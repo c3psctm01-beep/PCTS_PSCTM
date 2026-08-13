@@ -58,15 +58,15 @@ const defaultProjects = [
     }
 ];
 // --- SUPABASE CONFIG ---
-const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
+const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.db.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let projects = [];
 
 window.loadProjects = async function() {
     try {
-        const { data, error } = await supabase.from('projects').select('*').order('id', { ascending: true });
+        const { data, error } = await db.from('projects').select('*').order('id', { ascending: true });
         if (error) throw error;
         
         if (data && data.length > 0) {
@@ -109,7 +109,7 @@ window.saveProjects = async function() {
             tasks: p.tasks || [],
             gallery: p.gallery || []
         }));
-        const { error } = await supabase.from('projects').upsert(dbProjects);
+        const { error } = await db.from('projects').upsert(dbProjects);
         if (error) throw error;
     } catch (e) {
         console.error('Supabase Save Error:', e);
@@ -231,13 +231,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.textContent = 'กำลังเข้าสู่ระบบ...';
         btn.disabled = true;
         
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
         
         btn.textContent = 'เข้าสู่ระบบ';
         btn.disabled = false;
         
         if (error) {
-            alert('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน');
+            alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
+            console.error('Login Error:', error);
         } else {
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginForm').reset();
@@ -245,27 +246,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     window.logout = async function() {
-        await supabase.auth.signOut();
+        await db.auth.signOut();
     };
 
     // Listen to Auth State Changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    db.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth event:', event, session);
         if (session) {
             document.getElementById('btnLogin').style.display = 'none';
             document.getElementById('userInfo').style.display = 'block';
             document.getElementById('userEmailDisplay').textContent = session.user.email;
             
             // Get role from DB
-            const { data, error } = await supabase.from('user_roles').select('role').eq('id', session.user.id).single();
+            const { data, error } = await db.from('user_roles').select('role').eq('id', session.user.id).single();
+            console.log('Role fetch:', data, error);
             if (data && data.role) {
-                window.updateRole(data.role);
+                const userRole = data.role.toLowerCase();
+                window.updateRole(userRole);
+                if (userRole === 'admin') {
+                    alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
+                } else if (userRole === 'editor') {
+                    alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Editor');
+                }
             } else {
+                console.warn('Role not found or error, falling back to viewer');
+                alert('ล็อกอินสำเร็จ แต่ไม่พบสิทธิ์ของคุณในระบบ (รหัส UID อาจไม่ตรงในตาราง user_roles หรือลืมกำหนดสิทธิ์) ระบบจะให้สิทธิ์แค่ Viewer ครับ');
                 window.updateRole('viewer'); // fallback
             }
         } else {
             document.getElementById('btnLogin').style.display = 'block';
             document.getElementById('userInfo').style.display = 'none';
-            window.updateRole('viewer');
+            if (typeof window.updateRole === 'function') {
+                window.updateRole('viewer');
+            }
         }
     });
 
