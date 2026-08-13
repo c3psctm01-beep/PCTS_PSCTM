@@ -59,13 +59,12 @@
                 </ul>
             </nav>
 
-            <div class="role-switcher">
-                <label>สวมสิทธิ์เป็น:</label>
-                <select id="roleSelect">
-                    <option value="viewer">Viewer (บุคคลทั่วไป)</option>
-                    <option value="editor">Editor (ผู้ควบคุมงาน)</option>
-                    <option value="admin">Admin (ผู้ดูแลระบบ)</option>
-                </select>
+            <div class="role-switcher" id="authSection">
+                <button class="btn btn-primary" id="btnLogin" style="width: 100%;" onclick="document.getElementById('loginModal').style.display='flex'">เข้าสู่ระบบ (Login)</button>
+                <div id="userInfo" style="display: none; text-align: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;" id="userEmailDisplay"></div>
+                    <button class="btn" id="btnLogout" style="width: 100%; border: 1px solid var(--border-color); background: white;" onclick="logout()">ออกจากระบบ</button>
+                </div>
             </div>
         </aside>
 
@@ -407,6 +406,25 @@
         </div>
     </div>
 
+    <!-- Modal for Login -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content card" style="max-width: 400px; padding: 30px;">
+            <span class="close-modal" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+            <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">เข้าสู่ระบบ PCTS</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>อีเมล (Email)</label>
+                    <input type="email" id="loginEmail" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                </div>
+                <div class="form-group">
+                    <label>รหัสผ่าน (Password)</label>
+                    <input type="password" id="loginPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtnSpinner" style="width: 100%; margin-top: 10px;">เข้าสู่ระบบ</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -416,7 +434,8 @@
     <!-- html2pdf for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Toastify JS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 

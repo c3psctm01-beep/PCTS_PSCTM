@@ -57,14 +57,65 @@ const defaultProjects = [
         gallery: []
     }
 ];
+// --- SUPABASE CONFIG ---
+const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Force reset to the 2 new projects
-let projects = defaultProjects;
+let projects = [];
 
-function saveProjects() {
-    localStorage.setItem('pcts_projects', JSON.stringify(projects));
+window.loadProjects = async function() {
+    try {
+        const { data, error } = await supabase.from('projects').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+            projects = data.map(dbProj => ({
+                id: dbProj.id,
+                name: dbProj.name,
+                status: dbProj.status,
+                budget: dbProj.budget,
+                duration: dbProj.duration,
+                startDate: dbProj.start_date,
+                endDate: dbProj.end_date,
+                contractor: dbProj.contractor,
+                details: dbProj.details,
+                tasks: dbProj.tasks || [],
+                gallery: dbProj.gallery || []
+            }));
+        } else {
+            projects = defaultProjects;
+            await saveProjects();
+        }
+    } catch (e) {
+        console.error('Supabase Load Error:', e);
+        alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน');
+        projects = defaultProjects;
+    }
 }
-saveProjects(); // Ensure they are saved right away
+
+window.saveProjects = async function() {
+    try {
+        const dbProjects = projects.map(p => ({
+            id: p.id,
+            name: p.name,
+            status: p.status,
+            budget: p.budget || '',
+            duration: p.duration || '',
+            start_date: p.startDate || null,
+            end_date: p.endDate || null,
+            contractor: p.contractor || '',
+            details: p.details || '',
+            tasks: p.tasks || [],
+            gallery: p.gallery || []
+        }));
+        const { error } = await supabase.from('projects').upsert(dbProjects);
+        if (error) throw error;
+    } catch (e) {
+        console.error('Supabase Save Error:', e);
+        alert('บันทึกข้อมูลไปยังฐานข้อมูลไม่สำเร็จ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+    }
+}
 
 function calculateProjectProgress(p) {
     if (!p.tasks || p.tasks.length === 0) return { plan: 0, actual: 0 };
@@ -118,7 +169,7 @@ const sCurveData = {
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     
     // --- Navigation Logic ---
     const navItems = document.querySelectorAll('.sidebar-nav li');
@@ -148,14 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Role Management Logic ---
-    const roleSelect = document.getElementById('roleSelect');
+    // --- Role & Authentication Logic ---
     const roleAdminItems = document.querySelectorAll('.role-admin');
     const roleEditorItems = document.querySelectorAll('.role-editor');
     const currentUserRoleText = document.getElementById('currentUserRole');
 
-    function updateRole(role) {
-        // Reset view to dashboard when role changes to avoid stuck in forbidden view
+    window.updateRole = function(role) {
         document.querySelector('[data-target="dashboard-view"]').click();
 
         if (role === 'viewer') {
@@ -168,17 +217,57 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUserRoleText.textContent = 'Editor (ผู้ควบคุมงาน)';
         } else if (role === 'admin') {
             roleAdminItems.forEach(el => el.style.display = 'flex');
-            roleEditorItems.forEach(el => el.style.display = 'flex'); // Admin sees all
+            roleEditorItems.forEach(el => el.style.display = 'flex');
             currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
         }
-    }
-
-    roleSelect.addEventListener('change', (e) => {
-        updateRole(e.target.value);
+    };
+    
+    // Auth Form Listener
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const btn = document.getElementById('loginBtnSpinner');
+        btn.textContent = 'กำลังเข้าสู่ระบบ...';
+        btn.disabled = true;
+        
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
+        btn.textContent = 'เข้าสู่ระบบ';
+        btn.disabled = false;
+        
+        if (error) {
+            alert('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน');
+        } else {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
     });
 
-    // Initialize default role
-    updateRole('viewer');
+    window.logout = async function() {
+        await supabase.auth.signOut();
+    };
+
+    // Listen to Auth State Changes
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+            document.getElementById('btnLogin').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('userEmailDisplay').textContent = session.user.email;
+            
+            // Get role from DB
+            const { data, error } = await supabase.from('user_roles').select('role').eq('id', session.user.id).single();
+            if (data && data.role) {
+                window.updateRole(data.role);
+            } else {
+                window.updateRole('viewer'); // fallback
+            }
+        } else {
+            document.getElementById('btnLogin').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'none';
+            window.updateRole('viewer');
+        }
+    });
 
     // --- Render Tables ---
     window.renderTables = function() {
@@ -262,6 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
+    
+    // Load projects from Supabase before rendering
+    await window.loadProjects();
     renderTables();
 
     // --- S-Curve Chart.js Initialization ---
@@ -1059,11 +1151,14 @@ document.getElementById('editorForm')?.addEventListener('submit', function(e) {
                 const files = fileInput.files;
                 if (files && files.length > 0) {
                     let filesProcessed = 0;
+                    
+                    const getCanvasBlob = (canvas) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.6));
+
                     Array.from(files).forEach(file => {
                         const reader = new FileReader();
                         reader.onload = (event) => {
                             const img = new Image();
-                            img.onload = () => {
+                            img.onload = async () => {
                                 const canvas = document.createElement('canvas');
                                 const MAX_WIDTH = 800;
                                 const MAX_HEIGHT = 800;
@@ -1078,13 +1173,34 @@ document.getElementById('editorForm')?.addEventListener('submit', function(e) {
                                 canvas.height = height;
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0, width, height);
-                                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                                 
-                                p.gallery.push({
-                                    url: compressedDataUrl,
-                                    date: reportDate,
-                                    desc: desc || `อัปเดตงาน: ${t.name}`
-                                });
+                                const blob = await getCanvasBlob(canvas);
+                                
+                                const fileName = `${Date.now()}_${Math.floor(Math.random()*1000)}.jpg`;
+                                const folderDate = new Date().toISOString().split('T')[0];
+                                const filePath = `${folderDate}/${fileName}`;
+                                
+                                const { data: uploadData, error: uploadError } = await supabase
+                                    .storage
+                                    .from('project-images')
+                                    .upload(filePath, blob, { contentType: 'image/jpeg' });
+                                    
+                                if (uploadError) {
+                                    console.error('Upload Error:', uploadError);
+                                    alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + uploadError.message);
+                                } else {
+                                    const { data: { publicUrl } } = supabase
+                                        .storage
+                                        .from('project-images')
+                                        .getPublicUrl(filePath);
+                                        
+                                    p.gallery.push({
+                                        url: publicUrl,
+                                        date: reportDate,
+                                        desc: desc || `อัปเดตงาน: ${t.name}`
+                                    });
+                                }
+
                                 filesProcessed++;
                                 if (filesProcessed === files.length) {
                                     processUpdate();
