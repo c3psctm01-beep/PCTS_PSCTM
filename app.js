@@ -85,11 +85,16 @@ window.loadProjects = async function() {
             }));
         } else {
             projects = defaultProjects;
-            await saveProjects();
+            const { data: sessionData } = await db.auth.getSession();
+            if (sessionData && sessionData.session) {
+                await saveProjects();
+            } else {
+                console.log('ไม่พบข้อมูลโครงการในฐานข้อมูล และยังไม่ได้เข้าสู่ระบบ ระบบจะใช้ข้อมูลจำลองแสดงผลชั่วคราว');
+            }
         }
     } catch (e) {
         console.error('Supabase Load Error:', e);
-        alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน');
+        alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ' + (e.message || ''));
         projects = defaultProjects;
     }
 }
