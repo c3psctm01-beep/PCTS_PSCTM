@@ -113,7 +113,7 @@ window.saveProjects = async function() {
         if (error) throw error;
     } catch (e) {
         console.error('Supabase Save Error:', e);
-        alert('บันทึกข้อมูลไปยังฐานข้อมูลไม่สำเร็จ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+        alert('บันทึกข้อมูลไม่สำเร็จ: ' + (e.message || 'โปรดตรวจสอบการตั้งค่าฐานข้อมูล (RLS) หรือการเชื่อมต่ออินเทอร์เน็ต'));
     }
 }
 
