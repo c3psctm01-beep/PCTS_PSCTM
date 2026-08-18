@@ -58,7 +58,7 @@ const defaultProjects = [
     }
 ];
 // --- SUPABASE CONFIG ---
-const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.db.co';
+const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
