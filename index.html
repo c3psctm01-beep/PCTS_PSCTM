@@ -277,9 +277,15 @@
                                     <input type="date" id="taskEndDate" required>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label>น้ำหนักความสำคัญ (%) เทียบกับโครงการรวม <span id="weightHint" style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-left: 10px;"></span></label>
-                                <input type="number" step="0.01" min="0" max="100" id="taskWeightInput" placeholder="เช่น 20.00" required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>น้ำหนักความสำคัญ (%) เทียบกับโครงการรวม <span id="weightHint" style="color:var(--primary-color); font-weight:bold; font-size:12px; margin-left: 10px;"></span></label>
+                                    <input type="number" step="0.01" min="0" max="100" id="taskWeightInput" placeholder="เช่น 20.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>ความก้าวหน้าจริง (%)</label>
+                                    <input type="number" step="0.01" min="0" max="100" id="taskActualAdminInput" placeholder="0.00 - 100.00">
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i>
                                 บันทึกแผนงานย่อย</button>
@@ -296,6 +302,7 @@
                                         <th>วันที่เริ่ม</th>
                                         <th>วันที่สิ้นสุด</th>
                                         <th>น้ำหนัก</th>
+                                        <th>ก้าวหน้าจริง</th>
                                         <th>จัดการ</th>
                                     </tr>
                                 </thead>

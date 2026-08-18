@@ -998,7 +998,11 @@ function renderAdminWbsTable(projectId) {
             <td>${t.startDate}</td>
             <td>${t.endDate}</td>
             <td>${t.weight}%</td>
-            <td>
+            <td>${t.actual || 0}%</td>
+            <td style="display:flex; gap:5px;">
+                <button class="btn btn-secondary" style="color:var(--primary-color); padding: 5px 10px;" onclick="editWbsTask(${p.id}, ${t.id})">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
                 <button class="btn btn-secondary" style="color:var(--danger-color); padding: 5px 10px;" onclick="deleteWbsTask(${p.id}, ${t.id})">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -1006,6 +1010,22 @@ function renderAdminWbsTable(projectId) {
         `;
         tbody.appendChild(tr);
     });
+}
+
+window.editWbsTask = function(projectId, taskId) {
+    const p = projects.find(proj => proj.id === projectId);
+    if (!p || !p.tasks) return;
+    const t = p.tasks.find(tk => tk.id === taskId);
+    if (!t) return;
+    
+    document.getElementById('taskNameInput').value = t.name || '';
+    document.getElementById('taskDescInput').value = t.description || '';
+    document.getElementById('taskStartDate').value = t.startDate || '';
+    document.getElementById('taskEndDate').value = t.endDate || '';
+    document.getElementById('taskWeightInput').value = t.weight || '';
+    document.getElementById('taskActualAdminInput').value = t.actual || 0;
+    
+    document.getElementById('adminForm').scrollIntoView({behavior: 'smooth'});
 }
 
 window.deleteWbsTask = function(projectId, taskId) {
@@ -1074,6 +1094,8 @@ document.getElementById('adminForm')?.addEventListener('submit', function(e) {
     const startDate = document.getElementById('taskStartDate').value;
     const endDate = document.getElementById('taskEndDate').value;
     const weight = parseFloat(document.getElementById('taskWeightInput').value);
+    const actualVal = document.getElementById('taskActualAdminInput').value;
+    const actual = actualVal !== "" ? parseFloat(actualVal) : 0;
 
     if (new Date(endDate) < new Date(startDate)) {
         alert("ข้อผิดพลาด: วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น");
@@ -1105,13 +1127,14 @@ document.getElementById('adminForm')?.addEventListener('submit', function(e) {
                 p.tasks[existingTaskIndex].startDate = startDate;
                 p.tasks[existingTaskIndex].endDate = endDate;
                 p.tasks[existingTaskIndex].weight = weight;
+                p.tasks[existingTaskIndex].actual = actual;
                 alert(`แก้ไขข้อมูลแผนงานย่อย "${taskName}" เรียบร้อยแล้ว!`);
             } else {
                 // Add new task
                 if(!p.tasks) p.tasks = [];
                 const newTaskId = p.tasks.length > 0 ? Math.max(...p.tasks.map(t => t.id)) + 1 : 1;
                 p.tasks.push({
-                    id: newTaskId, name: taskName, description: taskDesc, startDate: startDate, endDate: endDate, weight: weight, actual: 0
+                    id: newTaskId, name: taskName, description: taskDesc, startDate: startDate, endDate: endDate, weight: weight, actual: actual
                 });
                 alert(`เพิ่มแผนงานย่อย "${taskName}" ให้โครงการ "${p.name}" เรียบร้อยแล้ว!`);
             }
