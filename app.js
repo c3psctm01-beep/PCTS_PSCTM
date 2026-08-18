@@ -1198,7 +1198,7 @@ document.getElementById('editorForm')?.addEventListener('submit', function(e) {
                                 const folderDate = new Date().toISOString().split('T')[0];
                                 const filePath = `${folderDate}/${fileName}`;
                                 
-                                const { data: uploadData, error: uploadError } = await supabase
+                                const { data: uploadData, error: uploadError } = await db
                                     .storage
                                     .from('project-images')
                                     .upload(filePath, blob, { contentType: 'image/jpeg' });
@@ -1207,7 +1207,7 @@ document.getElementById('editorForm')?.addEventListener('submit', function(e) {
                                     console.error('Upload Error:', uploadError);
                                     alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + uploadError.message);
                                 } else {
-                                    const { data: { publicUrl } } = supabase
+                                    const { data: { publicUrl } } = db
                                         .storage
                                         .from('project-images')
                                         .getPublicUrl(filePath);
