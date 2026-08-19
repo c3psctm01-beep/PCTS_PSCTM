@@ -916,11 +916,18 @@ window.closeProjectModal = function() {
     document.getElementById('projectModal').style.display = 'none';
 };
 
-window.deleteProject = function(id) {
+window.deleteProject = async function(id) {
     if (confirm('คุณต้องการลบโครงการนี้ใช่หรือไม่?')) {
-        projects = projects.filter(p => p.id !== id);
-        saveProjects();
-        window.renderTables();
+        try {
+            const { error } = await db.from('projects').delete().eq('id', id);
+            if (error) throw error;
+            
+            projects = projects.filter(p => p.id !== id);
+            window.renderTables();
+        } catch (e) {
+            console.error('Delete Error:', e);
+            alert('ลบโครงการไม่สำเร็จ: ' + (e.message || ''));
+        }
     }
 };
 
