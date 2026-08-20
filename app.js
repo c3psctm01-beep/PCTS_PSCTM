@@ -199,6 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(window.projectCalendar) {
                     window.projectCalendar.refetchEvents();
                     window.projectCalendar.render();
+                    window.projectCalendar.updateSize();
                 }
             }
             if(targetId === 'calendar-view' && calendar) {
@@ -844,33 +845,74 @@ window.viewProjectDetails = function(projectId) {
                         },
                         events: function(fetchInfo, successCallback, failureCallback) {
                             let dynamicEvents = [];
-                            if (window.currentProjectViewData && window.currentProjectViewData.gallery) {
-                                let grouped = {};
-                                window.currentProjectViewData.gallery.forEach(g => {
-                                    if (!grouped[g.date]) {
-                                        grouped[g.date] = {
-                                            title: `อัปเดต: ${window.currentProjectViewData.name}`,
-                                            start: g.date,
-                                            description: g.desc,
-                                            color: '#742C81',
-                                            imageUrls: []
-                                        };
-                                    } else {
-                                        if (g.desc && grouped[g.date].description !== g.desc) {
-                                            grouped[g.date].description += '<br>' + g.desc;
+                            if (window.currentProjectViewData) {
+                                // Add WBS Tasks
+                                if (window.currentProjectViewData.tasks) {
+                                    window.currentProjectViewData.tasks.forEach(t => {
+                                        if (t.startDate && t.endDate) {
+                                            // Add 1 day to endDate so FullCalendar includes the end day fully (exclusive end date in FC)
+                                            let ed = new Date(t.endDate);
+                                            ed.setDate(ed.getDate() + 1);
+                                            let edStr = ed.toISOString().split('T')[0];
+                                            
+                                            dynamicEvents.push({
+                                                title: `แผนงาน: ${t.name}`,
+                                                start: t.startDate,
+                                                end: edStr,
+                                                color: '#F39C12', // Gold color for tasks
+                                                description: `ความก้าวหน้าจริง: ${t.actual || 0}%`,
+                                                isTask: true
+                                            });
                                         }
-                                    }
-                                    if (g.url) {
-                                        grouped[g.date].imageUrls.push(g.url);
-                                    }
-                                });
-                                Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
+                                    });
+                                }
+                                
+                                // Add Gallery Updates
+                                if (window.currentProjectViewData.gallery) {
+                                    let grouped = {};
+                                    window.currentProjectViewData.gallery.forEach(g => {
+                                        if (!grouped[g.date]) {
+                                            grouped[g.date] = {
+                                                title: `อัปเดต: ${window.currentProjectViewData.name}`,
+                                                start: g.date,
+                                                description: g.desc,
+                                                color: '#742C81', // Purple color for updates
+                                                imageUrls: []
+                                            };
+                                        } else {
+                                            if (g.desc && grouped[g.date].description !== g.desc) {
+                                                grouped[g.date].description += '<br>' + g.desc;
+                                            }
+                                        }
+                                        if (g.url) {
+                                            grouped[g.date].imageUrls.push(g.url);
+                                        }
+                                    });
+                                    Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
+                                }
                             }
                             successCallback(dynamicEvents);
                         },
                         themeSystem: 'standard',
                         eventClick: function(info) {
                             const props = info.event.extendedProps;
+                            
+                            if (props.isTask) {
+                                // Simple alert for tasks, or use the modal
+                                document.getElementById('modalDate').innerText = 'ข้อมูลแผนงาน: ' + info.event.title.replace('แผนงาน: ', '');
+                                let html = `<p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
+                                html += `<p><strong>วันที่เริ่ม:</strong> ${info.event.startStr.split('T')[0]}</p>`;
+                                let endD = info.event.end ? new Date(info.event.end) : null;
+                                if(endD) {
+                                    endD.setDate(endD.getDate() - 1);
+                                    html += `<p><strong>วันที่สิ้นสุด:</strong> ${endD.toISOString().split('T')[0]}</p>`;
+                                }
+                                document.getElementById('modalContent').innerHTML = html;
+                                document.getElementById('calendarModal').style.display = 'flex';
+                                return;
+                            }
+                            
+                            // Existing logic for gallery updates
                             window.currentCalendarImages = props.imageUrls || [];
                             document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
                             let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
@@ -889,6 +931,7 @@ window.viewProjectDetails = function(projectId) {
                 }
             } else {
                 window.projectCalendar.refetchEvents();
+                window.projectCalendar.updateSize();
             }
         }
     }, 100);
