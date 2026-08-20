@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (insertError) {
                 console.error('Error inserting user_roles:', insertError);
-                alert('สมัครสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึกข้อมูลคำขอ กรุณาแจ้ง Admin');
+                alert('สมัครสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึกข้อมูลคำขอ: ' + (insertError.message || JSON.stringify(insertError)));
             } else {
                 alert('สมัครใช้งานสำเร็จ! กรุณารอ Admin อนุมัติสิทธิ์การใช้งาน (Pending Approval)');
                 document.getElementById('loginModal').style.display = 'none';
