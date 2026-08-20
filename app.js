@@ -823,66 +823,75 @@ window.viewProjectDetails = function(projectId) {
         // Update S-Curve
         window.updateSCurve(p);
 
-        // Update Project Calendar
         window.currentProjectViewData = p;
-        if (!window.projectCalendar) {
-            const pcEl = document.getElementById('projectCalendar');
-            window.projectCalendar = new FullCalendar.Calendar(pcEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    let dynamicEvents = [];
-                    if (window.currentProjectViewData && window.currentProjectViewData.gallery) {
-                        let grouped = {};
-                        window.currentProjectViewData.gallery.forEach(g => {
-                            if (!grouped[g.date]) {
-                                grouped[g.date] = {
-                                    title: `อัปเดต: ${window.currentProjectViewData.name}`,
-                                    start: g.date,
-                                    description: g.desc,
-                                    color: '#742C81',
-                                    imageUrls: []
-                                };
-                            } else {
-                                if (g.desc && grouped[g.date].description !== g.desc) {
-                                    grouped[g.date].description += '<br>' + g.desc;
-                                }
-                            }
-                            if (g.url) {
-                                grouped[g.date].imageUrls.push(g.url);
-                            }
-                        });
-                        Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
-                    }
-                    successCallback(dynamicEvents);
-                },
-                themeSystem: 'standard',
-                eventClick: function(info) {
-                    const props = info.event.extendedProps;
-                    window.currentCalendarImages = props.imageUrls || [];
-                    document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
-                    let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
-                    if (props.imageUrls && props.imageUrls.length > 0) {
-                        html += `<div style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding-bottom: 10px;">`;
-                        props.imageUrls.forEach((url, idx) => {
-                            html += `<img src="${url}" style="height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;" onclick="window.openLightbox(${idx})">`;
-                        });
-                        html += `</div>`;
-                    }
-                    document.getElementById('modalContent').innerHTML = html;
-                    document.getElementById('calendarModal').style.display = 'flex';
-                }
-            });
-            window.projectCalendar.render();
-        } else {
-            window.projectCalendar.refetchEvents();
-        }
     }
+    
+    // Switch the view first so the container is visible
     document.querySelector('[data-target="project-detail-view"]').click();
+    
+    // Update Project Calendar after a slight delay to ensure the view transition is done
+    setTimeout(() => {
+        if (window.currentProjectViewData) {
+            if (!window.projectCalendar) {
+                const pcEl = document.getElementById('projectCalendar');
+                if (pcEl) {
+                    window.projectCalendar = new FullCalendar.Calendar(pcEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,timeGridWeek'
+                        },
+                        events: function(fetchInfo, successCallback, failureCallback) {
+                            let dynamicEvents = [];
+                            if (window.currentProjectViewData && window.currentProjectViewData.gallery) {
+                                let grouped = {};
+                                window.currentProjectViewData.gallery.forEach(g => {
+                                    if (!grouped[g.date]) {
+                                        grouped[g.date] = {
+                                            title: `อัปเดต: ${window.currentProjectViewData.name}`,
+                                            start: g.date,
+                                            description: g.desc,
+                                            color: '#742C81',
+                                            imageUrls: []
+                                        };
+                                    } else {
+                                        if (g.desc && grouped[g.date].description !== g.desc) {
+                                            grouped[g.date].description += '<br>' + g.desc;
+                                        }
+                                    }
+                                    if (g.url) {
+                                        grouped[g.date].imageUrls.push(g.url);
+                                    }
+                                });
+                                Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
+                            }
+                            successCallback(dynamicEvents);
+                        },
+                        themeSystem: 'standard',
+                        eventClick: function(info) {
+                            const props = info.event.extendedProps;
+                            window.currentCalendarImages = props.imageUrls || [];
+                            document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
+                            let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
+                            if (props.imageUrls && props.imageUrls.length > 0) {
+                                html += `<div style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding-bottom: 10px;">`;
+                                props.imageUrls.forEach((url, idx) => {
+                                    html += `<img src="${url}" style="height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;" onclick="window.openLightbox(${idx})">`;
+                                });
+                                html += `</div>`;
+                            }
+                            document.getElementById('modalContent').innerHTML = html;
+                            document.getElementById('calendarModal').style.display = 'flex';
+                        }
+                    });
+                    window.projectCalendar.render();
+                }
+            } else {
+                window.projectCalendar.refetchEvents();
+            }
+        }
+    }, 100);
 }
 
 window.deleteGalleryItem = function(projectId, date, desc) {
