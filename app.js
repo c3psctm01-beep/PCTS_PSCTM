@@ -493,6 +493,98 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('calendarModal').style.display = 'flex';
         }
     });
+    // --- Project-Specific Calendar Initialization ---
+    const pcEl = document.getElementById('projectCalendar');
+    window.projectCalendar = new FullCalendar.Calendar(pcEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            let dynamicEvents = [];
+            if (window.currentProjectViewData) {
+                // Add WBS Tasks
+                if (window.currentProjectViewData.tasks) {
+                    window.currentProjectViewData.tasks.forEach(t => {
+                        if (t.startDate && t.endDate) {
+                            let ed = new Date(t.endDate);
+                            ed.setDate(ed.getDate() + 1);
+                            let edStr = ed.toISOString().split('T')[0];
+                            
+                            dynamicEvents.push({
+                                title: `แผนงาน: ${t.name}`,
+                                start: t.startDate,
+                                end: edStr,
+                                color: '#F39C12', // Gold color for tasks
+                                description: `ความก้าวหน้าจริง: ${t.actual || 0}%`,
+                                isTask: true
+                            });
+                        }
+                    });
+                }
+                
+                // Add Gallery Updates
+                if (window.currentProjectViewData.gallery) {
+                    let grouped = {};
+                    window.currentProjectViewData.gallery.forEach(g => {
+                        if (!grouped[g.date]) {
+                            grouped[g.date] = {
+                                title: `อัปเดต: ${window.currentProjectViewData.name}`,
+                                start: g.date,
+                                description: g.desc,
+                                color: '#742C81',
+                                imageUrls: []
+                            };
+                        } else {
+                            if (g.desc && grouped[g.date].description !== g.desc) {
+                                grouped[g.date].description += '<br>' + g.desc;
+                            }
+                        }
+                        if (g.url) {
+                            grouped[g.date].imageUrls.push(g.url);
+                        }
+                    });
+                    Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
+                }
+            }
+            successCallback(dynamicEvents);
+        },
+        themeSystem: 'standard',
+        eventClick: function(info) {
+            const props = info.event.extendedProps;
+            
+            if (props.isTask) {
+                document.getElementById('modalDate').innerText = 'ข้อมูลแผนงาน: ' + info.event.title.replace('แผนงาน: ', '');
+                let html = `<p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
+                html += `<p><strong>วันที่เริ่ม:</strong> ${info.event.startStr.split('T')[0]}</p>`;
+                let endD = info.event.end ? new Date(info.event.end) : null;
+                if(endD) {
+                    endD.setDate(endD.getDate() - 1);
+                    html += `<p><strong>วันที่สิ้นสุด:</strong> ${endD.toISOString().split('T')[0]}</p>`;
+                }
+                document.getElementById('modalContent').innerHTML = html;
+                document.getElementById('calendarModal').style.display = 'flex';
+                return;
+            }
+            
+            window.currentCalendarImages = props.imageUrls || [];
+            document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
+            let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
+            if (props.imageUrls && props.imageUrls.length > 0) {
+                html += `<div style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding-bottom: 10px;">`;
+                props.imageUrls.forEach((url, idx) => {
+                    html += `<img src="${url}" style="height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;" onclick="window.openLightbox(${idx})">`;
+                });
+                html += `</div>`;
+            }
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('calendarModal').style.display = 'flex';
+        }
+    });
+    // Render initially even if hidden, will be resized later
+    if (window.projectCalendar) window.projectCalendar.render();
 
     window.openLightbox = function(startIndex) {
         if (!window.currentCalendarImages || window.currentCalendarImages.length === 0) return;
@@ -830,111 +922,14 @@ window.viewProjectDetails = function(projectId) {
     // Switch the view first so the container is visible
     document.querySelector('[data-target="project-detail-view"]').click();
     
-    // Update Project Calendar after a slight delay to ensure the view transition is done
-    setTimeout(() => {
-        if (window.currentProjectViewData) {
-            if (!window.projectCalendar) {
-                const pcEl = document.getElementById('projectCalendar');
-                if (pcEl) {
-                    window.projectCalendar = new FullCalendar.Calendar(pcEl, {
-                        initialView: 'dayGridMonth',
-                        headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek'
-                        },
-                        events: function(fetchInfo, successCallback, failureCallback) {
-                            let dynamicEvents = [];
-                            if (window.currentProjectViewData) {
-                                // Add WBS Tasks
-                                if (window.currentProjectViewData.tasks) {
-                                    window.currentProjectViewData.tasks.forEach(t => {
-                                        if (t.startDate && t.endDate) {
-                                            // Add 1 day to endDate so FullCalendar includes the end day fully (exclusive end date in FC)
-                                            let ed = new Date(t.endDate);
-                                            ed.setDate(ed.getDate() + 1);
-                                            let edStr = ed.toISOString().split('T')[0];
-                                            
-                                            dynamicEvents.push({
-                                                title: `แผนงาน: ${t.name}`,
-                                                start: t.startDate,
-                                                end: edStr,
-                                                color: '#F39C12', // Gold color for tasks
-                                                description: `ความก้าวหน้าจริง: ${t.actual || 0}%`,
-                                                isTask: true
-                                            });
-                                        }
-                                    });
-                                }
-                                
-                                // Add Gallery Updates
-                                if (window.currentProjectViewData.gallery) {
-                                    let grouped = {};
-                                    window.currentProjectViewData.gallery.forEach(g => {
-                                        if (!grouped[g.date]) {
-                                            grouped[g.date] = {
-                                                title: `อัปเดต: ${window.currentProjectViewData.name}`,
-                                                start: g.date,
-                                                description: g.desc,
-                                                color: '#742C81', // Purple color for updates
-                                                imageUrls: []
-                                            };
-                                        } else {
-                                            if (g.desc && grouped[g.date].description !== g.desc) {
-                                                grouped[g.date].description += '<br>' + g.desc;
-                                            }
-                                        }
-                                        if (g.url) {
-                                            grouped[g.date].imageUrls.push(g.url);
-                                        }
-                                    });
-                                    Object.values(grouped).forEach(ev => dynamicEvents.push(ev));
-                                }
-                            }
-                            successCallback(dynamicEvents);
-                        },
-                        themeSystem: 'standard',
-                        eventClick: function(info) {
-                            const props = info.event.extendedProps;
-                            
-                            if (props.isTask) {
-                                // Simple alert for tasks, or use the modal
-                                document.getElementById('modalDate').innerText = 'ข้อมูลแผนงาน: ' + info.event.title.replace('แผนงาน: ', '');
-                                let html = `<p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
-                                html += `<p><strong>วันที่เริ่ม:</strong> ${info.event.startStr.split('T')[0]}</p>`;
-                                let endD = info.event.end ? new Date(info.event.end) : null;
-                                if(endD) {
-                                    endD.setDate(endD.getDate() - 1);
-                                    html += `<p><strong>วันที่สิ้นสุด:</strong> ${endD.toISOString().split('T')[0]}</p>`;
-                                }
-                                document.getElementById('modalContent').innerHTML = html;
-                                document.getElementById('calendarModal').style.display = 'flex';
-                                return;
-                            }
-                            
-                            // Existing logic for gallery updates
-                            window.currentCalendarImages = props.imageUrls || [];
-                            document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
-                            let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
-                            if (props.imageUrls && props.imageUrls.length > 0) {
-                                html += `<div style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding-bottom: 10px;">`;
-                                props.imageUrls.forEach((url, idx) => {
-                                    html += `<img src="${url}" style="height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;" onclick="window.openLightbox(${idx})">`;
-                                });
-                                html += `</div>`;
-                            }
-                            document.getElementById('modalContent').innerHTML = html;
-                            document.getElementById('calendarModal').style.display = 'flex';
-                        }
-                    });
-                    window.projectCalendar.render();
-                }
-            } else {
-                window.projectCalendar.refetchEvents();
-                window.projectCalendar.updateSize();
-            }
-        }
-    }, 100);
+    // The calendar is initialized globally in DOMContentLoaded.
+    // We just refetch and update size. The nav listener already does this, but doing it here again is safe.
+    if (window.projectCalendar) {
+        window.projectCalendar.refetchEvents();
+        setTimeout(() => {
+            window.projectCalendar.updateSize();
+        }, 150);
+    }
 }
 
 window.deleteGalleryItem = function(projectId, date, desc) {
