@@ -230,6 +230,28 @@
                         </div>
                     </div>
                     
+                    <!-- User Management Table -->
+                    <div class="card mt-4">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2>จัดการสิทธิ์ผู้ใช้งาน (รออนุมัติ)</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="pea-table">
+                                <thead>
+                                    <tr>
+                                        <th>อีเมล</th>
+                                        <th>รหัสพนักงาน</th>
+                                        <th>สถานะปัจจุบัน</th>
+                                        <th>จัดการสิทธิ์</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUserTableBody">
+                                    <!-- JS will inject here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Project Management Table -->
                     <div class="card mt-4">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -418,22 +440,49 @@
         </div>
     </div>
 
-    <!-- Modal for Login -->
+    <!-- Modal for Login / Register -->
     <div id="loginModal" class="modal">
         <div class="modal-content card" style="max-width: 400px; padding: 30px;">
             <span class="close-modal" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
-            <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">เข้าสู่ระบบ PCTS</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>อีเมล (Email)</label>
-                    <input type="email" id="loginEmail" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                </div>
-                <div class="form-group">
-                    <label>รหัสผ่าน (Password)</label>
-                    <input type="password" id="loginPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                </div>
-                <button type="submit" class="btn btn-primary" id="loginBtnSpinner" style="width: 100%; margin-top: 10px;">เข้าสู่ระบบ</button>
-            </form>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <button id="tabLogin" class="btn" style="flex:1; background: var(--pea-purple); color: white;" onclick="switchAuthTab('login')">เข้าสู่ระบบ</button>
+                <button id="tabRegister" class="btn" style="flex:1; background: transparent; color: var(--text-secondary);" onclick="switchAuthTab('register')">สมัครใช้งาน</button>
+            </div>
+
+            <div id="loginSection">
+                <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">เข้าสู่ระบบ PCTS</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>อีเมล (Email)</label>
+                        <input type="email" id="loginEmail" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <div class="form-group">
+                        <label>รหัสผ่าน (Password)</label>
+                        <input type="password" id="loginPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="loginBtnSpinner" style="width: 100%; margin-top: 10px;">เข้าสู่ระบบ</button>
+                </form>
+            </div>
+
+            <div id="registerSection" style="display: none;">
+                <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">สมัครผู้ใช้งานใหม่</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="regEmpId" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <div class="form-group">
+                        <label>อีเมล (Email)</label>
+                        <input type="email" id="regEmail" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <div class="form-group">
+                        <label>รหัสผ่าน (Password)</label>
+                        <input type="password" id="regPassword" required minlength="6" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="regBtnSpinner" style="width: 100%; margin-top: 10px;">สมัครใช้งาน</button>
+                </form>
+            </div>
         </div>
     </div>
 

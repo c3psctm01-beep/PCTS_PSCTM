@@ -95,9 +95,65 @@ window.loadProjects = async function() {
     } catch (e) {
         console.error('Supabase Load Error:', e);
         alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ' + (e.message || ''));
-        projects = defaultProjects;
+        renderAdminProjects();
     }
-}
+};
+
+// --- User Management (Admin) ---
+window.loadPendingUsers = async function() {
+    try {
+        const { data, error } = await db.from('user_roles').select('*').eq('role', 'pending');
+        if (error) throw error;
+        
+        const tbody = document.getElementById('adminUserTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        if (data && data.length > 0) {
+            data.forEach(user => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.email || '-'}</td>
+                    <td>${user.employee_id || '-'}</td>
+                    <td><span class="status-badge" style="background-color: #FFF3E0; color: #E65100;">รออนุมัติ</span></td>
+                    <td>
+                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="approveUser('${user.id}')"><i class="fa-solid fa-check"></i> อนุมัติ (Editor)</button>
+                        <button class="btn" style="background-color: #E74C3C; color: white; padding: 5px 10px; font-size: 12px;" onclick="rejectUser('${user.id}')"><i class="fa-solid fa-xmark"></i> ปฏิเสธ</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">ไม่มีผู้ใช้งานที่รออนุมัติ</td></tr>';
+        }
+    } catch (err) {
+        console.error('Error loading pending users:', err);
+    }
+};
+
+window.approveUser = async function(userId) {
+    if (!confirm('ยืนยันการอนุมัติสิทธิ์เป็น Editor ให้ผู้ใชেন্ডนี้?')) return;
+    try {
+        const { error } = await db.from('user_roles').update({ role: 'editor' }).eq('id', userId);
+        if (error) throw error;
+        alert('อนุมัติสิทธิ์เรียบร้อยแล้ว');
+        window.loadPendingUsers();
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+};
+
+window.rejectUser = async function(userId) {
+    if (!confirm('ยืนยันการปฏิเสธและลบคำขอนี้?')) return;
+    try {
+        const { error } = await db.from('user_roles').delete().eq('id', userId);
+        if (error) throw error;
+        alert('ปฏิเสธคำขอเรียบร้อยแล้ว');
+        window.loadPendingUsers();
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+};
 
 window.saveProjects = async function() {
     try {
@@ -232,6 +288,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
     
+    window.switchAuthTab = function(tab) {
+        const loginSec = document.getElementById('loginSection');
+        const regSec = document.getElementById('registerSection');
+        const btnLogin = document.getElementById('tabLogin');
+        const btnReg = document.getElementById('tabRegister');
+        
+        if (tab === 'login') {
+            loginSec.style.display = 'block';
+            regSec.style.display = 'none';
+            btnLogin.style.background = 'var(--pea-purple)';
+            btnLogin.style.color = 'white';
+            btnReg.style.background = 'transparent';
+            btnReg.style.color = 'var(--text-secondary)';
+        } else {
+            loginSec.style.display = 'none';
+            regSec.style.display = 'block';
+            btnReg.style.background = 'var(--pea-purple)';
+            btnReg.style.color = 'white';
+            btnLogin.style.background = 'transparent';
+            btnLogin.style.color = 'var(--text-secondary)';
+        }
+    };
+
     // Auth Form Listener
     document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -255,6 +334,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const empId = document.getElementById('regEmpId').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const btn = document.getElementById('regBtnSpinner');
+        
+        btn.textContent = 'กำลังสมัคร...';
+        btn.disabled = true;
+        
+        // 1. Sign up user
+        const { data, error } = await db.auth.signUp({ email, password });
+        
+        if (error) {
+            alert('สมัครใช้งานไม่สำเร็จ: ' + error.message);
+            console.error('Signup Error:', error);
+            btn.textContent = 'สมัครใช้งาน';
+            btn.disabled = false;
+            return;
+        }
+
+        // 2. Insert into user_roles with pending status
+        if (data && data.user) {
+            const { error: insertError } = await db.from('user_roles').insert([
+                { id: data.user.id, email: email, employee_id: empId, role: 'pending' }
+            ]);
+            
+            if (insertError) {
+                console.error('Error inserting user_roles:', insertError);
+                alert('สมัครสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึกข้อมูลคำขอ กรุณาแจ้ง Admin');
+            } else {
+                alert('สมัครใช้งานสำเร็จ! กรุณารอ Admin อนุมัติสิทธิ์การใช้งาน (Pending Approval)');
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('registerForm').reset();
+                window.logout(); // Ensure they are logged out until approved (optional, but good practice if email verification is off)
+            }
+        }
+        
+        btn.textContent = 'สมัครใช้งาน';
+        btn.disabled = false;
+    });
+
     window.logout = async function() {
         await db.auth.signOut();
     };
@@ -272,9 +393,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Role fetch:', data, error);
             if (data && data.role) {
                 const userRole = data.role.toLowerCase();
+                
+                if (userRole === 'pending') {
+                    alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
+                    await window.logout();
+                    return;
+                }
+                
                 window.updateRole(userRole);
                 if (userRole === 'admin') {
                     alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
+                    window.loadPendingUsers(); // Load users for admin
                 } else if (userRole === 'editor') {
                     alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Editor');
                 }
