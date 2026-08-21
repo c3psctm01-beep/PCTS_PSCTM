@@ -310,6 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentUserRoleText = document.getElementById('currentUserRole');
 
     window.updateRole = function(role) {
+        window.currentRole = role;
         document.querySelector('[data-target="dashboard-view"]').click();
 
         if (role === 'viewer') {
@@ -1132,10 +1133,14 @@ window.viewProjectDetails = function(projectId) {
                 div.style.position = 'relative';
                 
                 // Keep the exact same date comparison since this is the only way to uniquely identify it without an ID
-                div.innerHTML = `
-                    <button class="btn btn-secondary role-editor" style="position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; padding: 5px 10px; z-index: 10; border-radius: 4px;" onclick="deleteGalleryItem(${p.id}, '${item.date}', '${item.desc}')">
+                const deleteBtnHTML = (window.currentRole === 'admin') ? `
+                    <button class="btn btn-secondary role-admin" style="position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; padding: 5px 10px; z-index: 10; border-radius: 4px;" onclick="deleteGalleryItem(${p.id}, '${item.date}', '${item.desc}')">
                         <i class="fa-solid fa-trash"></i>
                     </button>
+                ` : '';
+                
+                div.innerHTML = `
+                    ${deleteBtnHTML}
                     <img src="${item.url}" alt="progress">
                     <div class="gallery-info">
                         <p><i class="fa-regular fa-calendar"></i> ${item.date}</p>
