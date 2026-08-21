@@ -172,9 +172,11 @@ window.saveProjects = async function() {
         }));
         const { error } = await db.from('projects').upsert(dbProjects);
         if (error) throw error;
+        return true;
     } catch (e) {
         console.error('Supabase Save Error:', e);
         alert('บันทึกข้อมูลไม่สำเร็จ: ' + (e.message || 'โปรดตรวจสอบการตั้งค่าฐานข้อมูล (RLS) หรือการเชื่อมต่ออินเทอร์เน็ต'));
+        return false;
     }
 }
 
@@ -1475,7 +1477,7 @@ document.getElementById('adminForm')?.addEventListener('submit', function(e) {
                 alert(`เพิ่มแผนงานย่อย "${taskName}" ให้โครงการ "${p.name}" เรียบร้อยแล้ว!`);
             }
 
-            saveProjects();
+            await saveProjects();
             window.renderTables();
             this.reset();
             document.getElementById('weightHint').innerText = '';
@@ -1513,21 +1515,28 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                 
                 if (!p.gallery) p.gallery = [];
                 
-                const processUpdate = () => {
+                const processUpdate = async () => {
                     p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
                     try {
-                        saveProjects();
-                        window.renderTables();
-                        alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
-                        // NOTIFICATION
-                        addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
-                        
-                        document.getElementById('imagePreviewArea').innerHTML = ''; // Clear preview
-                        document.getElementById('editorForm').reset();
+                        const success = await saveProjects();
+                        if (success !== false) {
+                            window.renderTables();
+                            alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
+                            // NOTIFICATION
+                            addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
+                            
+                            document.getElementById('imagePreviewArea').innerHTML = ''; // Clear preview
+                            document.getElementById('editorForm').reset();
+                        } else {
+                            p.gallery.pop(); // Revert the last push if save failed
+                        }
                     } catch(e) {
                         console.error(e);
-                        alert("เกิดข้อผิดพลาด: ขนาดรูปภาพรวมใหญ่เกินกว่าระบบจะบันทึกได้ (LocalStorage เต็ม) กรุณาใช้รูปภาพขนาดเล็กลง หรือบันทึกเฉพาะข้อความ");
+                        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + e.message);
                         p.gallery.pop(); // Revert the last push
+                    } finally {
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
                     }
                 };
 
