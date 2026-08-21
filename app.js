@@ -1487,7 +1487,7 @@ document.getElementById('adminForm')?.addEventListener('submit', function(e) {
 });
 
 // Editor Form (Actual Progress Entry)
-document.getElementById('editorForm')?.addEventListener('submit', function(e) {
+document.getElementById('editorForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const projectId = document.getElementById('editorProjectSelect').value;
     const taskId = document.getElementById('editorTaskSelect').value;
@@ -1495,12 +1495,18 @@ document.getElementById('editorForm')?.addEventListener('submit', function(e) {
     const reportDate = document.getElementById('reportDate').value;
     const desc = document.querySelector('#editorForm textarea').value;
     const fileInput = document.querySelector('#editorForm .file-input');
+    const submitBtn = document.querySelector('#editorForm button[type="submit"]');
     
     if (projectId && taskId && reportDate) {
         const p = projects.find(proj => proj.id === parseInt(projectId));
         if (p) {
             const t = p.tasks.find(tk => tk.id === parseInt(taskId));
             if (t) {
+                // Show loading state
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+                submitBtn.disabled = true;
+
                 if (actualVal !== "") {
                     t.actual = parseFloat(actualVal);
                 }
