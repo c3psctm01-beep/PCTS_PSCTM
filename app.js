@@ -1424,7 +1424,7 @@ document.getElementById('taskNameInput')?.addEventListener('input', function(e) 
 });
 
 // Admin Form (WBS Entry)
-document.getElementById('adminForm')?.addEventListener('submit', function(e) {
+document.getElementById('adminForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const projectId = document.getElementById('adminProjectSelect').value;
     const taskName = document.getElementById('taskNameInput').value;
