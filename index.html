@@ -469,7 +469,36 @@
                         <label>รหัสผ่าน (Password)</label>
                         <input type="password" id="loginPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
                     </div>
-                    <button type="submit" class="btn btn-primary" id="loginBtnSpinner" style="width: 100%; margin-top: 10px;">เข้าสู่ระบบ</button>
+                    <div style="text-align: right; margin-bottom: 15px;">
+                        <a href="#" onclick="switchAuthTab('forgot')" style="color: var(--pea-purple); font-size: 14px; text-decoration: none;">ลืมรหัสผ่าน?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="loginBtnSpinner" style="width: 100%;">เข้าสู่ระบบ</button>
+                </form>
+            </div>
+
+            <div id="forgotPasswordSection" style="display: none;">
+                <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">ลืมรหัสผ่าน</h2>
+                <p style="text-align: center; font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">กรอกอีเมลของคุณเพื่อรับลิงก์สำหรับตั้งรหัสผ่านใหม่</p>
+                <form id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label>อีเมล (Email)</label>
+                        <input type="email" id="forgotEmail" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="forgotBtnSpinner" style="width: 100%; margin-top: 10px;">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <a href="#" onclick="switchAuthTab('login')" style="color: var(--text-secondary); font-size: 14px; text-decoration: none;">กลับไปหน้าเข้าสู่ระบบ</a>
+                    </div>
+                </form>
+            </div>
+
+            <div id="resetPasswordSection" style="display: none;">
+                <h2 style="text-align: center; color: var(--pea-purple); margin-bottom: 20px;">ตั้งรหัสผ่านใหม่</h2>
+                <form id="resetPasswordForm">
+                    <div class="form-group">
+                        <label>รหัสผ่านใหม่ (New Password)</label>
+                        <input type="password" id="newPassword" required minlength="6" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="resetBtnSpinner" style="width: 100%; margin-top: 10px;">ยืนยันรหัสผ่านใหม่</button>
                 </form>
             </div>
 

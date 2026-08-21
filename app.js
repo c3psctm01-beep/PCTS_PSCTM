@@ -314,23 +314,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.switchAuthTab = function(tab) {
         const loginSec = document.getElementById('loginSection');
         const regSec = document.getElementById('registerSection');
+        const forgotSec = document.getElementById('forgotPasswordSection');
+        const resetSec = document.getElementById('resetPasswordSection');
         const btnLogin = document.getElementById('tabLogin');
         const btnReg = document.getElementById('tabRegister');
         
+        loginSec.style.display = 'none';
+        regSec.style.display = 'none';
+        if (forgotSec) forgotSec.style.display = 'none';
+        if (resetSec) resetSec.style.display = 'none';
+        
         if (tab === 'login') {
             loginSec.style.display = 'block';
-            regSec.style.display = 'none';
             btnLogin.style.background = 'var(--pea-purple)';
             btnLogin.style.color = 'white';
             btnReg.style.background = 'transparent';
             btnReg.style.color = 'var(--text-secondary)';
-        } else {
-            loginSec.style.display = 'none';
+        } else if (tab === 'register') {
             regSec.style.display = 'block';
             btnReg.style.background = 'var(--pea-purple)';
             btnReg.style.color = 'white';
             btnLogin.style.background = 'transparent';
             btnLogin.style.color = 'var(--text-secondary)';
+        } else if (tab === 'forgot' && forgotSec) {
+            forgotSec.style.display = 'block';
+            btnLogin.style.background = 'transparent';
+            btnLogin.style.color = 'var(--text-secondary)';
+            btnReg.style.background = 'transparent';
+            btnReg.style.color = 'var(--text-secondary)';
+        } else if (tab === 'reset' && resetSec) {
+            resetSec.style.display = 'block';
+            btnLogin.style.background = 'transparent';
+            btnLogin.style.color = 'var(--text-secondary)';
+            btnReg.style.background = 'transparent';
+            btnReg.style.color = 'var(--text-secondary)';
         }
     };
 
@@ -399,6 +416,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     });
 
+    // Forgot Password Form Listener
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgotEmail').value;
+        const btn = document.getElementById('forgotBtnSpinner');
+        btn.textContent = 'กำลังส่ง...';
+        btn.disabled = true;
+
+        const { data, error } = await db.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + window.location.pathname,
+        });
+
+        btn.textContent = 'ส่งลิงก์รีเซ็ตรหัสผ่าน';
+        btn.disabled = false;
+
+        if (error) {
+            alert('เกิดข้อผิดพลาด: ' + error.message);
+        } else {
+            alert('ส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว กรุณาตรวจสอบกล่องข้อความ');
+            window.switchAuthTab('login');
+        }
+    });
+
+    // Reset Password Form Listener
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newPassword = document.getElementById('newPassword').value;
+        const btn = document.getElementById('resetBtnSpinner');
+        btn.textContent = 'กำลังบันทึก...';
+        btn.disabled = true;
+
+        const { data, error } = await db.auth.updateUser({ password: newPassword });
+
+        btn.textContent = 'ยืนยันรหัสผ่านใหม่';
+        btn.disabled = false;
+
+        if (error) {
+            alert('เกิดข้อผิดพลาด: ' + error.message);
+        } else {
+            alert('ตั้งรหัสผ่านใหม่สำเร็จแล้ว');
+            window.switchAuthTab('login');
+        }
+    });
+
     window.logout = async function() {
         await db.auth.signOut();
     };
@@ -406,6 +467,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Listen to Auth State Changes
     db.auth.onAuthStateChange(async (event, session) => {
         console.log('Auth event:', event, session);
+        if (event === 'PASSWORD_RECOVERY') {
+            document.getElementById('loginModal').style.display = 'flex';
+            window.switchAuthTab('reset');
+            return;
+        }
+
         if (session) {
             document.getElementById('btnLogin').style.display = 'none';
             document.getElementById('userInfo').style.display = 'block';
