@@ -70,10 +70,18 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Overlay for mobile sidebar -->
+            <div id="sidebarOverlay" class="sidebar-overlay"></div>
+            
             <header class="top-header">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="ค้นหาโครงการ...">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="ค้นหาโครงการ...">
+                    </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 25px;">
                     <!-- Notification Bell -->
@@ -373,11 +381,11 @@
                                 <textarea rows="4" placeholder="ระบุรายละเอียดงาน, ปัญหาอุปสรรค..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label>อัปโหลดรูปภาพหน้างาน</label>
+                                <label>อัปโหลดรูปภาพหน้างาน (รองรับการถ่ายภาพจากมือถือ)</label>
                                 <div class="file-upload-box">
                                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <p>คลิก หรือ ลากไฟล์รูปภาพมาวางที่นี่</p>
-                                    <input type="file" multiple accept="image/*" class="file-input">
+                                    <p>คลิกเพื่อเลือกรูปภาพ หรือ ถ่ายรูปจากกล้องมือถือ</p>
+                                    <input type="file" multiple accept="image/*" class="file-input" capture="environment">
                                 </div>
                                 <div class="image-preview" id="imagePreviewArea"></div>
                             </div>

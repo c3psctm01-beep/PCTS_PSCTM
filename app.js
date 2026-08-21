@@ -232,12 +232,35 @@ const sCurveData = {
 
 document.addEventListener('DOMContentLoaded', async () => {
     
+    // --- Mobile Menu Logic ---
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        if (sidebar.classList.contains('open')) {
+            sidebarOverlay.classList.add('active');
+        } else {
+            sidebarOverlay.classList.remove('active');
+        }
+    }
+
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleSidebar);
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+
     // --- Navigation Logic ---
     const navItems = document.querySelectorAll('.sidebar-nav li');
     const viewSections = document.querySelectorAll('.view-section');
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+            }
+
             // Remove active from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
