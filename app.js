@@ -155,9 +155,14 @@ window.rejectUser = async function(userId) {
     }
 };
 
-window.saveProjects = async function() {
+window.saveProjects = async function(projectId = null) {
     try {
-        const dbProjects = projects.map(p => ({
+        let targetProjects = projects;
+        if (projectId) {
+            targetProjects = projects.filter(p => p.id === projectId);
+        }
+
+        const dbProjects = targetProjects.map(p => ({
             id: p.id,
             name: p.name,
             status: p.status,
@@ -170,8 +175,17 @@ window.saveProjects = async function() {
             tasks: p.tasks || [],
             gallery: p.gallery || []
         }));
-        const { error } = await db.from('projects').upsert(dbProjects);
-        if (error) throw error;
+
+        let err = null;
+        if (projectId && dbProjects.length > 0) {
+            const { error } = await db.from('projects').update(dbProjects[0]).eq('id', projectId);
+            err = error;
+        } else {
+            const { error } = await db.from('projects').upsert(dbProjects);
+            err = error;
+        }
+
+        if (err) throw err;
         return true;
     } catch (e) {
         console.error('Supabase Save Error:', e);
@@ -1518,7 +1532,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                 const processUpdate = async () => {
                     p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
                     try {
-                        const success = await saveProjects();
+                        const success = await saveProjects(p.id);
                         if (success !== false) {
                             window.renderTables();
                             alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
