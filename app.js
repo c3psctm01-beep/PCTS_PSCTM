@@ -3133,12 +3133,18 @@ function parseDisbursement092(data) {
     const colPaidCurr = headers.findIndex(h => typeof h === 'string' && h.includes('รวมจ่ายจริงปีปัจจุบัน'));
     const colPaidTotal = headers.findIndex(h => typeof h === 'string' && h === 'รวมจ่ายจริง');
     const colCommitment = headers.findIndex(h => typeof h === 'string' && h.includes('ภาระผูกพัน'));
-    const colPR = headers.findIndex(h => typeof h === 'string' && (h.includes('PR') || h.includes('พีอาร์') || h.includes('ใบขอซื้อ')));
-    const colPO = headers.findIndex(h => typeof h === 'string' && (h.includes('PO') || h.includes('พีโอ') || h.includes('ใบสั่งซื้อ') || h.includes('ใบสั่งจ้าง')));
-    const colGR = headers.findIndex(h => typeof h === 'string' && (h.includes('GR') || h.includes('จีอาร์') || h.includes('ตรวจรับ')));
-    const colIR = headers.findIndex(h => typeof h === 'string' && (h.includes('IR') || h.includes('ไออาร์') || h.includes('ตั้งหนี้')));
     const colRemaining = headers.findIndex(h => typeof h === 'string' && h.includes('วงเงินคงเหลือยังไม่ดำเนินการ'));
     const colStatus = headers.findIndex(h => typeof h === 'string' && h.includes('สถานะ'));
+    
+    let colPR = -1, colPO = -1, colGR = -1, colIR = -1;
+    for (let i = headerRowIdx; i <= headerRowIdx + 2 && i < data.length; i++) {
+        const r = data[i];
+        if (!r) continue;
+        if (colPR === -1) colPR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('PR') || h.includes('พีอาร์') || h.includes('ใบขอซื้อ')));
+        if (colPO === -1) colPO = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('PO') || h.includes('พีโอ') || h.includes('ใบสั่งซื้อ') || h.includes('ใบสั่งจ้าง')));
+        if (colGR === -1) colGR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('GR') || h.includes('จีอาร์') || h.includes('ตรวจรับ')));
+        if (colIR === -1) colIR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('IR') || h.includes('ไออาร์') || h.includes('ตั้งหนี้')));
+    }
     
     p.disbursement.items = [];
     
@@ -3175,7 +3181,7 @@ function parseDisbursement092(data) {
             gr: gr,
             ir: ir,
             remaining: rm,
-            status: (row[colStatus] || '').toString().split(' ')[0]
+            status: (row[colStatus] || '').toString().trim()
         });
     }
     
@@ -3285,8 +3291,8 @@ window.renderDisbursementTab = function(p) {
         tbody.innerHTML = '';
         d.items.forEach((item, idx) => {
             let statusClass = 'disb-status-open';
-            if (item.status === 'CLSD') statusClass = 'disb-status-clsd';
-            if (item.status === 'PREL') statusClass = 'disb-status-prel';
+            if (item.status.includes('CLSD')) statusClass = 'disb-status-clsd';
+            if (item.status.includes('PREL')) statusClass = 'disb-status-prel';
             
             let pct = 0;
             if (item.budget && item.budget > 0) {
