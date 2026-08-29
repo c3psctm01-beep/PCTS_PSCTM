@@ -2488,7 +2488,8 @@ window.printSelectedSections = function() {
     // We temporarily show them off-screen to force render.
     const tabSCurve = document.getElementById('tabSCurve');
     const tabGantt = document.getElementById('tabGantt');
-    let origSCurveStyle = '', origGanttStyle = '';
+    const tabDisbursement = document.getElementById('tabDisbursement');
+    let origSCurveStyle = '', origGanttStyle = '', origDisbStyle = '';
 
     if (tabSCurve) {
         origSCurveStyle = tabSCurve.getAttribute('style') || '';
@@ -2516,6 +2517,23 @@ window.printSelectedSections = function() {
         tabGantt.style.zIndex = '-9999';
         if (window.currentGantt) {
             window.currentGantt.render();
+        }
+    }
+
+    if (tabDisbursement && selected.includes('disbursement')) {
+        origDisbStyle = tabDisbursement.getAttribute('style') || '';
+        tabDisbursement.style.display = 'block';
+        tabDisbursement.style.position = 'absolute';
+        tabDisbursement.style.visibility = 'hidden';
+        tabDisbursement.style.zIndex = '-9999';
+        tabDisbursement.style.width = '1200px';
+        tabDisbursement.style.height = '600px';
+        if (window.disbChartInstance) {
+            const oldAnim = window.disbChartInstance.options.animation;
+            window.disbChartInstance.options.animation = false;
+            window.disbChartInstance.resize();
+            window.disbChartInstance.update();
+            window.disbChartInstance.options.animation = oldAnim;
         }
     }
 
@@ -2651,9 +2669,83 @@ window.printSelectedSections = function() {
         }
     }
 
+    // --- Disbursement Section ---
+    if (selected.includes('disbursement') && p.disbursement) {
+        const d = p.disbursement;
+        const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num || 0);
+        
+        let disbRows = '';
+        if (d.items && d.items.length > 0) {
+            d.items.forEach((item, idx) => {
+                let pct = 0;
+                if (item.budget && item.budget > 0) pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
+                disbRows += `
+                    <tr>
+                        <td style="text-align: center;">${idx + 1}</td>
+                        <td>${item.name}</td>
+                        <td style="text-align: center;"><code>${item.wbs}</code></td>
+                        <td style="text-align: right;">${fmt(item.budget)}</td>
+                        <td style="text-align: right;">${fmt(item.totalPaid)}</td>
+                        <td style="text-align: right;">${fmt(item.remaining)}</td>
+                        <td style="text-align: right;">${pct}%</td>
+                        <td style="text-align: center;">${item.status || '-'}</td>
+                    </tr>`;
+            });
+        } else {
+            disbRows = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
+        }
+
+        const disbCanvas = document.getElementById('disbursementChart');
+        let disbImg = '';
+        if (disbCanvas) {
+            try { disbImg = disbCanvas.toDataURL('image/png', 1.0); } catch(e) {}
+        }
+        
+        printContent += `
+        <div class="print-section" style="page-break-before: always;">
+            <h2 class="print-section-title">ข้อมูลเบิกจ่ายงบประมาณ</h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
+                    <strong style="display: block; color: #555; font-size: 11px;">วงเงินงบประมาณ</strong>
+                    <span style="color: #2980b9; font-weight: bold; font-size: 14px;">${fmt(d.budget)}</span>
+                </div>
+                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
+                    <strong style="display: block; color: #555; font-size: 11px;">จ่ายจริงสะสม</strong>
+                    <span style="color: #27ae60; font-weight: bold; font-size: 14px;">${fmt(d.totalPaid)}</span>
+                </div>
+                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
+                    <strong style="display: block; color: #555; font-size: 11px;">งบคงเหลือ</strong>
+                    <span style="color: #e74c3c; font-weight: bold; font-size: 14px;">${fmt(d.remaining)}</span>
+                </div>
+            </div>
+
+            ${disbImg ? '<img src="' + disbImg + '" style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 20px;">' : ''}
+            
+            <table class="wbs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;">#</th>
+                        <th>รายการ</th>
+                        <th>WBS</th>
+                        <th>วงเงินงบประมาณ</th>
+                        <th>จ่ายจริงสะสม</th>
+                        <th>งบคงเหลือ</th>
+                        <th>%</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${disbRows}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
     // --- RESTORE ORIGINAL STYLES ---
     if (tabSCurve) tabSCurve.setAttribute('style', origSCurveStyle);
     if (tabGantt) tabGantt.setAttribute('style', origGanttStyle);
+    if (tabDisbursement && selected.includes('disbursement')) tabDisbursement.setAttribute('style', origDisbStyle);
 
     // Create print window
     const printWindow = window.open('', '_blank', 'width=1100,height=800');
