@@ -2184,6 +2184,7 @@ window.openProjectTab = function(evt, tabName) {
     
     if(tabName === 'tabGantt' && window.currentGantt) {
         setTimeout(() => {
+            changeGanttMode('Month');
             window.currentGantt.render();
         }, 50);
     }
