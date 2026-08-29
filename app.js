@@ -3379,6 +3379,14 @@ window.renderDisbursementTab = function(p) {
     }
     
     const monthSelect = document.getElementById('disbViewMonthSelect');
+    if (d.monthlyData) {
+        Object.keys(d.monthlyData).forEach(k => {
+            if (!k.includes(' ')) {
+                delete d.monthlyData[k];
+            }
+        });
+    }
+    
     if (d.monthlyData && Object.keys(d.monthlyData).length > 0) {
         monthSelect.style.display = 'inline-block';
         monthSelect.innerHTML = '';
@@ -3523,10 +3531,12 @@ window.renderDisbursementChart = function(p) {
             labels.push(`${pl.month} ${pl.year || ''}`.trim());
             accPlan += pl.amount;
             planData.push(accPlan);
-            actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
             
             if (idx <= foundViewMonthIndex) {
+                actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
                 accPlanUpToViewedMonth += pl.amount;
+            } else {
+                actualData.push(0);
             }
         });
         
