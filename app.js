@@ -106,7 +106,7 @@ window.loadProjects = async function() {
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: dbProj.gallery || [],
-                    disbursement: JSON.parse(localStorage.getItem('disbursement_' + dbProj.id)) || null
+                    disbursement: dbProj.disbursement || null
                 };
             });
         } else {
@@ -199,15 +199,9 @@ window.saveProjects = async function(projectId = null) {
             contractor: p.contractor || '',
             details: `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}]${p.details || ''}`,
             tasks: p.tasks || [],
-            gallery: p.gallery || []
+            gallery: p.gallery || [],
+            disbursement: p.disbursement || null
         }));
-
-        // Save disbursement to localStorage since Supabase schema might not have it
-        targetProjects.forEach(p => {
-            if (p.disbursement) {
-                localStorage.setItem('disbursement_' + p.id, JSON.stringify(p.disbursement));
-            }
-        });
 
         let err = null;
         if (projectId && dbProjects.length > 0) {
