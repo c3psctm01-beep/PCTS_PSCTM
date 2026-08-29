@@ -900,3 +900,106 @@ html, body {
 .disb-status-open { background: #fff3e0; color: #e67e22; }
 .disb-status-prel { background: #e3f2fd; color: #2980b9; }
 
+/* ---------------- Responsive & Mobile Optimization ---------------- */
+@media (max-width: 1024px) {
+    /* Tablet & Small Desktop Adjustments */
+    .dashboard-cards, .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .disbursement-summary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .project-header.card {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Mobile Adjustments */
+    
+    /* Top Nav: Horizontal Scrollable */
+    .top-nav {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 10px;
+    }
+    .top-nav ul {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+    }
+    .top-nav::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Grid Layouts */
+    .dashboard-cards, .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    .disbursement-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Tables */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    .pea-table th, .pea-table td {
+        white-space: nowrap;
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    /* Forms in Modals */
+    .form-group {
+        margin-bottom: 12px;
+    }
+    #disbMonthGroup {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+    
+    /* Typography & Spacing */
+    body {
+        font-size: 14px;
+    }
+    h2 { font-size: 18px; }
+    h3 { font-size: 16px; }
+    .card {
+        padding: 15px;
+    }
+    
+    /* Project Header Buttons */
+    .project-header .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    .project-header > div {
+        width: 100%;
+    }
+    
+    /* Hide some less critical columns on very small screens if needed (Optional, currently just scrollable) */
+}
+
+@media (max-width: 480px) {
+    .disbursement-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+
