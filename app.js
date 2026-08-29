@@ -3429,10 +3429,10 @@ window.renderDisbursementChart = function(p) {
             actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
         });
         
-        // เพิ่มแท่งสำหรับ "รวมจ่ายจริงล่าสุด"
-        labels.push('รวมจ่ายจริง (ล่าสุด)');
-        planData.push(0);
-        actualData.push(d.totalPaid || 0);
+        // เพิ่มแท่งสำหรับ "รวมแผน / จ่ายจริงปีนี้"
+        labels.push('รวมแผน / จ่ายจริงปีนี้');
+        planData.push(accPlan);
+        actualData.push(d.paidCurrentYear || 0);
         
     } else if (d.items && d.items.length > 0) {
         labels.push('แผนรวม', 'จ่ายจริงสะสม');
