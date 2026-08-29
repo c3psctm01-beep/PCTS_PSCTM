@@ -878,11 +878,13 @@ html, body {
 .disb-budget { border-color: var(--pea-purple); }
 .disb-paid { border-color: #27ae60; }
 .disb-remaining { border-color: #e67e22; }
+.disb-commitment { border-color: #e74c3c; }
 .disb-percent { border-color: #2980b9; }
 
 .disb-budget .disb-card-value { color: var(--pea-purple); }
 .disb-paid .disb-card-value { color: #27ae60; }
 .disb-remaining .disb-card-value { color: #e67e22; }
+.disb-commitment .disb-card-value { color: #e74c3c; }
 .disb-percent .disb-card-value { color: #2980b9; }
 
 .disb-status-tag {

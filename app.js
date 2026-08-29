@@ -3132,6 +3132,7 @@ function parseDisbursement092(data) {
     const colPaidPrev = headers.findIndex(h => typeof h === 'string' && h.includes('รวมจ่ายจริงถึงสิ้นปีก่อนหน้า'));
     const colPaidCurr = headers.findIndex(h => typeof h === 'string' && h.includes('รวมจ่ายจริงปีปัจจุบัน'));
     const colPaidTotal = headers.findIndex(h => typeof h === 'string' && h === 'รวมจ่ายจริง');
+    const colCommitment = headers.findIndex(h => typeof h === 'string' && h.includes('ภาระผูกพัน'));
     const colRemaining = headers.findIndex(h => typeof h === 'string' && h.includes('วงเงินคงเหลือยังไม่ดำเนินการ'));
     const colStatus = headers.findIndex(h => typeof h === 'string' && h.includes('สถานะ'));
     
@@ -3150,6 +3151,7 @@ function parseDisbursement092(data) {
         const pc = parseFloat(row[colPaidCurr]) || 0;
         let tp = parseFloat(row[colPaidTotal]);
         if (isNaN(tp)) tp = pp + pc;
+        const cmt = colCommitment !== -1 ? (parseFloat(row[colCommitment]) || 0) : 0;
         const rm = parseFloat(row[colRemaining]) || 0;
         
         p.disbursement.items.push({
@@ -3159,6 +3161,7 @@ function parseDisbursement092(data) {
             paidPrev: pp,
             paidCurr: pc,
             totalPaid: tp,
+            commitment: cmt,
             remaining: rm,
             status: (row[colStatus] || '').toString().split(' ')[0]
         });
@@ -3168,6 +3171,7 @@ function parseDisbursement092(data) {
     p.disbursement.paidPrevYear = p.disbursement.items.reduce((sum, item) => sum + item.paidPrev, 0);
     p.disbursement.paidCurrentYear = p.disbursement.items.reduce((sum, item) => sum + item.paidCurr, 0);
     p.disbursement.totalPaid = p.disbursement.items.reduce((sum, item) => sum + item.totalPaid, 0);
+    p.disbursement.commitment = p.disbursement.items.reduce((sum, item) => sum + (item.commitment || 0), 0);
     p.disbursement.remaining = p.disbursement.items.reduce((sum, item) => sum + item.remaining, 0);
 }
 
@@ -3248,15 +3252,17 @@ window.renderDisbursementTab = function(p) {
     if (!d) {
         document.getElementById('disbBudget').textContent = '-';
         document.getElementById('disbPaid').textContent = '-';
+        document.getElementById('disbCommitment').textContent = '-';
         document.getElementById('disbRemaining').textContent = '-';
         document.getElementById('disbPercent').textContent = '-';
-        document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
+        document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
         if (window.disbChartInstance) window.disbChartInstance.destroy();
         return;
     }
     
     document.getElementById('disbBudget').textContent = fmt(d.budget);
     document.getElementById('disbPaid').textContent = fmt(d.totalPaid);
+    document.getElementById('disbCommitment').textContent = fmt(d.commitment || 0);
     document.getElementById('disbRemaining').textContent = fmt(d.remaining);
     
     const percent = d.budget ? ((d.totalPaid / d.budget) * 100).toFixed(2) : 0;
@@ -3282,6 +3288,7 @@ window.renderDisbursementTab = function(p) {
                     <td><code>${item.wbs}</code></td>
                     <td style="text-align: right;">${fmt(item.budget)}</td>
                     <td style="text-align: right;">${fmt(item.totalPaid)}</td>
+                    <td style="text-align: right;">${fmt(item.commitment || 0)}</td>
                     <td style="text-align: right;">${fmt(item.remaining)}</td>
                     <td style="text-align: right;">${pct}%</td>
                     <td style="text-align: center;"><span class="disb-status-tag ${statusClass}">${item.status || '-'}</span></td>
@@ -3289,7 +3296,7 @@ window.renderDisbursementTab = function(p) {
             `;
         });
     } else {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
     }
     
     renderDisbursementChart(p);
