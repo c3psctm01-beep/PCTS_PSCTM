@@ -66,21 +66,37 @@ html, body {
 .top-nav li {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    position: relative;
+    font-weight: 500;
 }
 
 .top-nav li:hover {
-    background-color: rgba(116, 44, 129, 0.05);
     color: var(--pea-purple);
+    background-color: rgba(116, 44, 129, 0.04);
 }
 
 .top-nav li.active {
-    background-color: rgba(116, 44, 129, 0.1);
     color: var(--pea-purple);
     font-weight: 600;
+    background-color: transparent;
+}
+
+.top-nav li.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 15%;
+    width: 70%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--pea-purple), var(--pea-purple-light));
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(116, 44, 129, 0.3);
 }
 
 /* ---------------- Main Content ---------------- */
@@ -92,37 +108,19 @@ html, body {
 }
 
 .top-header {
-    height: 55px;
-    background-color: var(--bg-card);
+    height: 60px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
-    box-shadow: var(--shadow-sm);
-    position: relative;
+    padding: 0 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    z-index: 100;
 }
 
-.dept-title-container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.dept-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0;
-    background: linear-gradient(135deg, var(--pea-purple), var(--pea-gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    text-shadow: 0px 2px 4px rgba(0,0,0,0.05);
-}
 
 .user-profile {
     display: flex;
@@ -336,14 +334,18 @@ html, body {
 }
 
 .btn {
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-family: var(--font-body);
     font-weight: 600;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .btn-primary {
@@ -353,6 +355,8 @@ html, body {
 
 .btn-primary:hover {
     background-color: var(--pea-purple-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(116, 44, 129, 0.3);
 }
 
 .btn-secondary {
