@@ -3039,7 +3039,37 @@ window.openDisbursementUploadModal = function(type) {
     document.getElementById('disbUploadTitle').innerHTML = type === 'actual' ? '<i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย (092)' : '<i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย';
     document.getElementById('disbFileType').value = type;
     document.getElementById('disbFileType').disabled = true;
-    document.getElementById('disbMonthGroup').style.display = type === 'actual' ? 'block' : 'none';
+    
+    const yearSelect = document.getElementById('disbUploadYear');
+    if (yearSelect.options.length === 0) {
+        const currentYear = new Date().getFullYear() + 543;
+        for (let i = currentYear - 3; i <= currentYear + 3; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            if (i === currentYear) opt.selected = true;
+            yearSelect.appendChild(opt);
+        }
+    }
+    
+    const updateMonthTicks = () => {
+        const y = yearSelect.value;
+        const mData = window.currentProjectViewData?.disbursement?.monthlyData || {};
+        const monthSelect = document.getElementById('disbUploadMonth');
+        Array.from(monthSelect.options).forEach(opt => {
+            const cleanText = opt.textContent.replace(' ✅', '');
+            if (mData[`${opt.value} ${y}`]) {
+                opt.textContent = cleanText + ' ✅';
+            } else {
+                opt.textContent = cleanText;
+            }
+        });
+    };
+    
+    yearSelect.onchange = updateMonthTicks;
+    updateMonthTicks();
+    
+    document.getElementById('disbMonthGroup').style.display = type === 'actual' ? 'flex' : 'none';
     document.getElementById('disbFileInput').value = '';
     document.getElementById('disbSheetSelector').style.display = 'none';
     currentDisbWorkbook = null;
@@ -3094,8 +3124,9 @@ document.getElementById('disbursementUploadForm').addEventListener('submit', fun
     const data = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
     
     if (currentDisbUploadType === 'actual') {
-        const month = document.getElementById('disbUploadMonth').value;
-        parseDisbursement092(data, month);
+        const monthStr = document.getElementById('disbUploadMonth').value;
+        const yearStr = document.getElementById('disbUploadYear').value;
+        parseDisbursement092(data, `${monthStr} ${yearStr}`);
     } else {
         parseDisbursementPlan(data);
     }
@@ -3214,14 +3245,22 @@ function updateActualFromMonthly(disb) {
     }
     
     disb.actual = disb.plan.map(pItem => {
-        // Extract just the month name part (e.g. "ต.ค.") from plan's month string in case it has year attached
         const planMonthCode = pItem.month.replace(/[\.\s]/g, '').trim(); 
-        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
         const targetMonths = ['ตค','พย','ธค','มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย'];
+        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
         const mIndex = targetMonths.indexOf(planMonthCode);
         if (mIndex !== -1) {
-            const mData = disb.monthlyData[displayMonths[mIndex]];
-            if (mData) return mData.totalPaid;
+            let lookupKey = displayMonths[mIndex] + ' ' + (pItem.year || '');
+            lookupKey = lookupKey.trim();
+            if (disb.monthlyData[lookupKey]) {
+                return disb.monthlyData[lookupKey].totalPaid;
+            }
+            
+            const keys = Object.keys(disb.monthlyData);
+            const fallbackKey = keys.find(k => k.startsWith(displayMonths[mIndex]));
+            if (fallbackKey) {
+                return disb.monthlyData[fallbackKey].totalPaid;
+            }
         }
         return 0;
     });
@@ -3343,7 +3382,21 @@ window.renderDisbursementTab = function(p) {
     if (d.monthlyData && Object.keys(d.monthlyData).length > 0) {
         monthSelect.style.display = 'inline-block';
         monthSelect.innerHTML = '';
-        Object.keys(d.monthlyData).forEach(m => {
+        
+        const keys = Object.keys(d.monthlyData);
+        const monthOrder = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        keys.sort((a, b) => {
+            const partsA = a.split(' ');
+            const partsB = b.split(' ');
+            const mA = partsA[0];
+            const yA = partsA[1] || '0';
+            const mB = partsB[0];
+            const yB = partsB[1] || '0';
+            if (yA !== yB) return parseInt(yA) - parseInt(yB);
+            return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+        });
+        
+        keys.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m;
             opt.textContent = `ข้อมูลเดือน: ${m}`;
