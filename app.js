@@ -601,6 +601,11 @@ window.filterDashboard = function(type, event) {
             p.plan = progress.plan;
             p.actual = progress.actual;
 
+            let disbPct = 0;
+            if (p.disbursement && p.disbursement.budget > 0) {
+                disbPct = ((p.disbursement.totalPaid / p.disbursement.budget) * 100).toFixed(2);
+            }
+
             const tr = document.createElement('tr');
             const statusClass = p.status === 'แล้วเสร็จ' ? 'status-completed' : 'status-active';
             const projectType = p.type || 'จ้างเหมา';
@@ -611,13 +616,21 @@ window.filterDashboard = function(type, event) {
                 <td>${p.contractor}</td>
                 <td>${p.supervisor || '-'}</td>
                 <td><span class="status-badge ${statusClass}">${p.status}</span></td>
-                <td>
-                    <div style="font-size: 13px; margin-bottom: 3px;">
-                        Plan: ${p.plan}% | Actual: ${p.actual}%
+                <td style="min-width: 180px;">
+                    <div style="display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                        <span style="color: #7f8c8d;">แผนงาน: ${p.plan}%</span>
+                        <span style="color: #3498db; font-weight: 600;">ทำได้: ${p.actual}%</span>
                     </div>
-                    <div class="progress-bar-container">
+                    <div class="progress-bar-container" style="margin-bottom: 8px;">
                         <div class="progress-bar-plan" style="width: ${p.plan}%;"></div>
                         <div class="progress-bar-actual" style="width: ${p.actual}%;"></div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                        <span style="color: #27ae60; font-weight: 600;">เบิกจ่าย: ${disbPct}%</span>
+                    </div>
+                    <div class="progress-bar-container" style="background-color: #ecf0f1; height: 5px;">
+                        <div class="progress-bar-actual" style="width: ${disbPct}%; background-color: #2ecc71;"></div>
                     </div>
                 </td>
                 <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewProjectDetails(${p.id})">ดูรายละเอียด</button></td>
