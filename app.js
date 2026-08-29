@@ -3273,7 +3273,7 @@ window.renderDisbursementTab = function(p) {
         document.getElementById('disbCommitment').textContent = '-';
         document.getElementById('disbRemaining').textContent = '-';
         document.getElementById('disbPercent').textContent = '-';
-        document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="12" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
+        document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
         if (window.disbChartInstance) window.disbChartInstance.destroy();
         return;
     }
@@ -3299,6 +3299,9 @@ window.renderDisbursementTab = function(p) {
                 pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
             }
             
+            let budgetRemaining = (item.budget || 0) - (item.totalPaid || 0);
+            let totalCommitment = (item.pr || 0) + (item.po || 0) + (item.gr || 0) + (item.ir || 0);
+            
             tbody.innerHTML += `
                 <tr>
                     <td style="text-align: center;">${idx + 1}</td>
@@ -3306,6 +3309,8 @@ window.renderDisbursementTab = function(p) {
                     <td><code>${item.wbs}</code></td>
                     <td style="text-align: right;">${fmt(item.budget)}</td>
                     <td style="text-align: right;">${fmt(item.totalPaid)}</td>
+                    <td style="text-align: right; color: #2980b9; font-weight: 500;">${fmt(budgetRemaining)}</td>
+                    <td style="text-align: right; color: #e74c3c; font-weight: 500;">${fmt(totalCommitment)}</td>
                     <td style="text-align: right;">${fmt(item.pr || 0)}</td>
                     <td style="text-align: right;">${fmt(item.po || 0)}</td>
                     <td style="text-align: right;">${fmt(item.gr || 0)}</td>
@@ -3317,7 +3322,7 @@ window.renderDisbursementTab = function(p) {
             `;
         });
     } else {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
     }
     
     renderDisbursementChart(p);
