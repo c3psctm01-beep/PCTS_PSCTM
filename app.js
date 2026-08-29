@@ -3039,6 +3039,7 @@ window.openDisbursementUploadModal = function(type) {
     document.getElementById('disbUploadTitle').innerHTML = type === 'actual' ? '<i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย (092)' : '<i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย';
     document.getElementById('disbFileType').value = type;
     document.getElementById('disbFileType').disabled = true;
+    document.getElementById('disbMonthGroup').style.display = type === 'actual' ? 'block' : 'none';
     document.getElementById('disbFileInput').value = '';
     document.getElementById('disbSheetSelector').style.display = 'none';
     currentDisbWorkbook = null;
@@ -3093,7 +3094,8 @@ document.getElementById('disbursementUploadForm').addEventListener('submit', fun
     const data = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
     
     if (currentDisbUploadType === 'actual') {
-        parseDisbursement092(data);
+        const month = document.getElementById('disbUploadMonth').value;
+        parseDisbursement092(data, month);
     } else {
         parseDisbursementPlan(data);
     }
@@ -3106,11 +3108,12 @@ document.getElementById('disbursementUploadForm').addEventListener('submit', fun
     alert('นำเข้าข้อมูลสำเร็จ');
 });
 
-function parseDisbursement092(data) {
+function parseDisbursement092(data, month) {
     if (!window.currentProjectViewData) return;
     const p = window.currentProjectViewData;
     
-    if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
+    if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], monthlyData: {}, budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
+    if (!p.disbursement.monthlyData) p.disbursement.monthlyData = {};
     
     let headerRowIdx = -1;
     for (let i = 0; i < Math.min(20, data.length); i++) {
@@ -3146,7 +3149,10 @@ function parseDisbursement092(data) {
         if (colIR === -1) colIR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('IR') || h.includes('ไออาร์') || h.includes('ตั้งหนี้')));
     }
     
-    p.disbursement.items = [];
+    const monthData = {
+        items: [],
+        budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, commitment: 0, remaining: 0
+    };
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
         const row = data[i];
@@ -3168,7 +3174,7 @@ function parseDisbursement092(data) {
         const cmt = colCommitment !== -1 ? (parseFloat(row[colCommitment]) || 0) : (pr + po + gr + ir);
         const rm = parseFloat(row[colRemaining]) || 0;
         
-        p.disbursement.items.push({
+        monthData.items.push({
             name: (row[colName] || '-').toString().trim(),
             wbs: wbs.trim(),
             budget: b,
@@ -3185,13 +3191,67 @@ function parseDisbursement092(data) {
         });
     }
     
-    p.disbursement.budget = p.disbursement.items.reduce((sum, item) => sum + item.budget, 0);
-    p.disbursement.paidPrevYear = p.disbursement.items.reduce((sum, item) => sum + item.paidPrev, 0);
-    p.disbursement.paidCurrentYear = p.disbursement.items.reduce((sum, item) => sum + item.paidCurr, 0);
-    p.disbursement.totalPaid = p.disbursement.items.reduce((sum, item) => sum + item.totalPaid, 0);
-    p.disbursement.commitment = p.disbursement.items.reduce((sum, item) => sum + (item.commitment || 0), 0);
-    p.disbursement.remaining = p.disbursement.items.reduce((sum, item) => sum + item.remaining, 0);
+    monthData.budget = monthData.items.reduce((sum, item) => sum + item.budget, 0);
+    monthData.paidPrevYear = monthData.items.reduce((sum, item) => sum + item.paidPrev, 0);
+    monthData.paidCurrentYear = monthData.items.reduce((sum, item) => sum + item.paidCurr, 0);
+    monthData.totalPaid = monthData.items.reduce((sum, item) => sum + item.totalPaid, 0);
+    monthData.commitment = monthData.items.reduce((sum, item) => sum + (item.commitment || 0), 0);
+    monthData.remaining = monthData.items.reduce((sum, item) => sum + item.remaining, 0);
+    
+    p.disbursement.monthlyData[month] = monthData;
+    
+    updateActualFromMonthly(p.disbursement);
+    
+    // Set to view this month automatically
+    p.disbursement.currentViewMonth = month;
+    applyDisbursementMonthView(p.disbursement);
 }
+
+function updateActualFromMonthly(disb) {
+    if (!disb.plan || disb.plan.length === 0) {
+        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+        disb.plan = displayMonths.map(m => ({ month: m, year: '', amount: 0 }));
+    }
+    
+    disb.actual = disb.plan.map(pItem => {
+        // Extract just the month name part (e.g. "ต.ค.") from plan's month string in case it has year attached
+        const planMonthCode = pItem.month.replace(/[\.\s]/g, '').trim(); 
+        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+        const targetMonths = ['ตค','พย','ธค','มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย'];
+        const mIndex = targetMonths.indexOf(planMonthCode);
+        if (mIndex !== -1) {
+            const mData = disb.monthlyData[displayMonths[mIndex]];
+            if (mData) return mData.totalPaid;
+        }
+        return 0;
+    });
+}
+
+function applyDisbursementMonthView(disb) {
+    if (!disb.monthlyData) return;
+    const m = disb.currentViewMonth;
+    const data = disb.monthlyData[m];
+    if (!data) return;
+    
+    disb.items = data.items;
+    disb.budget = data.budget;
+    disb.paidPrevYear = data.paidPrevYear;
+    disb.paidCurrentYear = data.paidCurrentYear;
+    disb.totalPaid = data.totalPaid;
+    disb.commitment = data.commitment;
+    disb.remaining = data.remaining;
+}
+
+window.changeDisbursementViewMonth = function() {
+    if (!window.currentProjectViewData || !window.currentProjectViewData.disbursement) return;
+    const disb = window.currentProjectViewData.disbursement;
+    const select = document.getElementById('disbViewMonthSelect');
+    if (select.value === 'latest') return;
+    
+    disb.currentViewMonth = select.value;
+    applyDisbursementMonthView(disb);
+    window.renderDisbursementTab(window.currentProjectViewData);
+};
 
 function parseDisbursementPlan(data) {
     if (!window.currentProjectViewData) return;
@@ -3275,7 +3335,23 @@ window.renderDisbursementTab = function(p) {
         document.getElementById('disbPercent').textContent = '-';
         document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
         if (window.disbChartInstance) window.disbChartInstance.destroy();
+        document.getElementById('disbViewMonthSelect').style.display = 'none';
         return;
+    }
+    
+    const monthSelect = document.getElementById('disbViewMonthSelect');
+    if (d.monthlyData && Object.keys(d.monthlyData).length > 0) {
+        monthSelect.style.display = 'inline-block';
+        monthSelect.innerHTML = '';
+        Object.keys(d.monthlyData).forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = `ข้อมูลเดือน: ${m}`;
+            if (m === d.currentViewMonth) opt.selected = true;
+            monthSelect.appendChild(opt);
+        });
+    } else {
+        monthSelect.style.display = 'none';
     }
     
     document.getElementById('disbBudget').textContent = fmt(d.budget);
@@ -3345,13 +3421,15 @@ window.renderDisbursementChart = function(p) {
     const actualData = [];
     
     if (d.plan && d.plan.length > 0) {
-        d.plan.forEach(pl => {
+        let accPlan = 0;
+        d.plan.forEach((pl, idx) => {
             labels.push(`${pl.month} ${pl.year || ''}`.trim());
-            planData.push(pl.amount);
-            actualData.push(0); // แผนรายเดือนไม่มีข้อมูลจ่ายจริง
+            accPlan += pl.amount;
+            planData.push(accPlan);
+            actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
         });
         
-        // เพิ่มแท่งสำหรับ "จ่ายจริงสะสม" ในตอนท้าย
+        // เพิ่มแท่งสำหรับ "รวมจ่ายจริงล่าสุด"
         labels.push('รวมจ่ายจริง (ล่าสุด)');
         planData.push(0);
         actualData.push(d.totalPaid || 0);

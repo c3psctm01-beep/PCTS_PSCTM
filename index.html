@@ -244,7 +244,12 @@
                     <div id="tabDisbursement" class="tabcontent" style="display: none;">
                     <div class="card mt-4">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                            <h2 style="margin: 0;">เบิกจ่ายงบประมาณ</h2>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <h2 style="margin: 0;">เบิกจ่ายงบประมาณ</h2>
+                                <select id="disbViewMonthSelect" style="padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 14px; max-width: 200px; display: none;" onchange="changeDisbursementViewMonth()">
+                                    <option value="latest">เดือนล่าสุดที่นำเข้า</option>
+                                </select>
+                            </div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button class="btn btn-secondary role-admin" onclick="openDisbursementUploadModal('plan')" style="font-size: 12px; background-color: #2980b9; color: white;">
                                     <i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย
@@ -609,6 +614,23 @@
                     <select id="disbFileType" required>
                         <option value="actual">ข้อมูลเบิกจ่ายจริง (092)</option>
                         <option value="plan">แผนเบิกจ่าย</option>
+                    </select>
+                </div>
+                <div id="disbMonthGroup" class="form-group">
+                    <label>ประจำเดือน</label>
+                    <select id="disbUploadMonth">
+                        <option value="ต.ค.">ตุลาคม (ต.ค.)</option>
+                        <option value="พ.ย.">พฤศจิกายน (พ.ย.)</option>
+                        <option value="ธ.ค.">ธันวาคม (ธ.ค.)</option>
+                        <option value="ม.ค.">มกราคม (ม.ค.)</option>
+                        <option value="ก.พ.">กุมภาพันธ์ (ก.พ.)</option>
+                        <option value="มี.ค.">มีนาคม (มี.ค.)</option>
+                        <option value="เม.ย.">เมษายน (เม.ย.)</option>
+                        <option value="พ.ค.">พฤษภาคม (พ.ค.)</option>
+                        <option value="มิ.ย.">มิถุนายน (มิ.ย.)</option>
+                        <option value="ก.ค.">กรกฎาคม (ก.ค.)</option>
+                        <option value="ส.ค.">สิงหาคม (ส.ค.)</option>
+                        <option value="ก.ย.">กันยายน (ก.ย.)</option>
                     </select>
                 </div>
                 <div class="form-group">
