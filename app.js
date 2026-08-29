@@ -3418,6 +3418,9 @@ window.renderDisbursementTab = function(p) {
     const tbody = document.getElementById('disbursementTableBody');
     if (d.items && d.items.length > 0) {
         tbody.innerHTML = '';
+        let sumBudget = 0, sumTotalPaid = 0, sumBudgetRemaining = 0, sumTotalCommitment = 0;
+        let sumPr = 0, sumPo = 0, sumGr = 0, sumIr = 0, sumRemaining = 0;
+        
         d.items.forEach((item, idx) => {
             let statusClass = 'disb-status-open';
             if (item.status.includes('CLSD')) statusClass = 'disb-status-clsd';
@@ -3430,6 +3433,16 @@ window.renderDisbursementTab = function(p) {
             
             let budgetRemaining = (item.budget || 0) - (item.totalPaid || 0);
             let totalCommitment = (item.pr || 0) + (item.po || 0) + (item.gr || 0) + (item.ir || 0);
+            
+            sumBudget += item.budget || 0;
+            sumTotalPaid += item.totalPaid || 0;
+            sumBudgetRemaining += budgetRemaining;
+            sumTotalCommitment += totalCommitment;
+            sumPr += item.pr || 0;
+            sumPo += item.po || 0;
+            sumGr += item.gr || 0;
+            sumIr += item.ir || 0;
+            sumRemaining += item.remaining || 0;
             
             tbody.innerHTML += `
                 <tr>
@@ -3450,6 +3463,24 @@ window.renderDisbursementTab = function(p) {
                 </tr>
             `;
         });
+        
+        let sumPct = sumBudget > 0 ? ((sumTotalPaid / sumBudget) * 100).toFixed(2) : 0;
+        tbody.innerHTML += `
+            <tr style="background-color: #f8f9fa; font-weight: bold;">
+                <td colspan="3" style="text-align: right;">รวมทั้งหมด:</td>
+                <td style="text-align: right;">${fmt(sumBudget)}</td>
+                <td style="text-align: right;">${fmt(sumTotalPaid)}</td>
+                <td style="text-align: right; color: #2980b9;">${fmt(sumBudgetRemaining)}</td>
+                <td style="text-align: right; color: #e74c3c;">${fmt(sumTotalCommitment)}</td>
+                <td style="text-align: right;">${fmt(sumPr)}</td>
+                <td style="text-align: right;">${fmt(sumPo)}</td>
+                <td style="text-align: right;">${fmt(sumGr)}</td>
+                <td style="text-align: right;">${fmt(sumIr)}</td>
+                <td style="text-align: right;">${fmt(sumRemaining)}</td>
+                <td style="text-align: right;">${sumPct}%</td>
+                <td></td>
+            </tr>
+        `;
     } else {
         tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
     }
@@ -3475,16 +3506,33 @@ window.renderDisbursementChart = function(p) {
     
     if (d.plan && d.plan.length > 0) {
         let accPlan = 0;
+        let accPlanUpToViewedMonth = 0;
+        
+        let targetMonthStr = '';
+        if (d.currentViewMonth) {
+            targetMonthStr = d.currentViewMonth.split(' ')[0]; // Extract "ม.ค." from "ม.ค. 2567"
+        }
+        
+        let foundViewMonthIndex = d.plan.length - 1;
+        if (targetMonthStr) {
+            const idx = d.plan.findIndex(p => p.month.includes(targetMonthStr));
+            if (idx !== -1) foundViewMonthIndex = idx;
+        }
+        
         d.plan.forEach((pl, idx) => {
             labels.push(`${pl.month} ${pl.year || ''}`.trim());
             accPlan += pl.amount;
             planData.push(accPlan);
             actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
+            
+            if (idx <= foundViewMonthIndex) {
+                accPlanUpToViewedMonth += pl.amount;
+            }
         });
         
-        // เพิ่มแท่งสำหรับ "รวมแผน / จ่ายจริงปีนี้"
-        labels.push('รวมแผน / จ่ายจริงปีนี้');
-        planData.push(accPlan);
+        const barLabel = targetMonthStr ? `สะสมถึง ${targetMonthStr}` : 'แผนรวม / จ่ายจริงปีนี้';
+        labels.push(barLabel);
+        planData.push(accPlanUpToViewedMonth);
         actualData.push(d.paidCurrentYear || 0);
         
     } else if (d.items && d.items.length > 0) {
