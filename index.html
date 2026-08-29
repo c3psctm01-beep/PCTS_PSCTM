@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PEA Construction Tracking System</title>
 
-    <!-- Google Fonts: Kanit -->
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Prompt & Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,70 +27,42 @@
 
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-box">
-                    <i class="fa-solid fa-bolt"></i>
-                </div>
-                <div>
-                    <h2>PCTS</h2>
-                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: -2px; line-height: 1.2;">(PEA Constrution Tracking System)</p>
-                </div>
-            </div>
-
-            <nav class="sidebar-nav">
-                <ul>
-                    <li class="active" data-target="dashboard-view">
-                        <i class="fa-solid fa-chart-pie"></i> ภาพรวมโครงการ (Dashboard)
-                    </li>
-                    <li data-target="project-detail-view" style="display: none;">
-                        <i class="fa-solid fa-chart-line"></i> กราฟ S-Curve & รายละเอียด
-                    </li>
-                    <li data-target="calendar-view">
-                        <i class="fa-solid fa-calendar-days"></i> ปฏิทินปฏิบัติงาน (Calendar)
-                    </li>
-                    <li data-target="admin-view" class="role-admin">
-                        <i class="fa-solid fa-pen-to-square"></i> ตั้งค่าแผนงาน (Admin)
-                    </li>
-                    <li data-target="editor-view" class="role-editor">
-                        <i class="fa-solid fa-camera"></i> รายงานความก้าวหน้า (Editor)
-                    </li>
-                </ul>
-            </nav>
-
-            <div class="role-switcher" id="authSection">
-                <button class="btn btn-primary" id="btnLogin" style="width: 100%;" onclick="document.getElementById('loginModal').style.display='flex'">เข้าสู่ระบบ (Login)</button>
-                <div id="userInfo" style="display: none; text-align: center;">
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;" id="userEmailDisplay"></div>
-                    <button class="btn" id="btnLogout" style="width: 100%; border: 1px solid var(--border-color); background: white;" onclick="logout()">ออกจากระบบ</button>
-                </div>
-            </div>
-        </aside>
-
         <!-- Main Content -->
-        <main class="main-content">
-            <!-- Overlay for mobile sidebar -->
-            <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        <main class="main-content" style="flex: 1; display: flex; flex-direction: column; width: 100%;">
             
             <header class="top-header">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="mobileMenuBtn" class="mobile-menu-btn">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div class="search-bar">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" placeholder="ค้นหาโครงการ...">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="logo-box" style="display: flex; align-items: center; gap: 10px; color: var(--pea-purple);">
+                        <i class="fa-solid fa-bolt" style="font-size: 20px;"></i>
+                        <div>
+                            <h2 style="margin: 0; line-height: 1;">PCTS</h2>
+                            <p style="font-size: 10px; color: var(--text-secondary); margin: 0;">PEA Construction</p>
+                        </div>
                     </div>
+                    
+                    <nav class="top-nav">
+                        <ul>
+                            <li class="active" data-target="dashboard-view">
+                                <i class="fa-solid fa-chart-pie"></i> <span>ภาพรวม</span>
+                            </li>
+                            <li data-target="admin-view" class="role-admin">
+                                <i class="fa-solid fa-pen-to-square"></i> <span>ตั้งค่าแผนงาน</span>
+                            </li>
+                            <li data-target="editor-view" class="role-editor">
+                                <i class="fa-solid fa-camera"></i> <span>รายงานความก้าวหน้า</span>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
+                
                 <div style="display: flex; align-items: center; gap: 25px;">
                     <!-- Notification Bell -->
-                    <div class="notification-wrapper" style="position: relative; cursor: pointer;" onclick="toggleNotifications()">
-                        <i class="fa-solid fa-bell" style="font-size: 22px; color: var(--text-secondary);"></i>
-                        <span id="notifBadge" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; display: none;">0</span>
+                    <div class="notification-wrapper" style="display: none; position: relative; cursor: pointer;" onclick="toggleNotifications()">
+                        <i class="fa-solid fa-bell" style="font-size: 20px; color: var(--text-secondary);"></i>
+                        <span id="notifBadge" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; border-radius: 50%; padding: 2px 5px; font-size: 9px; font-weight: bold; display: none;">0</span>
                         
                         <!-- Dropdown -->
-                        <div id="notifDropdown" class="card" style="display: none; position: absolute; top: 40px; right: -10px; width: 320px; z-index: 1000; box-shadow: var(--shadow-lg); padding: 0; text-align: left; cursor: default;">
+                        <div id="notifDropdown" class="card" style="display: none; position: absolute; top: 35px; right: -10px; width: 320px; z-index: 1000; box-shadow: var(--shadow-lg); padding: 0; text-align: left; cursor: default;">
                             <div style="padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                                 <span>การแจ้งเตือน</span>
                                 <span style="font-size: 12px; color: var(--pea-purple); cursor: pointer; font-weight: normal;" onclick="clearNotifications(event)">ล้างทั้งหมด</span>
@@ -100,10 +72,19 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="user-profile">
-                        <div class="avatar"><i class="fa-solid fa-user"></i></div>
-                        <span id="currentUserRole">Viewer</span>
+                    <button class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="padding: 6px 12px; font-size: 12px;" title="ตั้งค่าระบบ">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <div id="authButtons" style="display: flex; gap: 10px;">
+                    <div class="user-profile" style="display: flex; align-items: center; gap: 15px;">
+                        <span id="currentUserRole" style="font-size: 11px; font-weight: 600;">Viewer</span>
+                        <div id="authSection" style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" id="btnLogin" style="padding: 6px 12px; font-size: 10px;" onclick="document.getElementById('loginModal').style.display='flex'">เข้าสู่ระบบ</button>
+                            <div id="userInfo" style="display: none; align-items: center; gap: 10px;">
+                                <span style="font-size: 10px; color: var(--text-secondary);" id="userEmailDisplay"></span>
+                                <button class="btn" id="btnLogout" style="padding: 6px 12px; font-size: 10px; border: 1px solid var(--border-color); background: white;" onclick="logout()">ออกระบบ</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -123,7 +104,7 @@
                         <div class="card stat-card">
                             <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
                             <div class="stat-info">
-                                <h3>กำลังดำเนินการ</h3>
+                                <h3>อยู่ระหว่างก่อสร้าง</h3>
                                 <p id="statActiveProjects">0 โครงการ</p>
                             </div>
                         </div>
@@ -136,14 +117,22 @@
                         </div>
                     </div>
 
-                    <div class="project-list card">
-                        <h2>รายการโครงการล่าสุด</h2>
+                    <div class="project-tabs" style="margin-top: 5px;">
+                        <button class="tablinks active" onclick="filterDashboard('all', event)"><i class="fa-solid fa-building"></i> ทั้งหมด</button>
+                        <button class="tablinks" onclick="filterDashboard('ดำเนินการเอง', event)"><i class="fa-solid fa-users-gear"></i> ดำเนินการเอง</button>
+                        <button class="tablinks" onclick="filterDashboard('จ้างเหมา', event)"><i class="fa-solid fa-file-contract"></i> จ้างเหมา</button>
+                    </div>
+
+                    <div class="project-list card flex-table-card">
+                        <h2 id="dashboardTableTitle">รายการโครงการทั้งหมด</h2>
                         <div class="table-responsive">
                             <table class="pea-table">
                                 <thead>
                                     <tr>
                                         <th>ชื่อโครงการ</th>
+                                        <th>ประเภท</th>
                                         <th>ผู้รับเหมา</th>
+                                        <th>ผู้ควบคุมงาน</th>
                                         <th>สถานะ</th>
                                         <th>ความก้าวหน้า (Plan / Actual)</th>
                                         <th>จัดการ</th>
@@ -160,18 +149,37 @@
                 <!-- Project Detail & S-Curve View -->
                 <section id="project-detail-view" class="view-section">
                     <div class="project-header card" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
-                        <div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <button class="btn-home" onclick="goHome()" title="กลับหน้าแรก">
+                                <i class="fa-solid fa-house"></i>
+                            </button>
+                            <div>
                             <h1 class="page-title" id="detailProjectTitle" style="margin-bottom: 5px;">โครงการก่อสร้างสถานีไฟฟ้าย่อย</h1>
                             <p id="detailProjectInfo">ผู้รับเหมา: บริษัท ตัวอย่าง จำกัด | ระยะเวลา: 1 ม.ค. 2569 - 31 ธ.ค. 2569</p>
+                            </div>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn" style="background-color: #34495e; color: white;" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
-                            <button class="btn" style="background-color: #27ae60; color: white;" onclick="downloadExcelReport()"><i class="fa-solid fa-file-excel"></i> ดาวน์โหลด (Excel)</button>
+                            <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
                         </div>
                     </div>
 
+                    <!-- Tabs Navigation -->
+                    <div class="project-tabs">
+                        <button class="tablinks active" onclick="openProjectTab(event, 'tabWBS')"><i class="fa-solid fa-table-list"></i> แผนงาน/ผลงานก่อสร้าง</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabGantt')"><i class="fa-solid fa-stream"></i> Gantt Chart</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabSCurve')"><i class="fa-solid fa-chart-line"></i> S-Curve</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabGallery')"><i class="fa-solid fa-images"></i> รูปภาพความก้าวหน้า</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabCalendar')"><i class="fa-regular fa-calendar-days"></i> ปฏิทินปฏิบัติงาน</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabDisbursement')"><i class="fa-solid fa-money-bill-transfer"></i> เบิกจ่ายงบประมาณ</button>
+                    </div>
+
+                    <!-- Tab: WBS -->
+                    <div id="tabWBS" class="tabcontent" style="display: block;">
                     <div class="card mt-4">
-                        <h2>รายการแผนงานย่อย (WBS)</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                            <h2 style="margin: 0;">แผนงาน/ผลงานก่อสร้าง</h2>
+                            <button class="btn btn-secondary role-admin" onclick="openCopyTasksModal()" style="font-size: 12px;"><i class="fa-solid fa-copy"></i> คัดลอกแผนงานจากโครงการอื่น</button>
+                        </div>
                         <div class="table-responsive">
                             <table class="pea-table">
                                 <thead>
@@ -188,59 +196,137 @@
                             </table>
                         </div>
                     </div>
+                    </div> <!-- End Tab WBS -->
 
+                    <!-- Tab: Gantt -->
+                    <div id="tabGantt" class="tabcontent" style="display: none;">
                     <div class="card mt-4">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                             <h2 style="margin: 0;">Gantt Chart แผนงานย่อย</h2>
                             <div>
                                 <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 12px;" onclick="changeGanttMode('Week')">สัปดาห์</button>
                                 <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 12px;" onclick="changeGanttMode('Month')">เดือน</button>
                             </div>
                         </div>
-                        <div style="overflow-x: auto; padding-bottom: 20px;">
-                            <svg id="ganttChart"></svg>
+                        <div style="overflow-x: auto; padding-bottom: 20px; text-align: center; width: 100%;">
+                            <svg id="ganttChart" style="margin: 0 auto;"></svg>
                         </div>
                     </div>
+                    </div> <!-- End Tab Gantt -->
 
+                    <!-- Tab: S-Curve -->
+                    <div id="tabSCurve" class="tabcontent" style="display: none;">
                     <div class="chart-container card mt-4">
                         <h2>S-Curve ความก้าวหน้าโครงการ</h2>
                         <canvas id="sCurveChart"></canvas>
                     </div>
+                    </div>
 
+                    <!-- Tab: Gallery -->
+                    <div id="tabGallery" class="tabcontent" style="display: none;">
                     <div class="gallery-container card mt-4">
                         <h2>รูปภาพความก้าวหน้าล่าสุด</h2>
                         <div class="gallery-grid" id="progressGallery">
                             <!-- ภาพจาก JS -->
                         </div>
                     </div>
+                    </div> <!-- End Tab Gallery -->
 
+                    <!-- Tab: Calendar -->
+                    <div id="tabCalendar" class="tabcontent" style="display: none;">
                     <div class="calendar-container card mt-4 p-4">
                         <h2>ปฏิทินปฏิบัติงานโครงการ</h2>
                         <div id="projectCalendar" style="min-height: 500px;"></div>
                     </div>
-                </section>
+                    </div> <!-- End Tab Calendar -->
 
-                <!-- Calendar View -->
-                <section id="calendar-view" class="view-section">
-                    <h1 class="page-title">ปฏิทินปฏิบัติงานรายวัน</h1>
-                    <div class="card mt-4 p-4">
-                        <div id="calendar"></div>
+                    <!-- Tab: Disbursement -->
+                    <div id="tabDisbursement" class="tabcontent" style="display: none;">
+                    <div class="card mt-4">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                            <h2 style="margin: 0;">เบิกจ่ายงบประมาณ</h2>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn btn-secondary role-admin" onclick="openDisbursementUploadModal('plan')" style="font-size: 12px; background-color: #2980b9; color: white;">
+                                    <i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย
+                                </button>
+                                <button class="btn btn-secondary role-admin" onclick="openDisbursementUploadModal('actual')" style="font-size: 12px; background-color: #27ae60; color: white;">
+                                    <i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย (092)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="disbursement-summary" id="disbursementSummary">
+                            <div class="disb-card disb-budget">
+                                <div class="disb-card-label">วงเงินงบประมาณ</div>
+                                <div class="disb-card-value" id="disbBudget">-</div>
+                            </div>
+                            <div class="disb-card disb-paid">
+                                <div class="disb-card-label">จ่ายจริงสะสม</div>
+                                <div class="disb-card-value" id="disbPaid">-</div>
+                            </div>
+                            <div class="disb-card disb-remaining">
+                                <div class="disb-card-label">งบคงเหลือ</div>
+                                <div class="disb-card-value" id="disbRemaining">-</div>
+                            </div>
+                            <div class="disb-card disb-percent">
+                                <div class="disb-card-label">อัตราเบิกจ่าย</div>
+                                <div class="disb-card-value" id="disbPercent">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div style="margin-top: 20px; margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 10px; font-size: 15px;">กราฟเปรียบเทียบแผนเบิกจ่าย vs จ่ายจริง (รายเดือน)</h3>
+                            <div style="position: relative; height: 300px; width: 100%;">
+                                <canvas id="disbursementChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Detail Table -->
+                        <h3 style="margin-bottom: 10px; font-size: 15px;">รายละเอียดข้อมูลเบิกจ่าย</h3>
+                        <div class="table-responsive">
+                            <table class="pea-table">
+                                <thead>
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>รายการ</th>
+                                        <th>WBS</th>
+                                        <th>วงเงินงบประมาณ</th>
+                                        <th>จ่ายจริงสะสม</th>
+                                        <th>งบคงเหลือ</th>
+                                        <th>% เบิกจ่าย</th>
+                                        <th>สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="disbursementTableBody">
+                                    <tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                    </div> <!-- End Tab Disbursement -->
                 </section>
 
                 <!-- Admin View -->
                 <section id="admin-view" class="view-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                         <h1 class="page-title" style="margin-bottom: 0;">จัดการโครงการและแผนงาน (Admin)</h1>
                         <div style="display: flex; gap: 10px;">
                             <button class="btn" style="background-color: #f39c12; color: white;" onclick="document.getElementById('importExcelInput').click()"><i class="fa-solid fa-upload"></i> นำเข้าข้อมูล (Excel)</button>
                             <input type="file" id="importExcelInput" style="display:none;" accept=".xlsx, .xls">
                         </div>
                     </div>
+                    <div class="project-tabs" style="margin-top: 5px;">
+                        <button class="tablinks admin-tablinks active" onclick="openAdminTab(event, 'adminTabProject')"><i class="fa-solid fa-building"></i> จัดการโครงการ</button>
+                        <button class="tablinks admin-tablinks" onclick="openAdminTab(event, 'adminTabWBS')"><i class="fa-solid fa-list-check"></i> เพิ่ม/แก้ไขแผนงานย่อย</button>
+                        <button class="tablinks admin-tablinks" onclick="openAdminTab(event, 'adminTabUser')"><i class="fa-solid fa-users"></i> จัดการสิทธิ์</button>
+                    </div>
                     
                     <!-- User Management Table -->
-                    <div class="card mt-4">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div id="adminTabUser" class="admin-tabcontent" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+                    <div class="card mt-4 flex-table-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h2>จัดการสิทธิ์ผู้ใช้งาน (รออนุมัติ)</h2>
                         </div>
                         <div class="table-responsive">
@@ -259,10 +345,12 @@
                             </table>
                         </div>
                     </div>
+                    </div>
 
                     <!-- Project Management Table -->
-                    <div class="card mt-4">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div id="adminTabProject" class="admin-tabcontent" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                    <div class="card mt-4 flex-table-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h2>จัดการโครงการ</h2>
                             <button class="btn btn-primary" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> เพิ่มโครงการใหม่</button>
                         </div>
@@ -271,7 +359,9 @@
                                 <thead>
                                     <tr>
                                         <th>ชื่อโครงการ</th>
+                                        <th>ประเภท</th>
                                         <th>ผู้รับเหมา</th>
+                                        <th>ผู้ควบคุมงาน</th>
                                         <th>สถานะ</th>
                                         <th>จัดการ</th>
                                     </tr>
@@ -282,10 +372,12 @@
                             </table>
                         </div>
                     </div>
+                    </div>
 
                     <!-- WBS Data Entry -->
-                    <div class="card mt-4">
-                        <h2 style="margin-bottom: 15px;">เพิ่ม/แก้ไขแผนงานย่อย (WBS / Task)</h2>
+                    <div id="adminTabWBS" class="admin-tabcontent" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+                    <div class="card mt-4 flex-table-card">
+                        <h2 style="margin-bottom: 10px;">เพิ่ม/แก้ไขแผนงานย่อย</h2>
                         <form id="adminForm" class="pea-form">
                             <div class="form-group">
                                 <label>เลือกโครงการ</label>
@@ -326,9 +418,11 @@
                                 บันทึกแผนงานย่อย</button>
                             <button type="button" class="btn btn-secondary" onclick="document.getElementById('adminForm').reset(); document.getElementById('weightHint').innerText = '';" style="margin-left: 10px;">
                                 <i class="fa-solid fa-eraser"></i> ล้างข้อมูล</button>
+                            <button type="button" class="btn btn-secondary role-admin" onclick="openCopyTasksModal()" style="margin-left: 10px; background-color: #8e44ad; color: white;">
+                                <i class="fa-solid fa-copy"></i> คัดลอกแผนงานจากโครงการอื่น</button>
                         </form>
                         
-                        <div class="table-responsive mt-4" style="margin-top: 30px;">
+                        <div class="table-responsive mt-4" style="margin-top: 10px;">
                             <h3 style="margin-bottom: 10px; font-size: 16px;">รายการแผนงานย่อยของโครงการที่เลือก</h3>
                             <table class="pea-table">
                                 <thead>
@@ -347,11 +441,17 @@
                             </table>
                         </div>
                     </div>
+                    </div>
                 </section>
 
                 <!-- Editor View -->
                 <section id="editor-view" class="view-section">
-                    <h1 class="page-title">รายงานความก้าวหน้าประจำวัน (Editor)</h1>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h1 class="page-title">รายงานความก้าวหน้าประจำวัน (Editor)</h1>
+                        <button class="btn btn-secondary" onclick="document.getElementById('aiModal').style.display='flex'" style="background-color: var(--pea-purple); color: white;">
+                            <i class="fa-solid fa-robot"></i> ใช้ AI ประเมินจากภาพ CCTV
+                        </button>
+                    </div>
                     <div class="card mt-4">
                         <form id="editorForm" class="pea-form">
                             <div class="form-group">
@@ -410,6 +510,13 @@
                     <input type="text" id="projectNameInput" required>
                 </div>
                 <div class="form-group">
+                    <label>ประเภทโครงการ</label>
+                    <select id="projectTypeInput" required>
+                        <option value="ดำเนินการเอง">ดำเนินการเอง</option>
+                        <option value="จ้างเหมา" selected>จ้างเหมา</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>ผู้รับเหมา</label>
                     <input type="text" id="projectContractorInput" required>
                 </div>
@@ -428,11 +535,82 @@
                 <div class="form-group">
                     <label>สถานะ</label>
                     <select id="projectStatusInput">
-                        <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                        <option value="อยู่ระหว่างออกแบบประมาณการ">อยู่ระหว่างออกแบบประมาณการ</option>
+                        <option value="อยู่ระหว่างรองบประมาณ">อยู่ระหว่างรองบประมาณ</option>
+                        <option value="อยู่ระหว่างก่อสร้าง">อยู่ระหว่างก่อสร้าง</option>
                         <option value="แล้วเสร็จ">แล้วเสร็จ</option>
                     </select>
                 </div>
+                <div class="form-group" id="copyTemplateProjectGroup">
+                    <label>คัดลอกแผนงานย่อย จากโครงการที่มีอยู่ (ถ้ามี)</label>
+                    <select id="copyTemplateProjectSelect">
+                        <option value="">-- ไม่คัดลอก (สร้างโครงการเปล่า) --</option>
+                    </select>
+                </div>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> บันทึกโครงการ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Copying Tasks (WBS) -->
+    <div id="copyTasksModal" class="modal">
+        <div class="modal-content card" style="max-width: 500px;">
+            <span class="close-modal" onclick="closeCopyTasksModal()">&times;</span>
+            <h2 style="color: var(--pea-purple);"><i class="fa-solid fa-copy"></i> คัดลอกแผนงานก่อสร้าง</h2>
+            <form id="copyTasksForm" class="pea-form mt-4">
+                <div class="form-group">
+                    <label>คัดลอกแผนงานจากโครงการ (ต้นทาง)</label>
+                    <select id="copySourceProjectSelect" required>
+                        <option value="" disabled selected>-- เลือกโครงการต้นทาง --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>นำไปใส่ในโครงการ (ปลายทาง)</label>
+                    <select id="copyTargetProjectSelect" required>
+                        <option value="" disabled selected>-- เลือกโครงการปลายทาง --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>รูปแบบการคัดลอก</label>
+                    <select id="copyModeSelect">
+                        <option value="replace">แทนที่แผนงานเดิมทั้งหมด</option>
+                        <option value="append">เพิ่มต่อท้ายแผนงานเดิมที่มีอยู่</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+                        <input type="checkbox" id="resetActualProgressCheck" checked>
+                        รีเซ็ตความก้าวหน้าจริง (%) เป็น 0%
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-copy"></i> ยืนยันการคัดลอกแผนงาน</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Disbursement Upload -->
+    <div id="disbursementUploadModal" class="modal">
+        <div class="modal-content card" style="max-width: 500px;">
+            <span class="close-modal" onclick="closeDisbursementUploadModal()">&times;</span>
+            <h2 style="color: var(--pea-purple);" id="disbUploadTitle"><i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย</h2>
+            <form id="disbursementUploadForm" class="pea-form mt-4">
+                <div class="form-group">
+                    <label>ประเภทไฟล์</label>
+                    <select id="disbFileType" required>
+                        <option value="actual">ข้อมูลเบิกจ่ายจริง (092)</option>
+                        <option value="plan">แผนเบิกจ่าย</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>เลือกไฟล์ Excel (.xlsx)</label>
+                    <input type="file" id="disbFileInput" accept=".xlsx, .xls" required style="padding: 8px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+                </div>
+                <div id="disbSheetSelector" style="display: none;" class="form-group">
+                    <label>เลือก Sheet ที่ต้องการ</label>
+                    <select id="disbSheetSelect">
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-import"></i> นำเข้าข้อมูล</button>
             </form>
         </div>
     </div>
@@ -522,6 +700,120 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal for Settings -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content card" style="max-width: 500px;">
+            <span class="close-modal" onclick="document.getElementById('settingsModal').style.display='none'">&times;</span>
+            <h2>ตั้งค่าระบบ</h2>
+            <div class="pea-form mt-4">
+                <div class="form-group">
+                    <label>Google Gemini API Key</label>
+                    <input type="password" id="geminiApiKey" placeholder="ใส่ API Key ที่นี่...">
+                    <small style="color: var(--text-secondary);">คีย์นี้จะถูกเก็บไว้ในเครื่องของคุณเท่านั้น</small>
+                </div>
+                <div class="form-group">
+                    <label>AI Model</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="geminiModelSelect" style="flex: 1;">
+                            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">บันทึกการตั้งค่า</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for AI CCTV Upload -->
+    <div id="aiModal" class="modal">
+        <div class="modal-content card" style="max-width: 600px;">
+            <span class="close-modal" onclick="document.getElementById('aiModal').style.display='none'">&times;</span>
+            <h2><i class="fa-solid fa-robot"></i> AI วิเคราะห์ความก้าวหน้าจาก CCTV</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">อัปโหลดภาพหน้าจอจากแอป Tapo เพื่อให้ AI ช่วยประเมินเปอร์เซ็นต์งานและร่างรายงานให้คุณ</p>
+            
+            <div class="pea-form mt-4">
+                <div class="form-group">
+                    <label>อัปโหลดภาพจาก CCTV</label>
+                    <div class="file-upload-box" id="aiUploadBox">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>คลิกเพื่อเลือกรูปภาพ หรือ ลากภาพมาวางที่นี่</p>
+                        <input type="file" accept="image/*" id="aiImageInput" class="file-input">
+                    </div>
+                    <div class="image-preview" id="aiImagePreview"></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" id="btnAnalyzeAI" style="flex: 1; display: none;" onclick="analyzeImageWithAI()">
+                        เริ่มการวิเคราะห์ด้วย AI
+                    </button>
+                </div>
+                
+                <div id="aiLoading" style="display: none; text-align: center; margin-top: 20px;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--pea-purple);"></i>
+                    <p style="margin-top: 10px;">AI กำลังวิเคราะห์ภาพ... โปรดรอสักครู่</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Print Report Selection -->
+    <div id="printModal" class="modal">
+        <div class="modal-content card" style="max-width: 520px; padding: 30px;">
+            <span class="close-modal" onclick="closePrintModal()">&times;</span>
+            <h2 style="color: var(--pea-purple); margin-bottom: 5px;"><i class="fa-solid fa-print"></i> พิมพ์รายงานโครงการ</h2>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 18px;">เลือกหัวข้อที่ต้องการพิมพ์ในรายงาน</p>
+            
+            <div class="print-select-all" style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+                <label class="print-checkbox-label" style="font-weight: 600; color: var(--pea-purple);">
+                    <input type="checkbox" id="printSelectAll" checked onchange="toggleAllPrintSections(this.checked)">
+                    <span class="print-checkmark"></span>
+                    เลือกทั้งหมด
+                </label>
+            </div>
+            
+            <div class="print-section-list">
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="projectInfo" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-circle-info" style="color: var(--pea-purple);"></i>
+                    ข้อมูลโครงการ
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="wbs" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-table-list" style="color: #2980b9;"></i>
+                    แผนงาน/ผลงานก่อสร้าง
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="scurve" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-chart-line" style="color: #27ae60;"></i>
+                    S-Curve ความก้าวหน้า
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="gantt" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-stream" style="color: #e67e22;"></i>
+                    Gantt Chart
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="gallery" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-images" style="color: #8e44ad;"></i>
+                    รูปภาพความก้าวหน้า
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="printSelectedSections()">
+                    <i class="fa-solid fa-print"></i> พิมพ์รายงาน
+                </button>
+                <button class="btn btn-secondary" style="padding: 10px;" onclick="closePrintModal()">
+                    ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -534,7 +826,7 @@
     <!-- Toastify JS -->
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=10"></script>
 </body>
 
 </html>

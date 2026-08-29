@@ -3,11 +3,12 @@ const defaultProjects = [
     {
         id: 1,
         name: "สถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว)",
-        contractor: "บริษัท รับเหมาไฟฟ้า จำกัด",
+        type: "ดำเนินการเอง",
+        contractor: "กฟภ.",
         supervisor: "นายสมชาย ใจดี",
         committee: "คณะกรรมการชุดที่ 2",
         duration: "7 เดือน",
-        status: "กำลังดำเนินการ",
+        status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
             { id: 101, name: "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)", startDate: "2026-06-01", endDate: "2026-06-15", weight: 10, actual: 100 },
             { id: 102, name: "ปรับปรุงที่ดิน", startDate: "2026-06-16", endDate: "2026-06-30", weight: 5, actual: 100 },
@@ -31,11 +32,12 @@ const defaultProjects = [
     {
         id: 2,
         name: "สถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+        type: "จ้างเหมา",
         contractor: "บริษัท รับเหมาไฟฟ้า จำกัด",
         supervisor: "นายสมชาย ใจดี",
         committee: "คณะกรรมการชุดที่ 2",
         duration: "7 เดือน",
-        status: "กำลังดำเนินการ",
+        status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
             { id: 201, name: "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว)", startDate: "2026-06-01", endDate: "2026-06-15", weight: 10, actual: 80 },
             { id: 202, name: "ปรับปรุงที่ดิน", startDate: "2026-06-16", endDate: "2026-06-30", weight: 5, actual: 10 },
@@ -70,19 +72,43 @@ window.loadProjects = async function() {
         if (error) throw error;
         
         if (data && data.length > 0) {
-            projects = data.map(dbProj => ({
-                id: dbProj.id,
-                name: dbProj.name,
-                status: dbProj.status,
-                budget: dbProj.budget,
-                duration: dbProj.duration,
-                startDate: dbProj.start_date,
-                endDate: dbProj.end_date,
-                contractor: dbProj.contractor,
-                details: dbProj.details,
-                tasks: dbProj.tasks || [],
-                gallery: dbProj.gallery || []
-            }));
+            projects = data.map(dbProj => {
+                let pType = 'จ้างเหมา';
+                let pSupervisor = '';
+                let pCommittee = '';
+                let pDetails = dbProj.details || '';
+                
+                if(pDetails.includes('[TYPE:')) {
+                    const match = pDetails.match(/\[TYPE:(.*?)\]/);
+                    if(match) { pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                }
+                if(pDetails.includes('[SUP:')) {
+                    const match = pDetails.match(/\[SUP:(.*?)\]/);
+                    if(match) { pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                }
+                if(pDetails.includes('[COM:')) {
+                    const match = pDetails.match(/\[COM:(.*?)\]/);
+                    if(match) { pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                }
+
+                return {
+                    id: dbProj.id,
+                    name: dbProj.name,
+                    status: dbProj.status,
+                    budget: dbProj.budget,
+                    duration: dbProj.duration,
+                    startDate: dbProj.start_date,
+                    endDate: dbProj.end_date,
+                    contractor: dbProj.contractor,
+                    supervisor: pSupervisor,
+                    committee: pCommittee,
+                    details: pDetails,
+                    type: pType,
+                    tasks: dbProj.tasks || [],
+                    gallery: dbProj.gallery || [],
+                    disbursement: JSON.parse(localStorage.getItem('disbursement_' + dbProj.id)) || null
+                };
+            });
         } else {
             projects = defaultProjects;
             const { data: sessionData } = await db.auth.getSession();
@@ -171,10 +197,17 @@ window.saveProjects = async function(projectId = null) {
             start_date: p.startDate || null,
             end_date: p.endDate || null,
             contractor: p.contractor || '',
-            details: p.details || '',
+            details: `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}]${p.details || ''}`,
             tasks: p.tasks || [],
             gallery: p.gallery || []
         }));
+
+        // Save disbursement to localStorage since Supabase schema might not have it
+        targetProjects.forEach(p => {
+            if (p.disbursement) {
+                localStorage.setItem('disbursement_' + p.id, JSON.stringify(p.disbursement));
+            }
+        });
 
         let err = null;
         if (projectId && dbProjects.length > 0) {
@@ -250,32 +283,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- Mobile Menu Logic ---
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.querySelector('.sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-    function toggleSidebar() {
-        sidebar.classList.toggle('open');
-        if (sidebar.classList.contains('open')) {
-            sidebarOverlay.classList.add('active');
-        } else {
-            sidebarOverlay.classList.remove('active');
-        }
+    
+    // We moved nav to top, so on mobile we can just toggle top-nav display or let it be.
+    // For now, we will just hide the mobile menu btn since we use top nav.
+    if (mobileMenuBtn) {
+        mobileMenuBtn.style.display = 'none';
     }
 
-    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleSidebar);
-    if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
-
     // --- Navigation Logic ---
-    const navItems = document.querySelectorAll('.sidebar-nav li');
+    const navItems = document.querySelectorAll('.top-nav li');
     const viewSections = document.querySelectorAll('.view-section');
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
-            // Close sidebar on mobile
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('open');
-                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-            }
 
             // Remove active from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -319,11 +339,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentUserRoleText.textContent = 'Viewer (บุคคลทั่วไป)';
         } else if (role === 'editor') {
             roleAdminItems.forEach(el => el.style.display = 'none');
-            roleEditorItems.forEach(el => el.style.display = 'flex');
+            roleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.textContent = 'Editor (ผู้ควบคุมงาน)';
         } else if (role === 'admin') {
-            roleAdminItems.forEach(el => el.style.display = 'flex');
-            roleEditorItems.forEach(el => el.style.display = 'flex');
+            roleAdminItems.forEach(el => el.style.display = '');
+            roleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
         }
     };
@@ -496,9 +516,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('userEmailDisplay').textContent = session.user.email;
             
             // Get role from DB
-            const { data, error } = await db.from('user_roles').select('role').eq('id', session.user.id).single();
+            const { data, error } = await db.from('user_roles').select('role, employee_id').eq('id', session.user.id).single();
             console.log('Role fetch:', data, error);
             if (data && data.role) {
+                window.currentUserEmpId = data.employee_id || '';
                 const userRole = data.role.toLowerCase();
                 
                 if (userRole === 'pending') {
@@ -528,6 +549,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+window.currentDashboardFilter = 'all';
+window.filterDashboard = function(type, event) {
+    window.currentDashboardFilter = type;
+    
+    // Handle tab styles
+    if (event && event.currentTarget) {
+        const tabs = event.currentTarget.parentElement.getElementsByClassName("tablinks");
+        for (let i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove("active");
+        }
+        event.currentTarget.classList.add("active");
+    }
+    
+    // Update Title
+    const title = document.getElementById('dashboardTableTitle');
+    if(title) {
+        if(type === 'all') title.innerText = 'รายการโครงการทั้งหมด';
+        else title.innerText = 'รายการโครงการ: ' + type;
+    }
+    
+    renderTables();
+};
+
     // --- Render Tables ---
     window.renderTables = function() {
         // Update Stats
@@ -546,16 +590,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Render Dashboard Table
         const dashboardTbody = document.getElementById('projectTableBody');
         dashboardTbody.innerHTML = '';
-        projects.forEach(p => {
+        
+        let filteredProjects = projects;
+        if (window.currentDashboardFilter && window.currentDashboardFilter !== 'all') {
+            filteredProjects = projects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
+        }
+
+        filteredProjects.forEach(p => {
             const progress = calculateProjectProgress(p);
             p.plan = progress.plan;
             p.actual = progress.actual;
 
             const tr = document.createElement('tr');
             const statusClass = p.status === 'แล้วเสร็จ' ? 'status-completed' : 'status-active';
+            const projectType = p.type || 'จ้างเหมา';
+            const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
             tr.innerHTML = `
                 <td><strong>${p.name}</strong></td>
+                <td><span style="${typeClass}">${projectType}</span></td>
                 <td>${p.contractor}</td>
+                <td>${p.supervisor || '-'}</td>
                 <td><span class="status-badge ${statusClass}">${p.status}</span></td>
                 <td>
                     <div style="font-size: 13px; margin-bottom: 3px;">
@@ -578,9 +632,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             projects.forEach(p => {
                 const tr = document.createElement('tr');
                 const statusClass = p.status === 'แล้วเสร็จ' ? 'status-completed' : 'status-active';
+                const projectType = p.type || 'จ้างเหมา';
+                const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
                 tr.innerHTML = `
                     <td><strong>${p.name}</strong></td>
+                    <td><span style="${typeClass}">${projectType}</span></td>
                     <td>${p.contractor}</td>
+                    <td>${p.supervisor || '-'}</td>
                     <td><span class="status-badge ${statusClass}">${p.status}</span></td>
                     <td>
                         <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" onclick="openProjectModal(${p.id})"><i class="fa-solid fa-edit"></i></button>
@@ -900,6 +958,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.target === projModal) {
             projModal.style.display = "none";
         }
+        const printModal = document.getElementById('printModal');
+        if (event.target === printModal) {
+            printModal.style.display = "none";
+        }
     }
 
     // --- Image Upload Preview (Editor View) ---
@@ -1111,6 +1173,9 @@ window.viewProjectDetails = function(projectId) {
                     if (typeof adjustGanttDates === 'function') {
                         adjustGanttDates(window.currentGantt, ganttTasks);
                     }
+                    if (typeof stretchGanttNative === 'function') {
+                        stretchGanttNative(window.currentGantt);
+                    }
                     
                 } catch(e) {
                     console.error("Gantt Chart Error:", e);
@@ -1134,9 +1199,14 @@ window.viewProjectDetails = function(projectId) {
                 
                 // Keep the exact same date comparison since this is the only way to uniquely identify it without an ID
                 const deleteBtnHTML = (window.currentRole === 'admin') ? `
-                    <button class="btn btn-secondary role-admin" style="position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; padding: 5px 10px; z-index: 10; border-radius: 4px;" onclick="deleteGalleryItem(${p.id}, '${item.date}', '${item.desc}')">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;">
+                        <button class="btn btn-secondary role-admin" style="background: rgba(52, 152, 219, 0.9); color: white; padding: 5px 10px; border-radius: 4px;" onclick="editGalleryItemDesc(${p.id}, '${item.date}', '${item.desc}')" title="\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn btn-secondary role-admin" style="background: rgba(231, 76, 60, 0.9); color: white; padding: 5px 10px; border-radius: 4px;" onclick="deleteGalleryItem(${p.id}, '${item.date}', '${item.desc}')" title="\u0E25\u0E1A">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 ` : '';
                 
                 div.innerHTML = `
@@ -1157,10 +1227,17 @@ window.viewProjectDetails = function(projectId) {
         window.updateSCurve(p);
 
         window.currentProjectViewData = p;
+        if (typeof window.renderDisbursementTab === 'function') {
+            window.renderDisbursementTab(p);
+        }
     }
     
-    // Switch the view first so the container is visible
-    document.querySelector('[data-target="project-detail-view"]').click();
+    // Switch the view manually since the dummy nav item is gone
+    document.querySelectorAll('.view-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById('project-detail-view').classList.add('active');
+    document.querySelectorAll('.top-nav li').forEach(nav => nav.classList.remove('active'));
     
     // The calendar is initialized globally in DOMContentLoaded.
     // We just refetch and update size. The nav listener already does this, but doing it here again is safe.
@@ -1169,6 +1246,27 @@ window.viewProjectDetails = function(projectId) {
         setTimeout(() => {
             window.projectCalendar.updateSize();
         }, 150);
+    }
+}
+
+window.editGalleryItemDesc = function(projectId, date, desc) {
+    if (window.currentRole !== 'admin') return;
+    const p = projects.find(proj => proj.id === projectId);
+    if (p && p.gallery) {
+        const index = p.gallery.findIndex(g => g.date === date && g.desc === desc);
+        if (index !== -1) {
+            const newDesc = prompt('\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19:', desc);
+            if (newDesc !== null && newDesc.trim() !== '') {
+                p.gallery[index].desc = newDesc.trim();
+                saveProjects();
+                
+                window.viewProjectDetails(projectId);
+                
+                if (window.calendar) {
+                    window.calendar.refetchEvents();
+                }
+            }
+        }
     }
 }
 
@@ -1200,8 +1298,41 @@ window.changeGanttMode = function(mode) {
         if (typeof adjustGanttDates === 'function' && window.currentGanttTasks) {
             adjustGanttDates(window.currentGantt, window.currentGanttTasks);
         }
+        if (typeof stretchGanttNative === 'function') {
+            stretchGanttNative(window.currentGantt);
+        }
     }
 }
+
+window.stretchGanttNative = function(gantt) {
+    if (!gantt || !gantt.dates || gantt.dates.length === 0) return;
+    
+    const wrapper = document.querySelector('#ganttChart').parentElement;
+    if (!wrapper) return;
+    
+    // The width of the area we have available
+    const containerWidth = wrapper.clientWidth;
+    const totalColumns = gantt.dates.length;
+    
+    if (totalColumns > 0) {
+        // Calculate needed column width to fill the container exactly
+        // Subtract a little padding (e.g., 30px) so it doesn't overflow scrollbars
+        const minRequiredWidth = (containerWidth - 30) / totalColumns;
+        
+        // We restore original column width based on mode first in case it was stretched previously
+        let baseWidth = 120; // default for Month/Year
+        if (gantt.options.view_mode === 'Day') baseWidth = 38;
+        if (gantt.options.view_mode === 'Week') baseWidth = 140;
+        
+        // Stretch only if we have empty space
+        if (minRequiredWidth > baseWidth) {
+            gantt.options.column_width = minRequiredWidth;
+        } else {
+            gantt.options.column_width = baseWidth;
+        }
+        gantt.render();
+    }
+};
 
 window.adjustGanttDates = function(gantt, tasks) {
     if (!tasks || tasks.length === 0) return;
@@ -1239,16 +1370,32 @@ window.openProjectModal = function(id = null) {
     const modal = document.getElementById('projectModal');
     const form = document.getElementById('projectForm');
     const title = document.getElementById('projectModalTitle');
+    const copyGroup = document.getElementById('copyTemplateProjectGroup');
+    const copySelect = document.getElementById('copyTemplateProjectSelect');
     
     form.reset();
     document.getElementById('projectId').value = '';
 
+    if (copySelect) {
+        copySelect.innerHTML = '<option value="">-- ไม่คัดลอก (สร้างโครงการเปล่า) --</option>';
+        projects.forEach(p => {
+            if (p.tasks && p.tasks.length > 0) {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.tasks.length} รายการแผนงาน)`;
+                copySelect.appendChild(opt);
+            }
+        });
+    }
+
     if (id !== null) {
         title.innerText = 'แก้ไขโครงการ';
+        if (copyGroup) copyGroup.style.display = 'none';
         const project = projects.find(p => p.id === id);
         if(project) {
             document.getElementById('projectId').value = project.id;
             document.getElementById('projectNameInput').value = project.name;
+            document.getElementById('projectTypeInput').value = project.type || 'จ้างเหมา';
             document.getElementById('projectContractorInput').value = project.contractor;
             document.getElementById('projectSupervisorInput').value = project.supervisor || '';
             document.getElementById('projectCommitteeInput').value = project.committee || '';
@@ -1257,6 +1404,7 @@ window.openProjectModal = function(id = null) {
         }
     } else {
         title.innerText = 'เพิ่มโครงการใหม่';
+        if (copyGroup) copyGroup.style.display = 'block';
     }
     
     modal.style.display = 'flex';
@@ -1285,6 +1433,7 @@ document.getElementById('projectForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     const idVal = document.getElementById('projectId').value;
     const name = document.getElementById('projectNameInput').value;
+    const type = document.getElementById('projectTypeInput').value;
     const contractor = document.getElementById('projectContractorInput').value;
     const supervisor = document.getElementById('projectSupervisorInput').value;
     const committee = document.getElementById('projectCommitteeInput').value;
@@ -1296,6 +1445,7 @@ document.getElementById('projectForm')?.addEventListener('submit', function(e) {
         const project = projects.find(p => p.id === parseInt(idVal));
         if (project) {
             project.name = name;
+            project.type = type;
             project.contractor = contractor;
             project.supervisor = supervisor;
             project.committee = committee;
@@ -1305,21 +1455,144 @@ document.getElementById('projectForm')?.addEventListener('submit', function(e) {
     } else {
         // Add
         const newId = projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1;
+        let initialTasks = [];
+        const templateId = document.getElementById('copyTemplateProjectSelect')?.value;
+        if (templateId) {
+            const templateProj = projects.find(p => p.id === parseInt(templateId));
+            if (templateProj && templateProj.tasks) {
+                let startTaskId = 101;
+                initialTasks = templateProj.tasks.map(t => ({
+                    id: startTaskId++,
+                    name: t.name,
+                    desc: t.desc || '',
+                    startDate: t.startDate || '',
+                    endDate: t.endDate || '',
+                    weight: parseFloat(t.weight) || 0,
+                    actual: 0
+                }));
+            }
+        }
         projects.push({
             id: newId,
             name: name,
+            type: type,
             contractor: contractor,
             supervisor: supervisor,
             committee: committee,
             duration: duration,
             status: status,
-            tasks: []
+            tasks: initialTasks
         });
     }
 
     saveProjects();
     window.closeProjectModal();
     window.renderTables();
+});
+
+// Copy Tasks (WBS) Modal Functions
+window.openCopyTasksModal = function(defaultTargetId = null) {
+    const modal = document.getElementById('copyTasksModal');
+    const sourceSelect = document.getElementById('copySourceProjectSelect');
+    const targetSelect = document.getElementById('copyTargetProjectSelect');
+    if (!modal || !sourceSelect || !targetSelect) return;
+
+    sourceSelect.innerHTML = '<option value="" disabled selected>-- เลือกโครงการต้นทาง --</option>';
+    targetSelect.innerHTML = '<option value="" disabled selected>-- เลือกโครงการปลายทาง --</option>';
+
+    let activeDetailId = window.currentProjectViewData ? window.currentProjectViewData.id : null;
+    let adminWbsSelectId = document.getElementById('adminProjectSelect')?.value;
+    let autoTargetId = defaultTargetId || activeDetailId || (adminWbsSelectId ? parseInt(adminWbsSelectId) : null);
+
+    projects.forEach(p => {
+        const taskCount = (p.tasks && p.tasks.length) ? p.tasks.length : 0;
+        
+        if (taskCount > 0) {
+            const optS = document.createElement('option');
+            optS.value = p.id;
+            optS.textContent = `${p.name} (${taskCount} รายการแผนงาน)`;
+            sourceSelect.appendChild(optS);
+        }
+
+        const optT = document.createElement('option');
+        optT.value = p.id;
+        optT.textContent = `${p.name} (${taskCount} รายการแผนงาน)`;
+        if (autoTargetId && p.id === autoTargetId) {
+            optT.selected = true;
+        }
+        targetSelect.appendChild(optT);
+    });
+
+    modal.style.display = 'flex';
+};
+
+window.closeCopyTasksModal = function() {
+    const modal = document.getElementById('copyTasksModal');
+    if (modal) modal.style.display = 'none';
+};
+
+document.getElementById('copyTasksForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const sourceId = parseInt(document.getElementById('copySourceProjectSelect').value);
+    const targetId = parseInt(document.getElementById('copyTargetProjectSelect').value);
+    const mode = document.getElementById('copyModeSelect').value;
+    const resetActual = document.getElementById('resetActualProgressCheck').checked;
+
+    if (!sourceId || !targetId) {
+        alert('กรุณาเลือกโครงการต้นทางและปลายทางให้ถูกต้อง');
+        return;
+    }
+
+    if (sourceId === targetId) {
+        alert('โครงการต้นทางและปลายทางต้องไม่เป็นโครงการเดียวกัน');
+        return;
+    }
+
+    const sourceProj = projects.find(p => p.id === sourceId);
+    const targetProj = projects.find(p => p.id === targetId);
+
+    if (!sourceProj || !sourceProj.tasks || sourceProj.tasks.length === 0) {
+        alert('โครงการต้นทางไม่มีรายการแผนงานย่อยให้คัดลอก');
+        return;
+    }
+
+    if (!targetProj) {
+        alert('ไม่พบโครงการปลายทาง');
+        return;
+    }
+
+    let startTaskId = (targetProj.tasks && targetProj.tasks.length > 0) 
+        ? Math.max(...targetProj.tasks.map(t => t.id)) + 1 
+        : 101;
+
+    const clonedTasks = sourceProj.tasks.map(t => ({
+        id: startTaskId++,
+        name: t.name,
+        desc: t.desc || '',
+        startDate: t.startDate || '',
+        endDate: t.endDate || '',
+        weight: parseFloat(t.weight) || 0,
+        actual: resetActual ? 0 : (parseFloat(t.actual) || 0)
+    }));
+
+    if (mode === 'replace') {
+        targetProj.tasks = clonedTasks;
+    } else {
+        targetProj.tasks = (targetProj.tasks || []).concat(clonedTasks);
+    }
+
+    await saveProjects(targetProj.id);
+    closeCopyTasksModal();
+    alert(`คัดลอกแผนงานย่อย ${clonedTasks.length} รายการไปยังโครงการ "${targetProj.name}" เรียบร้อยแล้ว!`);
+
+    window.renderTables();
+    if (window.currentProjectViewData && window.currentProjectViewData.id === targetProj.id) {
+        window.viewProjectDetails(targetProj.id);
+    }
+    const adminSelect = document.getElementById('adminProjectSelect');
+    if (adminSelect && parseInt(adminSelect.value) === targetProj.id) {
+        adminSelect.dispatchEvent(new Event('change'));
+    }
 });
 
 // Dynamic task loading for Editor
@@ -1608,7 +1881,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                     p.gallery.push({
                                         url: publicUrl,
                                         date: reportDate,
-                                        desc: desc || `อัปเดตงาน: ${t.name}`
+                                        desc: (desc || `อัปเดตงาน: ${t.name}`) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : '')
                                     });
                                 }
 
@@ -1626,7 +1899,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                         p.gallery.push({
                             url: null,
                             date: reportDate,
-                            desc: desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`)
+                            desc: (desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`)) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : '')
                         });
                     }
                     processUpdate();
@@ -1673,7 +1946,7 @@ document.getElementById('importExcelInput')?.addEventListener('change', function
                         supervisor: row.supervisor || row.Supervisor || row['ผู้ควบคุมงาน'] || '',
                         committee: row.committee || row.Committee || row['กรรมการตรวจรับ'] || '',
                         duration: row.duration || row.Duration || row['ระยะเวลา'] || '',
-                        status: row.status || row.Status || row['สถานะ'] || 'กำลังดำเนินการ',
+                        status: row.status || row.Status || row['สถานะ'] || 'อยู่ระหว่างก่อสร้าง',
                         tasks: tasks,
                         gallery: gallery
                     };
@@ -1867,7 +2140,1139 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// --- Project Tabs ---
+window.openProjectTab = function(evt, tabName) {
+    let i, tabcontent, tablinks;
+    
+    // Hide all tab content
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabcontent[i].classList.remove("active");
+    }
+    
+    // Remove active class from all tab links
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    
+    // Show current tab, add active class to button
+    const activeTab = document.getElementById(tabName);
+    if(activeTab) {
+        activeTab.style.display = "block";
+        activeTab.classList.add("active");
+    }
+    
+    if(evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+    }
+    
+    // Fix FullCalendar and Chart rendering issues when tab becomes visible
+    if(tabName === 'tabCalendar' && window.projectCalendar) {
+        setTimeout(() => {
+            window.projectCalendar.updateSize();
+        }, 50);
+    }
+    
+    if(tabName === 'tabGantt' && window.currentGantt) {
+        setTimeout(() => {
+            window.currentGantt.render();
+        }, 50);
+    }
+};
+
+// --- Admin Tabs ---
+window.openAdminTab = function(evt, tabName) {
+    let i, tabcontent, tablinks;
+    
+    // Hide all tab content
+    tabcontent = document.getElementsByClassName("admin-tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    
+    // Remove active class from all admin tab links
+    tablinks = document.getElementsByClassName("admin-tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    
+    // Show current tab, add active class to button
+    const activeTab = document.getElementById(tabName);
+    if(activeTab) {
+        activeTab.style.display = "flex";
+        activeTab.style.flexDirection = "column";
+        activeTab.style.flex = "1";
+        activeTab.style.overflow = "hidden";
+    }
+    
+    if(evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+    }
+};
+
 // Call on load
 document.addEventListener('DOMContentLoaded', () => {
     renderAppNotifications();
+    
+    // Load Settings
+    const savedKey = localStorage.getItem('geminiApiKey');
+    if (savedKey && document.getElementById('geminiApiKey')) {
+        document.getElementById('geminiApiKey').value = savedKey;
+    }
+    
+    const savedModel = localStorage.getItem('geminiModel');
+    if (savedModel && document.getElementById('geminiModelSelect')) {
+        document.getElementById('geminiModelSelect').value = savedModel;
+    }
 });
+
+// --- Settings ---
+window.saveSettings = function() {
+    const key = document.getElementById('geminiApiKey').value;
+    const model = document.getElementById('geminiModelSelect').value;
+    localStorage.setItem('geminiApiKey', key);
+    localStorage.setItem('geminiModel', model);
+    alert('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+    document.getElementById('settingsModal').style.display = 'none';
+};
+
+window.fetchGeminiModels = async function() {
+    let apiKey = document.getElementById('geminiApiKey').value;
+    if (!apiKey || apiKey.trim() === '') {
+        alert('กรุณากรอก API Key ก่อนกดดึงข้อมูล');
+        return;
+    }
+    apiKey = apiKey.trim();
+    
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        const select = document.getElementById('geminiModelSelect');
+        select.innerHTML = '';
+        
+        let foundSupported = false;
+        
+        data.models.forEach(model => {
+            // We only want models that support generateContent and multimodal
+            if (model.supportedGenerationMethods && model.supportedGenerationMethods.includes('generateContent') && model.name.includes('flash')) {
+                const option = document.createElement('option');
+                const modelName = model.name.replace('models/', '');
+                option.value = modelName;
+                option.text = modelName + ' (Supported)';
+                select.appendChild(option);
+                foundSupported = true;
+            }
+        });
+        
+        if (!foundSupported) {
+            alert('ไม่พบโมเดลที่รองรับใน API Key ของคุณ ลองใช้คีย์จาก Google AI Studio');
+        } else {
+            alert('ดึงรายชื่อโมเดลสำเร็จแล้ว! เลือกโมเดลที่ต้องการแล้วกดบันทึก');
+        }
+    } catch (err) {
+        alert('ดึงข้อมูลล้มเหลว ตรวจสอบ API Key หรืออินเทอร์เน็ต: ' + err.message);
+    }
+};
+
+// --- AI Analysis Logic ---
+window.aiBase64Image = null;
+
+const aiImageInput = document.getElementById('aiImageInput');
+if (aiImageInput) {
+    aiImageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) {
+            window.aiBase64Image = null;
+            document.getElementById('btnAnalyzeAI').style.display = 'none';
+            document.getElementById('aiImagePreview').innerHTML = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            window.aiBase64Image = event.target.result;
+            document.getElementById('aiImagePreview').innerHTML = `<img src="${window.aiBase64Image}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:15px; display:block;">`;
+            document.getElementById('btnAnalyzeAI').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+window.analyzeImageWithAI = async function() {
+    let apiKey = localStorage.getItem('geminiApiKey');
+    if (!apiKey || apiKey.trim() === '') {
+        alert('กรุณาตั้งค่า Google Gemini API Key ในเมนูตั้งค่าก่อนใช้งาน');
+        document.getElementById('aiModal').style.display = 'none';
+        document.getElementById('settingsModal').style.display = 'flex';
+        return;
+    }
+    apiKey = apiKey.trim();
+    
+    if (!window.aiBase64Image) {
+        alert('กรุณาอัปโหลดรูปภาพก่อน');
+        return;
+    }
+
+    const projectId = document.getElementById('editorProjectSelect').value;
+    if (!projectId) {
+        alert('กรุณาเลือกโครงการในหน้ารายงานความก้าวหน้า (Editor) ก่อนใช้ AI ประเมิน');
+        document.getElementById('aiModal').style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('aiLoading').style.display = 'block';
+    document.getElementById('btnAnalyzeAI').disabled = true;
+
+    try {
+        const base64Data = window.aiBase64Image.split(',')[1];
+        const mimeType = window.aiBase64Image.split(';')[0].split(':')[1];
+        
+        const payload = {
+            contents: [{
+                parts: [
+                    {
+                        text: `นี่คือภาพหน้างานก่อสร้างสถานีไฟฟ้าย่อย (PEA Substation)
+กรุณาวิเคราะห์ภาพนี้และประเมินเปอร์เซ็นต์ความก้าวหน้าของงาน (เฉพาะงานที่เห็นในภาพเทียบกับความสมบูรณ์ของงานนั้นๆ) 
+และอธิบายว่ากำลังทำอะไรอยู่ มีปัญหาอะไรที่สังเกตเห็นหรือไม่
+
+ให้ตอบกลับมาเป็น JSON format ตามโครงสร้างนี้เท่านั้น (ห้ามใส่ Markdown หรือตัวอักษรอื่น):
+{
+  "percent": number,
+  "details": "string"
+}`
+                    },
+                    {
+                        inline_data: {
+                            mime_type: mimeType,
+                            data: base64Data
+                        }
+                    }
+                ]
+            }]
+        };
+
+        let selectedModel = localStorage.getItem('geminiModel');
+        if (!selectedModel) {
+            selectedModel = 'gemini-1.5-flash';
+        }
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        let aiText = data.candidates[0].content.parts[0].text;
+        
+        // Clean up markdown block if API returned it
+        aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        const result = JSON.parse(aiText);
+        
+        // Populate the editor form
+        if (result.percent) {
+            document.getElementById('taskActualInput').value = result.percent;
+        }
+        if (result.details) {
+            document.querySelector('#editorForm textarea').value = result.details;
+        }
+        
+        // Transfer the file to the editor form so it saves properly
+        const editorFileInput = document.querySelector('#editorForm input[type="file"]');
+        const aiFileInput = document.getElementById('aiImageInput');
+        if (editorFileInput && aiFileInput && aiFileInput.files.length > 0) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(aiFileInput.files[0]);
+            editorFileInput.files = dataTransfer.files;
+            
+            // Trigger change event to show preview in editor
+            const event = new Event('change', { bubbles: true });
+            editorFileInput.dispatchEvent(event);
+        }
+
+        alert('AI ประเมินผลสำเร็จ! ตรวจสอบข้อมูลในแบบฟอร์มและกด "ส่งรายงาน" เพื่อยืนยัน');
+        document.getElementById('aiModal').style.display = 'none';
+
+    } catch (error) {
+        console.error("AI Analysis Error:", error);
+        alert('เกิดข้อผิดพลาดในการวิเคราะห์ (ตรวจสอบ API Key หรืออินเทอร์เน็ต): ' + error.message);
+    } finally {
+        document.getElementById('aiLoading').style.display = 'none';
+        document.getElementById('btnAnalyzeAI').disabled = false;
+    }
+};
+
+// --- Home Navigation ---
+window.goHome = function() {
+    document.querySelectorAll('.view-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById('dashboard-view').classList.add('active');
+    document.querySelectorAll('.top-nav li').forEach(nav => nav.classList.remove('active'));
+    document.querySelector('[data-target="dashboard-view"]').classList.add('active');
+};
+
+// --- Print Report Modal ---
+window.openPrintModal = function() {
+    document.getElementById('printModal').style.display = 'flex';
+};
+
+window.closePrintModal = function() {
+    document.getElementById('printModal').style.display = 'none';
+};
+
+window.toggleAllPrintSections = function(checked) {
+    document.querySelectorAll('input[name="printSection"]').forEach(cb => {
+        cb.checked = checked;
+    });
+};
+
+// Sync "select all" checkbox when individual checkboxes change
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'printSection') {
+        const all = document.querySelectorAll('input[name="printSection"]');
+        const allChecked = Array.from(all).every(cb => cb.checked);
+        const selectAllCb = document.getElementById('printSelectAll');
+        if (selectAllCb) selectAllCb.checked = allChecked;
+    }
+});
+
+window.printSelectedSections = function() {
+    const selected = Array.from(document.querySelectorAll('input[name="printSection"]:checked')).map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        alert('\u0E01\u0E23\u0E38\u0E13\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 1 \u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D');
+        return;
+    }
+
+    const p = window.currentProjectViewData;
+    if (!p) {
+        alert('\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23');
+        return;
+    }
+
+    closePrintModal();
+
+    const progress = calculateProjectProgress(p);
+    const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // --- TEMPORARY RENDER TRICK ---
+    // If the tabs were never opened, the canvas/SVG has 0 size.
+    // We temporarily show them off-screen to force render.
+    const tabSCurve = document.getElementById('tabSCurve');
+    const tabGantt = document.getElementById('tabGantt');
+    let origSCurveStyle = '', origGanttStyle = '';
+
+    if (tabSCurve) {
+        origSCurveStyle = tabSCurve.getAttribute('style') || '';
+        tabSCurve.style.display = 'block';
+        tabSCurve.style.position = 'absolute';
+        tabSCurve.style.visibility = 'hidden';
+        tabSCurve.style.zIndex = '-9999';
+        // Force a wide landscape ratio for better print layout
+        tabSCurve.style.width = '1200px';
+        tabSCurve.style.height = '600px';
+        if (window.sChart) {
+            const oldAnim = window.sChart.options.animation;
+            window.sChart.options.animation = false; // Disable animation for instant render
+            window.sChart.resize();
+            window.sChart.update();
+            window.sChart.options.animation = oldAnim;
+        }
+    }
+
+    if (tabGantt) {
+        origGanttStyle = tabGantt.getAttribute('style') || '';
+        tabGantt.style.display = 'block';
+        tabGantt.style.position = 'absolute';
+        tabGantt.style.visibility = 'hidden';
+        tabGantt.style.zIndex = '-9999';
+        if (window.currentGantt) {
+            window.currentGantt.render();
+        }
+    }
+
+    // Build print content
+    let printContent = '';
+
+    // --- Project Info Section ---
+    if (selected.includes('projectInfo')) {
+        printContent += `
+        <div class="print-section">
+            <h2 class="print-section-title">\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</h2>
+            <table class="info-table">
+                <tr><td class="label-cell">\u0E0A\u0E37\u0E48\u0E2D\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</td><td class="value-cell">${p.name}</td></tr>
+                <tr><td class="label-cell">\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17</td><td class="value-cell">${p.type || '\u0E08\u0E49\u0E32\u0E07\u0E40\u0E2B\u0E21\u0E32'}</td></tr>
+                <tr><td class="label-cell">\u0E1C\u0E39\u0E49\u0E23\u0E31\u0E1A\u0E40\u0E2B\u0E21\u0E32</td><td class="value-cell">${p.contractor || '-'}</td></tr>
+                <tr><td class="label-cell">\u0E1C\u0E39\u0E49\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E07\u0E32\u0E19</td><td class="value-cell">${p.supervisor || '-'}</td></tr>
+                <tr><td class="label-cell">\u0E01\u0E23\u0E23\u0E21\u0E01\u0E32\u0E23\u0E15\u0E23\u0E27\u0E08\u0E23\u0E31\u0E1A</td><td class="value-cell">${p.committee || '-'}</td></tr>
+                <tr><td class="label-cell">\u0E23\u0E30\u0E22\u0E30\u0E40\u0E27\u0E25\u0E32</td><td class="value-cell">${p.duration || '-'}</td></tr>
+                <tr><td class="label-cell">\u0E2A\u0E16\u0E32\u0E19\u0E30</td><td class="value-cell">${p.status}</td></tr>
+                <tr><td class="label-cell">\u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E2A\u0E30\u0E2A\u0E21 (Plan)</td><td class="value-cell" style="color: #E67E22; font-weight: bold;">${progress.plan}%</td></tr>
+                <tr><td class="label-cell">\u0E1C\u0E25\u0E07\u0E32\u0E19\u0E08\u0E23\u0E34\u0E07\u0E2A\u0E30\u0E2A\u0E21 (Actual)</td><td class="value-cell" style="color: #742C81; font-weight: bold;">${progress.actual}%</td></tr>
+            </table>
+        </div>`;
+    }
+
+    // --- WBS Table Section ---
+    if (selected.includes('wbs') && p.tasks && p.tasks.length > 0) {
+        let wbsRows = '';
+        p.tasks.forEach((t, idx) => {
+            const barColor = t.actual >= 100 ? '#27ae60' : '#742C81';
+            wbsRows += `
+                <tr>
+                    <td style="text-align: center;">${idx + 1}</td>
+                    <td><strong>${t.name}</strong>${t.description ? '<br><span style="font-size: 10px; color: #888;">' + t.description + '</span>' : ''}</td>
+                    <td style="text-align: center;">${t.startDate || '-'}</td>
+                    <td style="text-align: center;">${t.endDate || '-'}</td>
+                    <td style="text-align: center;">${t.weight}%</td>
+                    <td style="text-align: center;">
+                        ${t.actual}%
+                        <div style="background: #eee; border-radius: 4px; height: 6px; margin-top: 3px; overflow: hidden;">
+                            <div style="background: ${barColor}; height: 100%; width: ${t.actual}%; border-radius: 4px;"></div>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+
+        printContent += `
+        <div class="print-section">
+            <h2 class="print-section-title">\u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E01\u0E48\u0E2D\u0E2A\u0E23\u0E49\u0E32\u0E07 (WBS)</h2>
+            <table class="wbs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>\u0E0A\u0E37\u0E48\u0E2D\u0E07\u0E32\u0E19 (Task)</th>
+                        <th style="width: 100px;">\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48\u0E40\u0E23\u0E34\u0E48\u0E21</th>
+                        <th style="width: 100px;">\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E34\u0E49\u0E19\u0E2A\u0E38\u0E14</th>
+                        <th style="width: 70px;">\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01 (%)</th>
+                        <th style="width: 100px;">\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32 (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${wbsRows}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    // --- S-Curve Section ---
+    if (selected.includes('scurve')) {
+        const sCurveCanvas = document.getElementById('sCurveChart');
+        let sCurveImg = '';
+        if (sCurveCanvas) {
+            try {
+                sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
+            } catch(e) {
+                console.warn('Could not capture S-Curve:', e);
+            }
+        }
+        printContent += `
+        <div class="print-section" ${!selected.includes('wbs') ? '' : 'style="page-break-before: always;"'}>
+            <h2 class="print-section-title">S-Curve \u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</h2>
+            ${sCurveImg ? '<img src="' + sCurveImg + '" style="width: 100%; max-height: 550px; object-fit: contain;">' : '<p style="color: #999; text-align: center;">\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E41\u0E2A\u0E14\u0E07\u0E01\u0E23\u0E32\u0E1F S-Curve</p>'}
+        </div>`;
+    }
+
+    // --- Gantt Chart Section ---
+    if (selected.includes('gantt')) {
+        const ganttSvg = document.querySelector('#ganttChart');
+        let ganttContent = '';
+        if (ganttSvg && ganttSvg.innerHTML.trim()) {
+            const svgClone = ganttSvg.cloneNode(true);
+            const w = ganttSvg.getAttribute('width') || ganttSvg.getBoundingClientRect().width;
+            const h = ganttSvg.getAttribute('height') || ganttSvg.getBoundingClientRect().height;
+            if (w && h) {
+                svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+                svgClone.setAttribute('width', '100%');
+                svgClone.setAttribute('height', 'auto');
+                svgClone.style.maxHeight = '550px';
+            }
+            ganttContent = svgClone.outerHTML;
+        }
+        printContent += `
+        <div class="print-section" style="page-break-before: always;">
+            <h2 class="print-section-title">Gantt Chart \u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E22\u0E48\u0E2D\u0E22</h2>
+            <div style="overflow: hidden;">
+                ${ganttContent || '<p style="color: #999; text-align: center;">\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 Gantt Chart</p>'}
+            </div>
+        </div>`;
+    }
+
+    // --- Gallery Section ---
+    if (selected.includes('gallery') && p.gallery && p.gallery.length > 0) {
+        const validGallery = p.gallery.filter(item => item.url);
+        if (validGallery.length > 0) {
+            let galleryItems = '';
+            validGallery.forEach(item => {
+                galleryItems += `
+                    <div class="gallery-print-item">
+                        <img src="${item.url}" onerror="this.style.display='none'">
+                        <div class="gallery-print-info">
+                            <span>${item.date || '-'}</span>
+                            <strong>${item.desc || '-'}</strong>
+                        </div>
+                    </div>`;
+            });
+            printContent += `
+            <div class="print-section" style="page-break-before: always;">
+                <h2 class="print-section-title">\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32</h2>
+                <div class="gallery-print-grid">
+                    ${galleryItems}
+                </div>
+            </div>`;
+        }
+    }
+
+    // --- RESTORE ORIGINAL STYLES ---
+    if (tabSCurve) tabSCurve.setAttribute('style', origSCurveStyle);
+    if (tabGantt) tabGantt.setAttribute('style', origGanttStyle);
+
+    // Create print window
+    const printWindow = window.open('', '_blank', 'width=1100,height=800');
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19 - ${p.name}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 12mm 15mm;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            color: #333;
+            font-size: 12px;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        h1, h2, h3 {
+            font-family: 'Prompt', sans-serif;
+        }
+
+        /* Header */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #742C81;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .report-header h1 {
+            font-size: 20px;
+            color: #742C81;
+            margin-bottom: 3px;
+        }
+        .report-header .subtitle {
+            font-size: 11px;
+            color: #777;
+        }
+        .report-header .logo {
+            text-align: right;
+            color: #742C81;
+        }
+        .report-header .logo .pcts {
+            font-family: 'Prompt', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .report-header .logo .sub {
+            font-size: 10px;
+            color: #999;
+        }
+
+        /* Sections */
+        .print-section {
+            margin-bottom: 20px;
+        }
+        .print-section-title {
+            font-size: 15px;
+            color: #742C81;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+        }
+
+        /* Info Table */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 6px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+        }
+        .info-table .label-cell {
+            width: 180px;
+            font-weight: 600;
+            color: #555;
+            background: #fafafa;
+        }
+        .info-table .value-cell {
+            color: #333;
+        }
+
+        /* WBS Table */
+        .wbs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .wbs-table th {
+            background: #742C81;
+            color: white;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .wbs-table td {
+            padding: 6px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .wbs-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .wbs-table tr:hover {
+            background: #f5f0f7;
+        }
+
+        /* Gallery */
+        .gallery-print-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .gallery-print-item {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .gallery-print-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            display: block;
+        }
+        .gallery-print-info {
+            padding: 5px 8px;
+            background: #fafafa;
+        }
+        .gallery-print-info span {
+            font-size: 10px;
+            color: #999;
+            display: block;
+        }
+        .gallery-print-info strong {
+            font-size: 11px;
+            color: #333;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+
+        /* Print button - hide on actual print */
+        .print-action-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #742C81;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .print-action-bar button {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Sarabun', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .print-action-bar .btn-print {
+            background: white;
+            color: #742C81;
+        }
+        .print-action-bar .btn-close {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* === Page-break & fit-to-page rules === */
+        .print-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .wbs-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .wbs-table thead {
+            display: table-header-group;
+        }
+        .info-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .gallery-print-item {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .gallery-print-grid {
+            page-break-inside: auto;
+        }
+        img {
+            max-width: 100%;
+            max-height: 650px;
+            object-fit: contain;
+        }
+        svg {
+            max-width: 100%;
+            max-height: 650px;
+            overflow: hidden;
+        }
+
+        @media print {
+            .print-action-bar { display: none !important; }
+            body { padding-top: 0 !important; }
+            .print-section {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .wbs-table {
+                page-break-inside: auto;
+            }
+            .wbs-table tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .wbs-table thead {
+                display: table-header-group;
+            }
+            .gallery-print-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            img, svg {
+                max-height: 650px;
+                page-break-inside: avoid;
+            }
+        }
+        @media screen {
+            body { padding-top: 50px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-action-bar">
+        <button class="btn-print" onclick="window.print()">\u0E1E\u0E34\u0E21\u0E1E\u0E4C / \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01 PDF</button>
+        <button class="btn-close" onclick="window.close()">\u0E1B\u0E34\u0E14\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07</button>
+    </div>
+
+    <div class="report-header">
+        <div>
+            <h1>${p.name}</h1>
+            <div class="subtitle">\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23 \u0E13 \u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 ${today}</div>
+        </div>
+        <div class="logo">
+            <div class="pcts">PCTS</div>
+            <div class="sub">PEA Construction Tracking System</div>
+        </div>
+    </div>
+
+    ${printContent}
+
+    <div class="report-footer">
+        PEA Construction Tracking System (PCTS) &mdash; \u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E40\u0E21\u0E37\u0E48\u0E2D ${today}
+    </div>
+</body>
+</html>`);
+    printWindow.document.close();
+};
+
+// ==========================================
+// Disbursement Feature
+// ==========================================
+let currentDisbUploadType = 'actual';
+let currentDisbWorkbook = null;
+
+window.openDisbursementUploadModal = function(type) {
+    currentDisbUploadType = type;
+    document.getElementById('disbUploadTitle').innerHTML = type === 'actual' ? '<i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย (092)' : '<i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย';
+    document.getElementById('disbFileType').value = type;
+    document.getElementById('disbFileType').disabled = true;
+    document.getElementById('disbFileInput').value = '';
+    document.getElementById('disbSheetSelector').style.display = 'none';
+    currentDisbWorkbook = null;
+    document.getElementById('disbursementUploadModal').style.display = 'flex';
+};
+
+window.closeDisbursementUploadModal = function() {
+    document.getElementById('disbursementUploadModal').style.display = 'none';
+};
+
+document.getElementById('disbFileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        currentDisbWorkbook = workbook;
+        
+        const sheetSelect = document.getElementById('disbSheetSelect');
+        sheetSelect.innerHTML = '';
+        
+        workbook.SheetNames.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            sheetSelect.appendChild(option);
+        });
+        
+        if (currentDisbUploadType === 'actual') {
+            const zbudr = workbook.SheetNames.find(n => n.toLowerCase().includes('zbudr092'));
+            if (zbudr) sheetSelect.value = zbudr;
+        } else {
+            sheetSelect.value = workbook.SheetNames[0];
+        }
+        
+        document.getElementById('disbSheetSelector').style.display = 'block';
+    };
+    reader.readAsArrayBuffer(file);
+});
+
+document.getElementById('disbursementUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentDisbWorkbook) {
+        alert('กรุณาเลือกไฟล์ Excel');
+        return;
+    }
+    
+    const sheetName = document.getElementById('disbSheetSelect').value;
+    const worksheet = currentDisbWorkbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
+    
+    if (currentDisbUploadType === 'actual') {
+        parseDisbursement092(data);
+    } else {
+        parseDisbursementPlan(data);
+    }
+    
+    closeDisbursementUploadModal();
+    saveProjects();
+    if (window.currentProjectViewData) {
+        window.renderDisbursementTab(window.currentProjectViewData);
+    }
+    alert('นำเข้าข้อมูลสำเร็จ');
+});
+
+function parseDisbursement092(data) {
+    if (!window.currentProjectViewData) return;
+    const p = window.currentProjectViewData;
+    
+    if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
+    
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(20, data.length); i++) {
+        if (data[i] && data[i].some(cell => cell && typeof cell === 'string' && (cell.includes('WBS') || cell.includes('วงเงินงบประมาณ')))) {
+            headerRowIdx = i;
+            break;
+        }
+    }
+    
+    if (headerRowIdx === -1) {
+        alert('ไม่พบหัวตาราง WBS หรือ วงเงินงบประมาณ ใน Sheet นี้');
+        return;
+    }
+    
+    const headers = data[headerRowIdx];
+    const colWbs = headers.findIndex(h => typeof h === 'string' && h.includes('WBS'));
+    const colName = headers.findIndex(h => typeof h === 'string' && h.includes('รายการ'));
+    const colBudget = headers.findIndex(h => typeof h === 'string' && h.includes('วงเงินงบประมาณ'));
+    const colPaidPrev = headers.findIndex(h => typeof h === 'string' && h.includes('รวมจ่ายจริงถึงสิ้นปีก่อนหน้า'));
+    const colPaidCurr = headers.findIndex(h => typeof h === 'string' && h.includes('รวมจ่ายจริงปีปัจจุบัน'));
+    const colPaidTotal = headers.findIndex(h => typeof h === 'string' && h === 'รวมจ่ายจริง');
+    const colRemaining = headers.findIndex(h => typeof h === 'string' && h.includes('วงเงินคงเหลือยังไม่ดำเนินการ'));
+    const colStatus = headers.findIndex(h => typeof h === 'string' && h.includes('สถานะ'));
+    
+    p.disbursement.items = [];
+    
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0) continue;
+        
+        const wbs = row[colWbs];
+        if (!wbs || typeof wbs !== 'string' || !wbs.includes('I-')) continue;
+        if (row[colName] && typeof row[colName] === 'string' && row[colName].startsWith('รวม')) continue;
+        
+        const b = parseFloat(row[colBudget]) || 0;
+        const pp = parseFloat(row[colPaidPrev]) || 0;
+        const pc = parseFloat(row[colPaidCurr]) || 0;
+        let tp = parseFloat(row[colPaidTotal]);
+        if (isNaN(tp)) tp = pp + pc;
+        const rm = parseFloat(row[colRemaining]) || 0;
+        
+        p.disbursement.items.push({
+            name: (row[colName] || '-').toString().trim(),
+            wbs: wbs.trim(),
+            budget: b,
+            paidPrev: pp,
+            paidCurr: pc,
+            totalPaid: tp,
+            remaining: rm,
+            status: (row[colStatus] || '').toString().split(' ')[0]
+        });
+    }
+    
+    p.disbursement.budget = p.disbursement.items.reduce((sum, item) => sum + item.budget, 0);
+    p.disbursement.paidPrevYear = p.disbursement.items.reduce((sum, item) => sum + item.paidPrev, 0);
+    p.disbursement.paidCurrentYear = p.disbursement.items.reduce((sum, item) => sum + item.paidCurr, 0);
+    p.disbursement.totalPaid = p.disbursement.items.reduce((sum, item) => sum + item.totalPaid, 0);
+    p.disbursement.remaining = p.disbursement.items.reduce((sum, item) => sum + item.remaining, 0);
+}
+
+function parseDisbursementPlan(data) {
+    if (!window.currentProjectViewData) return;
+    const p = window.currentProjectViewData;
+    
+    if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
+    
+    // Normalize string by removing dots and spaces
+    const normalizeMonth = (m) => m.replace(/[\.\s]/g, '').trim();
+    const targetMonths = ['ตค','พย','ธค','มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย'];
+    const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+    
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(20, data.length); i++) {
+        if (data[i] && data[i].some(cell => {
+            if (typeof cell !== 'string') return false;
+            const norm = normalizeMonth(cell);
+            return norm === 'ตค' || norm === 'พย';
+        })) {
+            headerRowIdx = i;
+            break;
+        }
+    }
+    
+    if (headerRowIdx === -1) {
+        alert('ไม่พบแถวเดือน (ต.ค., พ.ย.) ใน Sheet นี้');
+        return;
+    }
+    
+    const monthRow = data[headerRowIdx];
+    const yearRow = data[headerRowIdx - 1] || [];
+    const planCols = [];
+    let currentYear = '';
+    
+    for (let j = 0; j < monthRow.length; j++) {
+        if (yearRow[j] && typeof yearRow[j] === 'string' && yearRow[j].includes('ปี')) {
+            const match = yearRow[j].match(/\d{4}/);
+            if (match) currentYear = match[0];
+        }
+        
+        const cell = monthRow[j];
+        if (typeof cell === 'string') {
+            const norm = normalizeMonth(cell);
+            const mIndex = targetMonths.findIndex(m => norm.includes(m));
+            if (mIndex !== -1) {
+                planCols.push({ col: j, month: displayMonths[mIndex], year: currentYear });
+            }
+        }
+    }
+    
+    p.disbursement.plan = planCols.map(c => ({ month: c.month, year: c.year, amount: 0 }));
+    
+    const colWbs = monthRow.findIndex(h => typeof h === 'string' && h.toUpperCase().includes('WBS'));
+    
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row || row.length === 0) continue;
+        
+        const hasWbs = colWbs >= 0 && row[colWbs] && typeof row[colWbs] === 'string' && row[colWbs].includes('I-');
+        
+        if (hasWbs) {
+            planCols.forEach((c, idx) => {
+                const val = parseFloat(row[c.col]);
+                if (!isNaN(val)) {
+                    p.disbursement.plan[idx].amount += val;
+                }
+            });
+        }
+    }
+}
+
+window.renderDisbursementTab = function(p) {
+    const d = p.disbursement;
+    const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num || 0);
+    
+    if (!d) {
+        document.getElementById('disbBudget').textContent = '-';
+        document.getElementById('disbPaid').textContent = '-';
+        document.getElementById('disbRemaining').textContent = '-';
+        document.getElementById('disbPercent').textContent = '-';
+        document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
+        if (window.disbChartInstance) window.disbChartInstance.destroy();
+        return;
+    }
+    
+    document.getElementById('disbBudget').textContent = fmt(d.budget);
+    document.getElementById('disbPaid').textContent = fmt(d.totalPaid);
+    document.getElementById('disbRemaining').textContent = fmt(d.remaining);
+    
+    const percent = d.budget ? ((d.totalPaid / d.budget) * 100).toFixed(2) : 0;
+    document.getElementById('disbPercent').textContent = `${percent}%`;
+    
+    const tbody = document.getElementById('disbursementTableBody');
+    if (d.items && d.items.length > 0) {
+        tbody.innerHTML = '';
+        d.items.forEach((item, idx) => {
+            let statusClass = 'disb-status-open';
+            if (item.status === 'CLSD') statusClass = 'disb-status-clsd';
+            if (item.status === 'PREL') statusClass = 'disb-status-prel';
+            
+            let pct = 0;
+            if (item.budget && item.budget > 0) {
+                pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
+            }
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align: center;">${idx + 1}</td>
+                    <td>${item.name}</td>
+                    <td><code>${item.wbs}</code></td>
+                    <td style="text-align: right;">${fmt(item.budget)}</td>
+                    <td style="text-align: right;">${fmt(item.totalPaid)}</td>
+                    <td style="text-align: right;">${fmt(item.remaining)}</td>
+                    <td style="text-align: right;">${pct}%</td>
+                    <td style="text-align: center;"><span class="disb-status-tag ${statusClass}">${item.status || '-'}</span></td>
+                </tr>
+            `;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
+    }
+    
+    renderDisbursementChart(p);
+};
+
+window.disbChartInstance = null;
+window.renderDisbursementChart = function(p) {
+    const ctx = document.getElementById('disbursementChart');
+    if (!ctx) return;
+    
+    if (window.disbChartInstance) {
+        window.disbChartInstance.destroy();
+    }
+    
+    const d = p.disbursement;
+    if (!d || (!d.plan?.length && !d.items?.length)) return;
+    
+    const labels = [];
+    const planData = [];
+    const actualData = [];
+    
+    if (d.plan && d.plan.length > 0) {
+        d.plan.forEach(pl => {
+            labels.push(`${pl.month} ${pl.year || ''}`.trim());
+            planData.push(pl.amount);
+            actualData.push(0); // แผนรายเดือนไม่มีข้อมูลจ่ายจริง
+        });
+        
+        // เพิ่มแท่งสำหรับ "จ่ายจริงสะสม" ในตอนท้าย
+        labels.push('รวมจ่ายจริง (ล่าสุด)');
+        planData.push(0);
+        actualData.push(d.totalPaid || 0);
+        
+    } else if (d.items && d.items.length > 0) {
+        labels.push('แผนรวม', 'จ่ายจริงสะสม');
+        planData.push(d.budget || 0, 0);
+        actualData.push(0, d.totalPaid || 0);
+    }
+    
+    window.disbChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'แผนเบิกจ่าย',
+                    data: planData,
+                    backgroundColor: 'rgba(41, 128, 185, 0.7)',
+                    borderColor: 'rgba(41, 128, 185, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'จ่ายจริง',
+                    data: actualData,
+                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                    borderColor: 'rgba(39, 174, 96, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return new Intl.NumberFormat('th-TH', { notation: "compact" , compactDisplay: "short" }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(context.raw);
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
