@@ -575,14 +575,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Update Stats
         let total = projects.length;
         let completed = projects.filter(p => p.status === 'แล้วเสร็จ').length;
-        let active = total - completed;
+        let active = projects.filter(p => p.status === 'อยู่ระหว่างก่อสร้าง').length;
+        let design = projects.filter(p => p.status === 'อยู่ระหว่างออกแบบประมาณการ').length;
+        let budget = projects.filter(p => p.status === 'รองบประมาณ').length;
 
         const elTotal = document.getElementById('statTotalProjects');
         const elActive = document.getElementById('statActiveProjects');
+        const elDesign = document.getElementById('statDesignProjects');
+        const elBudget = document.getElementById('statBudgetProjects');
         const elCompleted = document.getElementById('statCompletedProjects');
 
         if (elTotal) elTotal.innerText = `${total} โครงการ`;
         if (elActive) elActive.innerText = `${active} โครงการ`;
+        if (elDesign) elDesign.innerText = `${design} โครงการ`;
+        if (elBudget) elBudget.innerText = `${budget} โครงการ`;
         if (elCompleted) elCompleted.innerText = `${completed} โครงการ`;
 
         // Render Dashboard Table
