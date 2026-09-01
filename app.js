@@ -3598,3 +3598,184 @@ window.renderDisbursementChart = function(p) {
         }
     });
 };
+
+// --- AI Chatbox Logic ---
+window.populateChatboxProjects = function() {
+    const select = document.getElementById('chatProjectSelect');
+    if (!select) return;
+    
+    const currentVal = select.value;
+    select.innerHTML = '<option value="all" style="color: black;">พูดคุยทั่วไป (ไม่เจาะจงโครงการ)</option>';
+    
+    if (typeof projects !== 'undefined') {
+        projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.style.color = "black";
+            opt.text = p.name;
+            select.appendChild(opt);
+        });
+    }
+    
+    if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+        select.value = currentVal;
+    }
+};
+
+window.toggleChatbox = function() {
+    const chatbox = document.getElementById('chatboxPanel');
+    if (chatbox.style.display === 'none' || !chatbox.style.display) {
+        populateChatboxProjects();
+        chatbox.style.display = 'flex';
+        document.getElementById('chatInput').focus();
+    } else {
+        chatbox.style.display = 'none';
+    }
+};
+
+window.handleChatKeyPress = function(event) {
+    if (event.key === 'Enter') {
+        sendChatMessage();
+    }
+};
+
+window.sendChatMessage = function() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    appendMessage(msg, 'user');
+    input.value = '';
+
+    // Simulate bot thinking and replying
+    setTimeout(() => {
+        botReply(msg);
+    }, 600);
+};
+
+function appendMessage(text, sender) {
+    const msgContainer = document.getElementById('chatboxMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-message ' + sender;
+    div.innerText = text;
+    msgContainer.appendChild(div);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+function botReply(userMsg) {
+    const apiKey = localStorage.getItem('geminiApiKey');
+    
+    if (!apiKey) {
+        appendMessage("ยังไม่ได้ตั้งค่า Google Gemini API Key ครับ กรุณาไปตั้งค่าที่ปุ่มฟันเฟือง (ตั้งค่าระบบ) ด้านบนขวาก่อนนะครับ", 'bot');
+        return;
+    }
+
+    // Show loading message
+    const msgContainer = document.getElementById('chatboxMessages');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'chat-message bot';
+    loadingDiv.id = 'chatLoadingIndicator';
+    loadingDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังคิด...';
+    msgContainer.appendChild(loadingDiv);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    let modelName = localStorage.getItem('geminiModel') || 'gemini-3.1-flash-lite';
+    // Fallback if the user typed it differently or has old model
+    if(modelName === 'gemini-1.5-flash-lite') modelName = 'gemini-3.1-flash-lite'; // Example fallback
+
+    const select = document.getElementById('chatProjectSelect');
+    const selectedProjectId = select ? select.value : 'all';
+
+    let contextText = "";
+    let imageParts = [];
+
+    if (selectedProjectId !== 'all' && typeof projects !== 'undefined') {
+        const p = projects.find(proj => proj.id == selectedProjectId);
+        if (p) {
+            contextText = `ข้อมูลโครงการที่กำลังพูดถึง:\nชื่อ: ${p.name}\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\nระยะเวลา: ${p.duration || '-'}\nงบประมาณ: ${p.budget || '-'}\n`;
+            
+            if (p.tasks && p.tasks.length > 0) {
+                contextText += "แผนงานย่อย:\n" + p.tasks.map(t => `- ${t.name}: แผน ${t.weight}% ความก้าวหน้าจริง ${t.actual}%`).join('\n') + "\n";
+            }
+            
+            if (p.gallery && p.gallery.length > 0) {
+                let validImages = p.gallery.filter(g => g.url && g.url.startsWith('data:image'));
+                if (validImages.length > 0) {
+                    contextText += `\nมีรูปภาพแนบมาด้วยจำนวน ${validImages.length} รูป (ให้วิเคราะห์ภาพประกอบด้วย)\n`;
+                    // Limit to max 3 images to save payload size and token limit
+                    validImages.slice(0, 3).forEach(g => {
+                        const mimeType = g.url.substring(g.url.indexOf(':') + 1, g.url.indexOf(';'));
+                        const base64Data = g.url.substring(g.url.indexOf(',') + 1);
+                        imageParts.push({
+                            "inlineData": {
+                                "mimeType": mimeType,
+                                "data": base64Data
+                            }
+                        });
+                    });
+                }
+            }
+        }
+    }
+
+    const systemInstruction = "คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก";
+    
+    let parts = [];
+    if (contextText) {
+        parts.push({ "text": contextText });
+    }
+    
+    // Add images
+    parts = parts.concat(imageParts);
+    
+    // Add user message
+    parts.push({ "text": "คำถาม: " + userMsg });
+
+    const requestBody = {
+        "systemInstruction": {
+            "parts": [{ "text": systemInstruction }]
+        },
+        "contents": [{
+            "parts": parts
+        }]
+    };
+
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const loadingEl = document.getElementById('chatLoadingIndicator');
+        if (loadingEl) loadingEl.remove();
+
+        if (data.error) {
+            console.error('Gemini API Error:', data.error);
+            appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error.message}`, 'bot');
+        } else if (data.candidates && data.candidates.length > 0) {
+            let replyText = data.candidates[0].content.parts[0].text;
+            
+            // Format basic markdown if present (e.g. bold, line breaks)
+            replyText = replyText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            replyText = replyText.replace(/\n/g, '<br>');
+
+            // Create HTML message
+            const div = document.createElement('div');
+            div.className = 'chat-message bot';
+            div.innerHTML = replyText;
+            msgContainer.appendChild(div);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        } else {
+            appendMessage("ไม่สามารถประมวลผลคำตอบได้ กรุณาลองใหม่อีกครั้งครับ", 'bot');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        const loadingEl = document.getElementById('chatLoadingIndicator');
+        if (loadingEl) loadingEl.remove();
+        appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
+    });
+}

@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 
 <body>
@@ -857,6 +857,40 @@
                     ยกเลิก
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- AI Mascot & Chatbox -->
+    <div class="mascot-widget" onclick="toggleChatbox()">
+        <img src="mascot.jpg" alt="AI Mascot" class="mascot-img">
+    </div>
+
+    <div class="chatbox-panel" id="chatboxPanel" style="display: none;">
+        <div class="chatbox-header">
+            <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                <img src="mascot.jpg" alt="AI Mascot" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; object-fit: cover;">
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; color: white; font-size: 13px;">PCTS AI Assistant</h3>
+                        <span style="font-size: 10px; color: #eee; display: flex; align-items: center; gap: 4px;">
+                            <span style="display: inline-block; width: 6px; height: 6px; background-color: #2ecc71; border-radius: 50%;"></span> ออนไลน์
+                        </span>
+                    </div>
+                    <select id="chatProjectSelect" style="font-size: 11px; padding: 2px; border-radius: 4px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); outline: none; width: 95%;">
+                        <option value="all" style="color: black;">พูดคุยทั่วไป (ไม่เจาะจงโครงการ)</option>
+                    </select>
+                </div>
+            </div>
+            <span class="close-chat" onclick="toggleChatbox()" style="margin-left: 5px;">&times;</span>
+        </div>
+        <div class="chatbox-messages" id="chatboxMessages">
+            <div class="chat-message bot">
+                สวัสดีครับ 👋 ผมคือผู้ช่วย AI ของระบบ PCTS มีคำถามหรืออยากให้ผมช่วยอะไร พิมพ์ถามมาได้เลยครับ!
+            </div>
+        </div>
+        <div class="chatbox-input">
+            <input type="text" id="chatInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="handleChatKeyPress(event)">
+            <button onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
