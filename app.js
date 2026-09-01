@@ -64,31 +64,35 @@ const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// --- GEMINI API KEY (HARDCODED) ---
+// นำ API Key ของคุณมาใส่ในเครื่องหมายคำพูดด้านล่างนี้ (หากใส่แล้วไม่ต้องกรอกที่หน้าเว็บอีก)
+window.GEMINI_API_KEY = "AQ.Ab8RN6L9uvz31zOl5evVdcseEHpeHd5UJ5vK6XuG5aL7ZzuGRA";
+
 let projects = [];
 
-window.loadProjects = async function() {
+window.loadProjects = async function () {
     try {
         const { data, error } = await db.from('projects').select('*').order('id', { ascending: true });
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
             projects = data.map(dbProj => {
                 let pType = 'จ้างเหมา';
                 let pSupervisor = '';
                 let pCommittee = '';
                 let pDetails = dbProj.details || '';
-                
-                if(pDetails.includes('[TYPE:')) {
+
+                if (pDetails.includes('[TYPE:')) {
                     const match = pDetails.match(/\[TYPE:(.*?)\]/);
-                    if(match) { pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
-                if(pDetails.includes('[SUP:')) {
+                if (pDetails.includes('[SUP:')) {
                     const match = pDetails.match(/\[SUP:(.*?)\]/);
-                    if(match) { pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
-                if(pDetails.includes('[COM:')) {
+                if (pDetails.includes('[COM:')) {
                     const match = pDetails.match(/\[COM:(.*?)\]/);
-                    if(match) { pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
 
                 return {
@@ -126,14 +130,14 @@ window.loadProjects = async function() {
 };
 
 // --- User Management (Admin) ---
-window.loadPendingUsers = async function() {
+window.loadPendingUsers = async function () {
     try {
         const { data, error } = await db.from('user_roles').select('*').eq('role', 'pending');
         if (error) throw error;
-        
+
         const tbody = document.getElementById('adminUserTableBody');
         if (!tbody) return;
-        
+
         tbody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(user => {
@@ -157,7 +161,7 @@ window.loadPendingUsers = async function() {
     }
 };
 
-window.approveUser = async function(userId) {
+window.approveUser = async function (userId) {
     if (!confirm('ยืนยันการอนุมัติสิทธิ์เป็น Editor ให้ผู้ใชেন্ডนี้?')) return;
     try {
         const { error } = await db.from('user_roles').update({ role: 'editor' }).eq('id', userId);
@@ -169,7 +173,7 @@ window.approveUser = async function(userId) {
     }
 };
 
-window.rejectUser = async function(userId) {
+window.rejectUser = async function (userId) {
     if (!confirm('ยืนยันการปฏิเสธและลบคำขอนี้?')) return;
     try {
         const { error } = await db.from('user_roles').delete().eq('id', userId);
@@ -181,7 +185,7 @@ window.rejectUser = async function(userId) {
     }
 };
 
-window.saveProjects = async function(projectId = null) {
+window.saveProjects = async function (projectId = null) {
     try {
         let targetProjects = projects;
         if (projectId) {
@@ -227,12 +231,12 @@ function calculateProjectProgress(p) {
     let totalActualWeighted = 0;
     let totalPlanWeighted = 0;
     const now = new Date();
-    
+
     p.tasks.forEach(t => {
         const w = parseFloat(t.weight) || 0;
         totalWeight += w;
         totalActualWeighted += ((parseFloat(t.actual) || 0) * w) / 100;
-        
+
         let planPercent = 0;
         if (t.startDate && t.endDate) {
             const start = new Date(t.startDate);
@@ -247,11 +251,11 @@ function calculateProjectProgress(p) {
         }
         totalPlanWeighted += (planPercent * w) / 100;
     });
-    
+
     if (totalWeight === 0) return { plan: 0, actual: 0 };
     let actualProg = (totalActualWeighted / totalWeight) * 100;
     let planProg = (totalPlanWeighted / totalWeight) * 100;
-    if(p.status === "แล้วเสร็จ") { planProg = 100; actualProg = 100; }
+    if (p.status === "แล้วเสร็จ") { planProg = 100; actualProg = 100; }
     // DELAY CHECK NOTIFICATION
     if ((planProg - actualProg) >= 10 && p.status !== "แล้วเสร็จ") {
         const lastWarn = sessionStorage.getItem(`warn_${p.id}`);
@@ -261,7 +265,7 @@ function calculateProjectProgress(p) {
             sessionStorage.setItem(`warn_${p.id}`, nowTime);
         }
     }
-    
+
     return { plan: planProg.toFixed(2), actual: actualProg.toFixed(2) };
 }
 
@@ -274,10 +278,10 @@ const sCurveData = {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    
+
     // --- Mobile Menu Logic ---
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    
+
     // We moved nav to top, so on mobile we can just toggle top-nav display or let it be.
     // For now, we will just hide the mobile menu btn since we use top nav.
     if (mobileMenuBtn) {
@@ -297,21 +301,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Hide all sections
             viewSections.forEach(section => section.classList.remove('active'));
-            
+
             // Show target section
             const targetId = item.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
 
             // Resize Chart and Calendar if their views are opened
-            if(targetId === 'project-detail-view') {
-                if(window.sChart) window.sChart.resize();
-                if(window.projectCalendar) {
+            if (targetId === 'project-detail-view') {
+                if (window.sChart) window.sChart.resize();
+                if (window.projectCalendar) {
                     window.projectCalendar.refetchEvents();
                     window.projectCalendar.render();
                     window.projectCalendar.updateSize();
                 }
             }
-            if(targetId === 'calendar-view' && calendar) {
+            if (targetId === 'calendar-view' && calendar) {
                 calendar.refetchEvents();
                 calendar.render();
             }
@@ -323,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleEditorItems = document.querySelectorAll('.role-editor');
     const currentUserRoleText = document.getElementById('currentUserRole');
 
-    window.updateRole = function(role) {
+    window.updateRole = function (role) {
         window.currentRole = role;
         document.querySelector('[data-target="dashboard-view"]').click();
 
@@ -341,20 +345,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
         }
     };
-    
-    window.switchAuthTab = function(tab) {
+
+    window.switchAuthTab = function (tab) {
         const loginSec = document.getElementById('loginSection');
         const regSec = document.getElementById('registerSection');
         const forgotSec = document.getElementById('forgotPasswordSection');
         const resetSec = document.getElementById('resetPasswordSection');
         const btnLogin = document.getElementById('tabLogin');
         const btnReg = document.getElementById('tabRegister');
-        
+
         loginSec.style.display = 'none';
         regSec.style.display = 'none';
         if (forgotSec) forgotSec.style.display = 'none';
         if (resetSec) resetSec.style.display = 'none';
-        
+
         if (tab === 'login') {
             loginSec.style.display = 'block';
             btnLogin.style.background = 'var(--pea-purple)';
@@ -390,12 +394,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btn = document.getElementById('loginBtnSpinner');
         btn.textContent = 'กำลังเข้าสู่ระบบ...';
         btn.disabled = true;
-        
+
         const { data, error } = await db.auth.signInWithPassword({ email, password });
-        
+
         btn.textContent = 'เข้าสู่ระบบ';
         btn.disabled = false;
-        
+
         if (error) {
             alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
             console.error('Login Error:', error);
@@ -411,13 +415,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const email = document.getElementById('regEmail').value;
         const password = document.getElementById('regPassword').value;
         const btn = document.getElementById('regBtnSpinner');
-        
+
         btn.textContent = 'กำลังสมัคร...';
         btn.disabled = true;
-        
+
         // 1. Sign up user
         const { data, error } = await db.auth.signUp({ email, password });
-        
+
         if (error) {
             alert('สมัครใช้งานไม่สำเร็จ: ' + error.message);
             console.error('Signup Error:', error);
@@ -431,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { error: insertError } = await db.from('user_roles').insert([
                 { id: data.user.id, email: email, employee_id: empId, role: 'pending' }
             ]);
-            
+
             if (insertError) {
                 console.error('Error inserting user_roles:', insertError);
                 alert('สมัครสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึกข้อมูลคำขอ: ' + (insertError.message || JSON.stringify(insertError)));
@@ -442,7 +446,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.logout(); // Ensure they are logged out until approved (optional, but good practice if email verification is off)
             }
         }
-        
+
         btn.textContent = 'สมัครใช้งาน';
         btn.disabled = false;
     });
@@ -491,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    window.logout = async function() {
+    window.logout = async function () {
         await db.auth.signOut();
     };
 
@@ -508,20 +512,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('btnLogin').style.display = 'none';
             document.getElementById('userInfo').style.display = 'block';
             document.getElementById('userEmailDisplay').textContent = session.user.email;
-            
+
             // Get role from DB
             const { data, error } = await db.from('user_roles').select('role, employee_id').eq('id', session.user.id).single();
             console.log('Role fetch:', data, error);
             if (data && data.role) {
                 window.currentUserEmpId = data.employee_id || '';
                 const userRole = data.role.toLowerCase();
-                
+
                 if (userRole === 'pending') {
                     alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
                     await window.logout();
                     return;
                 }
-                
+
                 window.updateRole(userRole);
                 if (userRole === 'admin') {
                     alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
@@ -543,40 +547,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-window.currentDashboardFilter = 'all';
-window.filterDashboard = function(type, event) {
-    window.currentDashboardFilter = type;
-    
-    // Handle tab styles
-    if (event && event.currentTarget) {
-        const tabs = event.currentTarget.parentElement.getElementsByClassName("tablinks");
-        for (let i = 0; i < tabs.length; i++) {
-            tabs[i].classList.remove("active");
+    window.currentDashboardFilter = 'all';
+    window.filterDashboard = function (type, event) {
+        window.currentDashboardFilter = type;
+
+        // Handle tab styles
+        if (event && event.currentTarget) {
+            const tabs = event.currentTarget.parentElement.getElementsByClassName("tablinks");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            event.currentTarget.classList.add("active");
         }
-        event.currentTarget.classList.add("active");
-    }
-    
-    // Update Title
-    const title = document.getElementById('dashboardTableTitle');
-    if(title) {
-        if(type === 'all') title.innerText = 'รายการโครงการทั้งหมด';
-        else title.innerText = 'รายการโครงการ: ' + type;
-    }
-    
-    renderTables();
-};
+
+        // Update Title
+        const title = document.getElementById('dashboardTableTitle');
+        if (title) {
+            if (type === 'all') title.innerText = 'รายการโครงการทั้งหมด';
+            else title.innerText = 'รายการโครงการ: ' + type;
+        }
+
+        renderTables();
+    };
 
     // --- Render Tables ---
-    window.renderTables = function() {
+    window.renderTables = function () {
         // Update Stats
         let total = projects.length;
         let completed = projects.filter(p => p.status === 'แล้วเสร็จ').length;
         let active = total - completed;
-        
+
         const elTotal = document.getElementById('statTotalProjects');
         const elActive = document.getElementById('statActiveProjects');
         const elCompleted = document.getElementById('statCompletedProjects');
-        
+
         if (elTotal) elTotal.innerText = `${total} โครงการ`;
         if (elActive) elActive.innerText = `${active} โครงการ`;
         if (elCompleted) elCompleted.innerText = `${completed} โครงการ`;
@@ -584,7 +588,7 @@ window.filterDashboard = function(type, event) {
         // Render Dashboard Table
         const dashboardTbody = document.getElementById('projectTableBody');
         dashboardTbody.innerHTML = '';
-        
+
         let filteredProjects = projects;
         if (window.currentDashboardFilter && window.currentDashboardFilter !== 'all') {
             filteredProjects = projects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
@@ -675,7 +679,7 @@ window.filterDashboard = function(type, event) {
             });
         }
     };
-    
+
     // Load projects from Supabase before rendering
     await window.loadProjects();
     renderTables();
@@ -741,7 +745,7 @@ window.filterDashboard = function(type, event) {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek'
         },
-        events: function(fetchInfo, successCallback, failureCallback) {
+        events: function (fetchInfo, successCallback, failureCallback) {
             let dynamicEvents = [];
             projects.forEach(p => {
                 if (p.gallery) {
@@ -770,18 +774,18 @@ window.filterDashboard = function(type, event) {
             successCallback(dynamicEvents);
         },
         themeSystem: 'standard',
-        eventClick: function(info) {
+        eventClick: function (info) {
             // Show modal with details
             const props = info.event.extendedProps;
             window.currentCalendarImages = props.imageUrls || [];
-            
+
             document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
-            
+
             let html = `
                 <p><strong>หัวข้อ:</strong> ${info.event.title}</p>
                 <p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>
             `;
-            
+
             if (props.imageUrls && props.imageUrls.length > 0) {
                 html += `<div style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding-bottom: 10px;">`;
                 props.imageUrls.forEach((url, idx) => {
@@ -789,7 +793,7 @@ window.filterDashboard = function(type, event) {
                 });
                 html += `</div>`;
             }
-            
+
             document.getElementById('modalContent').innerHTML = html;
             document.getElementById('calendarModal').style.display = 'flex';
         }
@@ -803,7 +807,7 @@ window.filterDashboard = function(type, event) {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek'
         },
-        events: function(fetchInfo, successCallback, failureCallback) {
+        events: function (fetchInfo, successCallback, failureCallback) {
             let dynamicEvents = [];
             if (window.currentProjectViewData) {
                 // Add WBS Tasks
@@ -813,7 +817,7 @@ window.filterDashboard = function(type, event) {
                             let ed = new Date(t.endDate);
                             ed.setDate(ed.getDate() + 1);
                             let edStr = ed.toISOString().split('T')[0];
-                            
+
                             dynamicEvents.push({
                                 title: `แผนงาน: ${t.name}`,
                                 start: t.startDate,
@@ -825,7 +829,7 @@ window.filterDashboard = function(type, event) {
                         }
                     });
                 }
-                
+
                 // Add Gallery Updates
                 if (window.currentProjectViewData.gallery) {
                     let grouped = {};
@@ -853,15 +857,15 @@ window.filterDashboard = function(type, event) {
             successCallback(dynamicEvents);
         },
         themeSystem: 'standard',
-        eventClick: function(info) {
+        eventClick: function (info) {
             const props = info.event.extendedProps;
-            
+
             if (props.isTask) {
                 document.getElementById('modalDate').innerText = 'ข้อมูลแผนงาน: ' + info.event.title.replace('แผนงาน: ', '');
                 let html = `<p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
                 html += `<p><strong>วันที่เริ่ม:</strong> ${info.event.startStr.split('T')[0]}</p>`;
                 let endD = info.event.end ? new Date(info.event.end) : null;
-                if(endD) {
+                if (endD) {
                     endD.setDate(endD.getDate() - 1);
                     html += `<p><strong>วันที่สิ้นสุด:</strong> ${endD.toISOString().split('T')[0]}</p>`;
                 }
@@ -869,7 +873,7 @@ window.filterDashboard = function(type, event) {
                 document.getElementById('calendarModal').style.display = 'flex';
                 return;
             }
-            
+
             window.currentCalendarImages = props.imageUrls || [];
             document.getElementById('modalDate').innerText = 'ข้อมูลวันที่: ' + info.event.startStr.split('T')[0];
             let html = `<p><strong>หัวข้อ:</strong> ${info.event.title}</p><p><strong>รายละเอียด:</strong> ${props.description || '-'}</p>`;
@@ -887,7 +891,7 @@ window.filterDashboard = function(type, event) {
     // Render initially even if hidden, will be resized later
     if (window.projectCalendar) window.projectCalendar.render();
 
-    window.openLightbox = function(startIndex) {
+    window.openLightbox = function (startIndex) {
         if (!window.currentCalendarImages || window.currentCalendarImages.length === 0) return;
         const w = window.open("");
         const imagesJson = JSON.stringify(window.currentCalendarImages);
@@ -948,17 +952,17 @@ window.filterDashboard = function(type, event) {
     // --- Modal Logic ---
     const calModal = document.getElementById('calendarModal');
     const projModal = document.getElementById('projectModal');
-    
+
     // Close calendar modal
     const calClose = calModal ? calModal.querySelector('.close-modal') : null;
     if (calClose) {
-        calClose.onclick = function() {
+        calClose.onclick = function () {
             calModal.style.display = "none";
         }
     }
 
     // Global click outside to close
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         if (event.target === calModal) {
             calModal.style.display = "none";
         }
@@ -975,9 +979,9 @@ window.filterDashboard = function(type, event) {
     const fileInput = document.querySelector('.file-input');
     const previewArea = document.getElementById('imagePreviewArea');
 
-    fileInput.addEventListener('change', function() {
+    fileInput.addEventListener('change', function () {
         previewArea.innerHTML = ''; // clear existing
-        if(this.files) {
+        if (this.files) {
             Array.from(this.files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -993,13 +997,13 @@ window.filterDashboard = function(type, event) {
 
 });
 
-window.updateSCurve = function(p) {
+window.updateSCurve = function (p) {
     if (!window.sChart) return;
-    
+
     // Find min and max dates
     let minDate = new Date("2099-01-01");
     let maxDate = new Date("2000-01-01");
-    
+
     if (!p.tasks || p.tasks.length === 0) {
         window.sChart.data.labels = [];
         window.sChart.data.datasets[0].data = [];
@@ -1007,7 +1011,7 @@ window.updateSCurve = function(p) {
         window.sChart.update();
         return;
     }
-    
+
     p.tasks.forEach(t => {
         if (t.startDate) {
             let d = new Date(t.startDate);
@@ -1018,7 +1022,7 @@ window.updateSCurve = function(p) {
             if (d > maxDate) maxDate = d;
         }
     });
-    
+
     if (minDate > maxDate) {
         window.sChart.data.labels = [];
         window.sChart.data.datasets[0].data = [];
@@ -1026,44 +1030,44 @@ window.updateSCurve = function(p) {
         window.sChart.update();
         return;
     }
-    
+
     // Generate months
     let labels = [];
     let planData = [];
     let actualData = [];
-    
+
     let current = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
     const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
     const now = new Date();
-    
+
     let totalWeight = 0;
     p.tasks.forEach(t => totalWeight += parseFloat(t.weight) || 0);
-    if(totalWeight === 0) totalWeight = 100;
-    
+    if (totalWeight === 0) totalWeight = 100;
+
     let currentActualProj = 0;
     p.tasks.forEach(t => currentActualProj += ((parseFloat(t.actual) || 0) * (parseFloat(t.weight) || 0)) / 100);
     currentActualProj = (currentActualProj / totalWeight) * 100;
 
     const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     let isPastOrCurrentMonth = true;
-    
+
     while (current <= endMonth) {
         labels.push(thaiMonths[current.getMonth()] + " " + (current.getFullYear() + 543).toString().substring(2));
         let eom = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-        
+
         let monthPlan = 0;
         p.tasks.forEach(t => {
-            if(!t.startDate || !t.endDate) return;
+            if (!t.startDate || !t.endDate) return;
             let start = new Date(t.startDate);
             let end = new Date(t.endDate);
             let w = parseFloat(t.weight) || 0;
-            
+
             if (eom >= end) monthPlan += w;
             else if (eom > start) monthPlan += ((eom - start) / (end - start)) * w;
         });
-        
+
         planData.push(((monthPlan / totalWeight) * 100).toFixed(2));
-        
+
         if (isPastOrCurrentMonth) {
             if (current.getFullYear() === now.getFullYear() && current.getMonth() === now.getMonth()) {
                 actualData.push(currentActualProj.toFixed(2));
@@ -1074,7 +1078,7 @@ window.updateSCurve = function(p) {
             } else {
                 let nowPlan = 0;
                 p.tasks.forEach(t => {
-                    if(!t.startDate || !t.endDate) return;
+                    if (!t.startDate || !t.endDate) return;
                     let start = new Date(t.startDate);
                     let end = new Date(t.endDate);
                     let w = parseFloat(t.weight) || 0;
@@ -1084,7 +1088,7 @@ window.updateSCurve = function(p) {
                 nowPlan = (nowPlan / totalWeight) * 100;
                 let ratio = nowPlan > 0 ? currentActualProj / nowPlan : 0;
                 let estimatedActual = ((monthPlan / totalWeight) * 100) * ratio;
-                if(estimatedActual > currentActualProj) estimatedActual = currentActualProj;
+                if (estimatedActual > currentActualProj) estimatedActual = currentActualProj;
                 actualData.push(estimatedActual.toFixed(2));
             }
         } else {
@@ -1092,7 +1096,7 @@ window.updateSCurve = function(p) {
         }
         current.setMonth(current.getMonth() + 1);
     }
-    
+
     if (p.status === "แล้วเสร็จ") {
         actualData = planData.map(d => d);
     }
@@ -1104,9 +1108,9 @@ window.updateSCurve = function(p) {
 }
 
 // Global function to navigate from table button
-window.viewProjectDetails = function(projectId) {
+window.viewProjectDetails = function (projectId) {
     const p = projects.find(proj => proj.id === projectId);
-    if(p) {
+    if (p) {
         document.getElementById('detailProjectTitle').innerText = p.name;
         document.getElementById('detailProjectInfo').innerHTML = `
             <strong>ผู้รับเหมา:</strong> ${p.contractor} | 
@@ -1115,10 +1119,10 @@ window.viewProjectDetails = function(projectId) {
             <strong>ระยะเวลา:</strong> ${p.duration || '-'} | 
             <strong>สถานะ:</strong> ${p.status}
         `;
-        
+
         const tbody = document.getElementById('detailTaskTableBody');
         tbody.innerHTML = '';
-        if(p.tasks && p.tasks.length > 0) {
+        if (p.tasks && p.tasks.length > 0) {
             p.tasks.forEach(t => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1148,7 +1152,7 @@ window.viewProjectDetails = function(projectId) {
                 end: t.endDate,
                 progress: t.actual || 0
             }));
-            
+
             if (ganttTasks.length > 0) {
                 try {
                     ganttContainer.innerHTML = '';
@@ -1162,7 +1166,7 @@ window.viewProjectDetails = function(projectId) {
                         view_mode: 'Month',
                         date_format: 'YYYY-MM-DD',
                         language: 'en',
-                        custom_popup_html: function(task) {
+                        custom_popup_html: function (task) {
                             return `
                                 <div style="padding: 10px; border-radius: 4px; background: #fff; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: Kanit, sans-serif; min-width: 200px;">
                                     <strong style="display:block; margin-bottom: 5px; color: #742C81;">${task.name}</strong>
@@ -1175,7 +1179,7 @@ window.viewProjectDetails = function(projectId) {
                             `;
                         }
                     });
-                    
+
                     window.currentGanttTasks = ganttTasks;
                     if (typeof adjustGanttDates === 'function') {
                         adjustGanttDates(window.currentGantt, ganttTasks);
@@ -1183,8 +1187,8 @@ window.viewProjectDetails = function(projectId) {
                     if (typeof stretchGanttNative === 'function') {
                         stretchGanttNative(window.currentGantt);
                     }
-                    
-                } catch(e) {
+
+                } catch (e) {
                     console.error("Gantt Chart Error:", e);
                 }
             } else {
@@ -1203,7 +1207,7 @@ window.viewProjectDetails = function(projectId) {
                 const div = document.createElement('div');
                 div.className = 'gallery-item';
                 div.style.position = 'relative';
-                
+
                 // Keep the exact same date comparison since this is the only way to uniquely identify it without an ID
                 const deleteBtnHTML = (window.currentRole === 'admin') ? `
                     <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;">
@@ -1215,7 +1219,7 @@ window.viewProjectDetails = function(projectId) {
                         </button>
                     </div>
                 ` : '';
-                
+
                 div.innerHTML = `
                     ${deleteBtnHTML}
                     <img src="${item.url}" alt="progress" onclick="openImageModal('${item.url}')" style="cursor: zoom-in; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -1229,7 +1233,7 @@ window.viewProjectDetails = function(projectId) {
         } else {
             galleryContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1; padding: 20px;">ยังไม่มีรูปภาพความก้าวหน้า</p>';
         }
-        
+
         // Update S-Curve
         window.updateSCurve(p);
 
@@ -1238,14 +1242,14 @@ window.viewProjectDetails = function(projectId) {
             window.renderDisbursementTab(p);
         }
     }
-    
+
     // Switch the view manually since the dummy nav item is gone
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
     });
     document.getElementById('project-detail-view').classList.add('active');
     document.querySelectorAll('.top-nav li').forEach(nav => nav.classList.remove('active'));
-    
+
     // The calendar is initialized globally in DOMContentLoaded.
     // We just refetch and update size. The nav listener already does this, but doing it here again is safe.
     if (window.projectCalendar) {
@@ -1256,7 +1260,7 @@ window.viewProjectDetails = function(projectId) {
     }
 }
 
-window.editGalleryItemDesc = function(projectId, date, desc) {
+window.editGalleryItemDesc = function (projectId, date, desc) {
     if (window.currentRole !== 'admin') return;
     const p = projects.find(proj => proj.id === projectId);
     if (p && p.gallery) {
@@ -1266,9 +1270,9 @@ window.editGalleryItemDesc = function(projectId, date, desc) {
             if (newDesc !== null && newDesc.trim() !== '') {
                 p.gallery[index].desc = newDesc.trim();
                 saveProjects();
-                
+
                 window.viewProjectDetails(projectId);
-                
+
                 if (window.calendar) {
                     window.calendar.refetchEvents();
                 }
@@ -1277,7 +1281,7 @@ window.editGalleryItemDesc = function(projectId, date, desc) {
     }
 }
 
-window.deleteGalleryItem = function(projectId, date, desc) {
+window.deleteGalleryItem = function (projectId, date, desc) {
     if (confirm('คุณต้องการลบรูปภาพ/ความก้าวหน้านี้ใช่หรือไม่?')) {
         const p = projects.find(proj => proj.id === projectId);
         if (p && p.gallery) {
@@ -1286,10 +1290,10 @@ window.deleteGalleryItem = function(projectId, date, desc) {
             if (index !== -1) {
                 p.gallery.splice(index, 1);
                 saveProjects();
-                
+
                 // Re-render the detail view
                 window.viewProjectDetails(projectId);
-                
+
                 // Also trigger calendar refetch if we are on calendar view or just in background
                 if (window.calendar) {
                     window.calendar.refetchEvents();
@@ -1299,7 +1303,7 @@ window.deleteGalleryItem = function(projectId, date, desc) {
     }
 }
 
-window.changeGanttMode = function(mode) {
+window.changeGanttMode = function (mode) {
     if (window.currentGantt) {
         window.currentGantt.change_view_mode(mode);
         if (typeof adjustGanttDates === 'function' && window.currentGanttTasks) {
@@ -1311,26 +1315,26 @@ window.changeGanttMode = function(mode) {
     }
 }
 
-window.stretchGanttNative = function(gantt) {
+window.stretchGanttNative = function (gantt) {
     if (!gantt || !gantt.dates || gantt.dates.length === 0) return;
-    
+
     const wrapper = document.querySelector('#ganttChart').parentElement;
     if (!wrapper) return;
-    
+
     // The width of the area we have available
     const containerWidth = wrapper.clientWidth;
     const totalColumns = gantt.dates.length;
-    
+
     if (totalColumns > 0) {
         // Calculate needed column width to fill the container exactly
         // Subtract a little padding (e.g., 30px) so it doesn't overflow scrollbars
         const minRequiredWidth = (containerWidth - 30) / totalColumns;
-        
+
         // We restore original column width based on mode first in case it was stretched previously
         let baseWidth = 120; // default for Month/Year
         if (gantt.options.view_mode === 'Day') baseWidth = 38;
         if (gantt.options.view_mode === 'Week') baseWidth = 140;
-        
+
         // Stretch only if we have empty space
         if (minRequiredWidth > baseWidth) {
             gantt.options.column_width = minRequiredWidth;
@@ -1341,19 +1345,19 @@ window.stretchGanttNative = function(gantt) {
     }
 };
 
-window.adjustGanttDates = function(gantt, tasks) {
+window.adjustGanttDates = function (gantt, tasks) {
     if (!tasks || tasks.length === 0) return;
-    
+
     let minDate = new Date("2099-01-01");
     let maxDate = new Date("2000-01-01");
-    
+
     tasks.forEach(t => {
         let sd = new Date(t.start);
         let ed = new Date(t.end);
         if (sd < minDate) minDate = sd;
         if (ed > maxDate) maxDate = ed;
     });
-    
+
     if (gantt.options.view_mode === 'Month') {
         minDate.setDate(1); // Start of month
         maxDate.setMonth(maxDate.getMonth() + 1);
@@ -1362,10 +1366,10 @@ window.adjustGanttDates = function(gantt, tasks) {
         minDate.setDate(minDate.getDate() - 3);
         maxDate.setDate(maxDate.getDate() + 3);
     }
-    
+
     gantt.gantt_start = minDate;
     gantt.gantt_end = maxDate;
-    
+
     if (typeof gantt.setup_date_values === 'function') {
         gantt.setup_date_values();
         gantt.render();
@@ -1373,13 +1377,13 @@ window.adjustGanttDates = function(gantt, tasks) {
 };
 
 // --- Project CRUD Logic ---
-window.openProjectModal = function(id = null) {
+window.openProjectModal = function (id = null) {
     const modal = document.getElementById('projectModal');
     const form = document.getElementById('projectForm');
     const title = document.getElementById('projectModalTitle');
     const copyGroup = document.getElementById('copyTemplateProjectGroup');
     const copySelect = document.getElementById('copyTemplateProjectSelect');
-    
+
     form.reset();
     document.getElementById('projectId').value = '';
 
@@ -1399,7 +1403,7 @@ window.openProjectModal = function(id = null) {
         title.innerText = 'แก้ไขโครงการ';
         if (copyGroup) copyGroup.style.display = 'none';
         const project = projects.find(p => p.id === id);
-        if(project) {
+        if (project) {
             document.getElementById('projectId').value = project.id;
             document.getElementById('projectNameInput').value = project.name;
             document.getElementById('projectTypeInput').value = project.type || 'จ้างเหมา';
@@ -1413,20 +1417,20 @@ window.openProjectModal = function(id = null) {
         title.innerText = 'เพิ่มโครงการใหม่';
         if (copyGroup) copyGroup.style.display = 'block';
     }
-    
+
     modal.style.display = 'flex';
 };
 
-window.closeProjectModal = function() {
+window.closeProjectModal = function () {
     document.getElementById('projectModal').style.display = 'none';
 };
 
-window.deleteProject = async function(id) {
+window.deleteProject = async function (id) {
     if (confirm('คุณต้องการลบโครงการนี้ใช่หรือไม่?')) {
         try {
             const { error } = await db.from('projects').delete().eq('id', id);
             if (error) throw error;
-            
+
             projects = projects.filter(p => p.id !== id);
             window.renderTables();
         } catch (e) {
@@ -1436,7 +1440,7 @@ window.deleteProject = async function(id) {
     }
 };
 
-document.getElementById('projectForm')?.addEventListener('submit', function(e) {
+document.getElementById('projectForm')?.addEventListener('submit', function (e) {
     e.preventDefault();
     const idVal = document.getElementById('projectId').value;
     const name = document.getElementById('projectNameInput').value;
@@ -1498,7 +1502,7 @@ document.getElementById('projectForm')?.addEventListener('submit', function(e) {
 });
 
 // Copy Tasks (WBS) Modal Functions
-window.openCopyTasksModal = function(defaultTargetId = null) {
+window.openCopyTasksModal = function (defaultTargetId = null) {
     const modal = document.getElementById('copyTasksModal');
     const sourceSelect = document.getElementById('copySourceProjectSelect');
     const targetSelect = document.getElementById('copyTargetProjectSelect');
@@ -1513,7 +1517,7 @@ window.openCopyTasksModal = function(defaultTargetId = null) {
 
     projects.forEach(p => {
         const taskCount = (p.tasks && p.tasks.length) ? p.tasks.length : 0;
-        
+
         if (taskCount > 0) {
             const optS = document.createElement('option');
             optS.value = p.id;
@@ -1533,12 +1537,12 @@ window.openCopyTasksModal = function(defaultTargetId = null) {
     modal.style.display = 'flex';
 };
 
-window.closeCopyTasksModal = function() {
+window.closeCopyTasksModal = function () {
     const modal = document.getElementById('copyTasksModal');
     if (modal) modal.style.display = 'none';
 };
 
-document.getElementById('copyTasksForm')?.addEventListener('submit', async function(e) {
+document.getElementById('copyTasksForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const sourceId = parseInt(document.getElementById('copySourceProjectSelect').value);
     const targetId = parseInt(document.getElementById('copyTargetProjectSelect').value);
@@ -1568,8 +1572,8 @@ document.getElementById('copyTasksForm')?.addEventListener('submit', async funct
         return;
     }
 
-    let startTaskId = (targetProj.tasks && targetProj.tasks.length > 0) 
-        ? Math.max(...targetProj.tasks.map(t => t.id)) + 1 
+    let startTaskId = (targetProj.tasks && targetProj.tasks.length > 0)
+        ? Math.max(...targetProj.tasks.map(t => t.id)) + 1
         : 101;
 
     const clonedTasks = sourceProj.tasks.map(t => ({
@@ -1603,7 +1607,7 @@ document.getElementById('copyTasksForm')?.addEventListener('submit', async funct
 });
 
 // Dynamic task loading for Editor
-document.getElementById('editorProjectSelect')?.addEventListener('change', function(e) {
+document.getElementById('editorProjectSelect')?.addEventListener('change', function (e) {
     const projectId = parseInt(this.value);
     const p = projects.find(proj => proj.id === projectId);
     const taskSelect = document.getElementById('editorTaskSelect');
@@ -1649,23 +1653,23 @@ function renderAdminWbsTable(projectId) {
     });
 }
 
-window.editWbsTask = function(projectId, taskId) {
+window.editWbsTask = function (projectId, taskId) {
     const p = projects.find(proj => proj.id === projectId);
     if (!p || !p.tasks) return;
     const t = p.tasks.find(tk => tk.id === taskId);
     if (!t) return;
-    
+
     document.getElementById('taskNameInput').value = t.name || '';
     document.getElementById('taskDescInput').value = t.description || '';
     document.getElementById('taskStartDate').value = t.startDate || '';
     document.getElementById('taskEndDate').value = t.endDate || '';
     document.getElementById('taskWeightInput').value = t.weight || '';
     document.getElementById('taskActualAdminInput').value = t.actual || 0;
-    
-    document.getElementById('adminForm').scrollIntoView({behavior: 'smooth'});
+
+    document.getElementById('adminForm').scrollIntoView({ behavior: 'smooth' });
 }
 
-window.deleteWbsTask = function(projectId, taskId) {
+window.deleteWbsTask = function (projectId, taskId) {
     if (confirm('คุณต้องการลบแผนงานย่อยนี้ใช่หรือไม่? (ความก้าวหน้าของงานนี้จะถูกลบด้วย)')) {
         const p = projects.find(proj => proj.id === projectId);
         if (p) {
@@ -1679,7 +1683,7 @@ window.deleteWbsTask = function(projectId, taskId) {
     }
 };
 
-document.getElementById('adminProjectSelect')?.addEventListener('change', function(e) {
+document.getElementById('adminProjectSelect')?.addEventListener('change', function (e) {
     const projectId = parseInt(this.value);
     const p = projects.find(proj => proj.id === projectId);
     const hint = document.getElementById('weightHint');
@@ -1692,7 +1696,7 @@ document.getElementById('adminProjectSelect')?.addEventListener('change', functi
         hint.innerText = `(รวมแล้ว ${total.toFixed(2)}% เหลือ ${remain.toFixed(2)}%)`;
         hint.style.color = remain === 0 ? 'red' : 'var(--primary-color)';
     }
-    
+
     const datalist = document.getElementById('existingTasksList');
     if (datalist) {
         datalist.innerHTML = '';
@@ -1704,11 +1708,11 @@ document.getElementById('adminProjectSelect')?.addEventListener('change', functi
             });
         }
     }
-    
+
     renderAdminWbsTable(projectId);
 });
 
-document.getElementById('taskNameInput')?.addEventListener('input', function(e) {
+document.getElementById('taskNameInput')?.addEventListener('input', function (e) {
     const projectId = parseInt(document.getElementById('adminProjectSelect').value);
     const p = projects.find(proj => proj.id === projectId);
     if (p && p.tasks) {
@@ -1723,7 +1727,7 @@ document.getElementById('taskNameInput')?.addEventListener('input', function(e) 
 });
 
 // Admin Form (WBS Entry)
-document.getElementById('adminForm')?.addEventListener('submit', async function(e) {
+document.getElementById('adminForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const projectId = document.getElementById('adminProjectSelect').value;
     const taskName = document.getElementById('taskNameInput').value;
@@ -1743,7 +1747,7 @@ document.getElementById('adminForm')?.addEventListener('submit', async function(
         const p = projects.find(proj => proj.id === parseInt(projectId));
         if (p) {
             const existingTaskIndex = p.tasks ? p.tasks.findIndex(t => t.name === taskName) : -1;
-            
+
             let currentTotal = 0;
             if (p.tasks) {
                 currentTotal = p.tasks.reduce((sum, t, idx) => {
@@ -1752,9 +1756,9 @@ document.getElementById('adminForm')?.addEventListener('submit', async function(
                     return sum + (parseFloat(t.weight) || 0);
                 }, 0);
             }
-            
+
             if (currentTotal + weight > 100.01) {
-                alert(`ข้อผิดพลาด: ค่าน้ำหนักรวมจะเกิน 100% (ปัจจุบัน ${currentTotal}%, ใส่เพิ่มได้อีก ${Math.max(0, 100-currentTotal).toFixed(2)}%)`);
+                alert(`ข้อผิดพลาด: ค่าน้ำหนักรวมจะเกิน 100% (ปัจจุบัน ${currentTotal}%, ใส่เพิ่มได้อีก ${Math.max(0, 100 - currentTotal).toFixed(2)}%)`);
                 return;
             }
 
@@ -1768,7 +1772,7 @@ document.getElementById('adminForm')?.addEventListener('submit', async function(
                 alert(`แก้ไขข้อมูลแผนงานย่อย "${taskName}" เรียบร้อยแล้ว!`);
             } else {
                 // Add new task
-                if(!p.tasks) p.tasks = [];
+                if (!p.tasks) p.tasks = [];
                 const newTaskId = p.tasks.length > 0 ? Math.max(...p.tasks.map(t => t.id)) + 1 : 1;
                 p.tasks.push({
                     id: newTaskId, name: taskName, description: taskDesc, startDate: startDate, endDate: endDate, weight: weight, actual: actual
@@ -1788,7 +1792,7 @@ document.getElementById('adminForm')?.addEventListener('submit', async function(
 });
 
 // Editor Form (Actual Progress Entry)
-document.getElementById('editorForm')?.addEventListener('submit', async function(e) {
+document.getElementById('editorForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const projectId = document.getElementById('editorProjectSelect').value;
     const taskId = document.getElementById('editorTaskSelect').value;
@@ -1797,7 +1801,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
     const desc = document.querySelector('#editorForm textarea').value;
     const fileInput = document.querySelector('#editorForm .file-input');
     const submitBtn = document.querySelector('#editorForm button[type="submit"]');
-    
+
     if (projectId && taskId && reportDate) {
         const p = projects.find(proj => proj.id === parseInt(projectId));
         if (p) {
@@ -1811,9 +1815,9 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                 if (actualVal !== "") {
                     t.actual = parseFloat(actualVal);
                 }
-                
+
                 if (!p.gallery) p.gallery = [];
-                
+
                 const processUpdate = async () => {
                     p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
                     try {
@@ -1823,13 +1827,13 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                             alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
                             // NOTIFICATION
                             addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
-                            
+
                             document.getElementById('imagePreviewArea').innerHTML = ''; // Clear preview
                             document.getElementById('editorForm').reset();
                         } else {
                             p.gallery.pop(); // Revert the last push if save failed
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.error(e);
                         alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + e.message);
                         p.gallery.pop(); // Revert the last push
@@ -1842,7 +1846,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                 const files = fileInput.files;
                 if (files && files.length > 0) {
                     let filesProcessed = 0;
-                    
+
                     const getCanvasBlob = (canvas) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.6));
 
                     Array.from(files).forEach(file => {
@@ -1864,18 +1868,18 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                 canvas.height = height;
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0, width, height);
-                                
+
                                 const blob = await getCanvasBlob(canvas);
-                                
-                                const fileName = `${Date.now()}_${Math.floor(Math.random()*1000)}.jpg`;
+
+                                const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
                                 const folderDate = new Date().toISOString().split('T')[0];
                                 const filePath = `${folderDate}/${fileName}`;
-                                
+
                                 const { data: uploadData, error: uploadError } = await db
                                     .storage
                                     .from('project-images')
                                     .upload(filePath, blob, { contentType: 'image/jpeg' });
-                                    
+
                                 if (uploadError) {
                                     console.error('Upload Error:', uploadError);
                                     alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + uploadError.message);
@@ -1884,7 +1888,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                         .storage
                                         .from('project-images')
                                         .getPublicUrl(filePath);
-                                        
+
                                     p.gallery.push({
                                         url: publicUrl,
                                         date: reportDate,
@@ -1919,32 +1923,32 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
 });
 
 // --- Data Import ---
-document.getElementById('importExcelInput')?.addEventListener('change', function(e) {
+document.getElementById('importExcelInput')?.addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     if (typeof XLSX === 'undefined') {
         alert('ไม่พบไลบรารี SheetJS กรุณารีเฟรชหน้าเว็บ');
         return;
     }
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         try {
             const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
+            const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             const importedData = XLSX.utils.sheet_to_json(worksheet);
-            
+
             if (importedData && importedData.length > 0) {
                 const formattedProjects = importedData.map(row => {
                     let tasks = [];
                     let gallery = [];
-                    
-                    try { if (row.tasks_json) tasks = JSON.parse(row.tasks_json); } catch(e){}
-                    try { if (row.gallery_json) gallery = JSON.parse(row.gallery_json); } catch(e){}
-                    
+
+                    try { if (row.tasks_json) tasks = JSON.parse(row.tasks_json); } catch (e) { }
+                    try { if (row.gallery_json) gallery = JSON.parse(row.gallery_json); } catch (e) { }
+
                     // Allow both Thai and English column names
                     return {
                         id: row.id || row.ID || row['รหัส'] || (Math.floor(Math.random() * 1000000)),
@@ -1970,7 +1974,7 @@ document.getElementById('importExcelInput')?.addEventListener('change', function
             console.error(err);
             alert('เกิดข้อผิดพลาดในการอ่านไฟล์ Excel');
         }
-        
+
         // Reset file input so same file can be selected again
         e.target.value = '';
     };
@@ -1990,7 +1994,7 @@ window.addEventListener('beforeprint', () => {
 });
 
 // --- Report Export Functions ---
-window.downloadPDFReport = function() {
+window.downloadPDFReport = function () {
     if (typeof html2pdf === 'undefined') {
         alert('กำลังโหลดไลบรารีสำหรับสร้าง PDF กรุณารอสักครู่');
         return;
@@ -1999,26 +2003,26 @@ window.downloadPDFReport = function() {
     // Hide buttons during export
     const buttons = element.querySelectorAll('button');
     buttons.forEach(btn => btn.style.display = 'none');
-    
+
     // Force solid black text and white backgrounds
     element.classList.add('pdf-export-mode');
-    
+
     // Fix width to prevent the PDF from scaling down too much on large screens (which causes faint/tiny text)
     const originalWidth = element.style.width;
     const originalMargin = element.style.margin;
     element.style.width = '1200px';
     element.style.margin = '0 auto';
-    
+
     const projectName = document.getElementById('detailProjectTitle').innerText;
-    
+
     const opt = {
-        margin:       10,
-        filename:     `${projectName.replace(/ /g, '_')}_Report.pdf`,
-        image:        { type: 'jpeg', quality: 1.0 },
-        html2canvas:  { scale: 4, backgroundColor: '#ffffff', useCORS: true, windowWidth: 1200 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        margin: 10,
+        filename: `${projectName.replace(/ /g, '_')}_Report.pdf`,
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { scale: 4, backgroundColor: '#ffffff', useCORS: true, windowWidth: 1200 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
-    
+
     html2pdf().set(opt).from(element).save().then(() => {
         buttons.forEach(btn => btn.style.display = '');
         element.classList.remove('pdf-export-mode');
@@ -2027,23 +2031,23 @@ window.downloadPDFReport = function() {
     });
 };
 
-window.downloadExcelReport = function() {
+window.downloadExcelReport = function () {
     if (typeof XLSX === 'undefined') {
         alert('กำลังโหลดไลบรารีสำหรับสร้าง Excel กรุณารอสักครู่');
         return;
     }
-    
+
     const activeProjectName = document.getElementById('detailProjectTitle').innerText;
     // Find project by matching name exactly
     const p = projects.find(proj => activeProjectName === proj.name) || projects[0];
-    
+
     if (!p) {
         alert("ไม่พบข้อมูลโครงการ");
         return;
     }
 
     const { plan, actual } = calculateProjectProgress(p);
-    
+
     // Create Summary Data
     const summaryData = [
         { "A": "ชื่อโครงการ", "B": p.name },
@@ -2054,7 +2058,7 @@ window.downloadExcelReport = function() {
         { "A": "สถานะ", "B": p.status },
         { "A": "", "B": "" } // Blank row
     ];
-    
+
     // Create Task Data
     const taskData = (p.tasks || []).map(t => ({
         "ชื่องาน (Task)": t.name,
@@ -2065,11 +2069,11 @@ window.downloadExcelReport = function() {
     }));
 
     const wb = XLSX.utils.book_new();
-    
+
     // Insert into worksheet
     const ws = XLSX.utils.json_to_sheet(summaryData, { skipHeader: true });
-    XLSX.utils.sheet_add_json(ws, taskData, { origin: "A8" }); 
-    
+    XLSX.utils.sheet_add_json(ws, taskData, { origin: "A8" });
+
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${p.name}_WBS_Report.xlsx`);
 };
@@ -2077,26 +2081,26 @@ window.downloadExcelReport = function() {
 // --- App Notifications System ---
 let appNotifications = JSON.parse(localStorage.getItem('pcts_notifications')) || [];
 
-function addAppNotification(msg, type='info') {
+function addAppNotification(msg, type = 'info') {
     appNotifications.unshift({ msg, type, date: new Date().toISOString(), read: false });
-    if(appNotifications.length > 30) appNotifications.pop();
+    if (appNotifications.length > 30) appNotifications.pop();
     localStorage.setItem('pcts_notifications', JSON.stringify(appNotifications));
     if (typeof renderAppNotifications === 'function') renderAppNotifications();
 }
 
-window.renderAppNotifications = function() {
+window.renderAppNotifications = function () {
     const list = document.getElementById('notifList');
     const badge = document.getElementById('notifBadge');
-    if(!list || !badge) return;
-    
+    if (!list || !badge) return;
+
     list.innerHTML = '';
     let unreadCount = 0;
-    
-    if(appNotifications.length === 0) {
+
+    if (appNotifications.length === 0) {
         list.innerHTML = '<div style="padding: 15px; text-align: center; color: #777;">ไม่มีการแจ้งเตือน</div>';
     } else {
         appNotifications.forEach((n, idx) => {
-            if(!n.read) unreadCount++;
+            if (!n.read) unreadCount++;
             const item = document.createElement('div');
             item.style.padding = '10px 15px';
             item.style.borderBottom = '1px solid var(--border-color)';
@@ -2104,12 +2108,12 @@ window.renderAppNotifications = function() {
             item.style.backgroundColor = n.read ? '#fff' : '#fef9e7';
             item.style.cursor = 'pointer';
             item.innerHTML = `
-                <div style="color: ${n.type==='danger'?'#e74c3c':'#27ae60'}">${n.msg}</div>
+                <div style="color: ${n.type === 'danger' ? '#e74c3c' : '#27ae60'}">${n.msg}</div>
                 <div style="font-size: 11px; color: #999; margin-top: 5px;">${new Date(n.date).toLocaleString('th-TH')}</div>
             `;
             item.onclick = (e) => {
                 e.stopPropagation();
-                if(!n.read) {
+                if (!n.read) {
                     n.read = true;
                     localStorage.setItem('pcts_notifications', JSON.stringify(appNotifications));
                     renderAppNotifications();
@@ -2118,8 +2122,8 @@ window.renderAppNotifications = function() {
             list.appendChild(item);
         });
     }
-    
-    if(unreadCount > 0) {
+
+    if (unreadCount > 0) {
         badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
         badge.style.display = 'block';
     } else {
@@ -2127,13 +2131,13 @@ window.renderAppNotifications = function() {
     }
 }
 
-window.toggleNotifications = function() {
+window.toggleNotifications = function () {
     const dd = document.getElementById('notifDropdown');
-    if(dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
 };
 
-window.clearNotifications = function(e) {
-    if(e) e.stopPropagation();
+window.clearNotifications = function (e) {
+    if (e) e.stopPropagation();
     appNotifications = [];
     localStorage.removeItem('pcts_notifications');
     renderAppNotifications();
@@ -2142,47 +2146,47 @@ window.clearNotifications = function(e) {
 document.addEventListener('click', (e) => {
     const wrapper = document.querySelector('.notification-wrapper');
     const dd = document.getElementById('notifDropdown');
-    if(wrapper && dd && !wrapper.contains(e.target)) {
+    if (wrapper && dd && !wrapper.contains(e.target)) {
         dd.style.display = 'none';
     }
 });
 
 // --- Project Tabs ---
-window.openProjectTab = function(evt, tabName) {
+window.openProjectTab = function (evt, tabName) {
     let i, tabcontent, tablinks;
-    
+
     // Hide all tab content
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
         tabcontent[i].classList.remove("active");
     }
-    
+
     // Remove active class from all tab links
     tablinks = document.getElementsByClassName("tablinks");
     for (i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
     }
-    
+
     // Show current tab, add active class to button
     const activeTab = document.getElementById(tabName);
-    if(activeTab) {
+    if (activeTab) {
         activeTab.style.display = "block";
         activeTab.classList.add("active");
     }
-    
-    if(evt && evt.currentTarget) {
+
+    if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
     }
-    
+
     // Fix FullCalendar and Chart rendering issues when tab becomes visible
-    if(tabName === 'tabCalendar' && window.projectCalendar) {
+    if (tabName === 'tabCalendar' && window.projectCalendar) {
         setTimeout(() => {
             window.projectCalendar.updateSize();
         }, 50);
     }
-    
-    if(tabName === 'tabGantt' && window.currentGantt) {
+
+    if (tabName === 'tabGantt' && window.currentGantt) {
         setTimeout(() => {
             changeGanttMode('Month');
             window.currentGantt.render();
@@ -2191,31 +2195,31 @@ window.openProjectTab = function(evt, tabName) {
 };
 
 // --- Admin Tabs ---
-window.openAdminTab = function(evt, tabName) {
+window.openAdminTab = function (evt, tabName) {
     let i, tabcontent, tablinks;
-    
+
     // Hide all tab content
     tabcontent = document.getElementsByClassName("admin-tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
-    
+
     // Remove active class from all admin tab links
     tablinks = document.getElementsByClassName("admin-tablinks");
     for (i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
     }
-    
+
     // Show current tab, add active class to button
     const activeTab = document.getElementById(tabName);
-    if(activeTab) {
+    if (activeTab) {
         activeTab.style.display = "flex";
         activeTab.style.flexDirection = "column";
         activeTab.style.flex = "1";
         activeTab.style.overflow = "hidden";
     }
-    
-    if(evt && evt.currentTarget) {
+
+    if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
     }
 };
@@ -2223,13 +2227,13 @@ window.openAdminTab = function(evt, tabName) {
 // Call on load
 document.addEventListener('DOMContentLoaded', () => {
     renderAppNotifications();
-    
+
     // Load Settings
     const savedKey = localStorage.getItem('geminiApiKey');
     if (savedKey && document.getElementById('geminiApiKey')) {
         document.getElementById('geminiApiKey').value = savedKey;
     }
-    
+
     const savedModel = localStorage.getItem('geminiModel');
     if (savedModel && document.getElementById('geminiModelSelect')) {
         document.getElementById('geminiModelSelect').value = savedModel;
@@ -2237,8 +2241,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- Settings ---
-window.openSettingsModal = function() {
-    const savedKey = localStorage.getItem('geminiApiKey');
+window.openSettingsModal = function () {
+    const savedKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
     if (savedKey && document.getElementById('geminiApiKey')) {
         document.getElementById('geminiApiKey').value = savedKey;
     }
@@ -2249,7 +2253,7 @@ window.openSettingsModal = function() {
     document.getElementById('settingsModal').style.display = 'flex';
 };
 
-window.saveSettings = function() {
+window.saveSettings = function () {
     const key = document.getElementById('geminiApiKey').value;
     const model = document.getElementById('geminiModelSelect').value;
     localStorage.setItem('geminiApiKey', key);
@@ -2258,26 +2262,26 @@ window.saveSettings = function() {
     document.getElementById('settingsModal').style.display = 'none';
 };
 
-window.fetchGeminiModels = async function() {
+window.fetchGeminiModels = async function () {
     let apiKey = document.getElementById('geminiApiKey').value;
     if (!apiKey || apiKey.trim() === '') {
         alert('กรุณากรอก API Key ก่อนกดดึงข้อมูล');
         return;
     }
     apiKey = apiKey.trim();
-    
+
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         if (!response.ok) {
             throw new Error(`Error: ${response.status}`);
         }
         const data = await response.json();
-        
+
         const select = document.getElementById('geminiModelSelect');
         select.innerHTML = '';
-        
+
         let foundSupported = false;
-        
+
         data.models.forEach(model => {
             // We only want models that support generateContent and multimodal
             if (model.supportedGenerationMethods && model.supportedGenerationMethods.includes('generateContent') && model.name.includes('flash')) {
@@ -2289,7 +2293,7 @@ window.fetchGeminiModels = async function() {
                 foundSupported = true;
             }
         });
-        
+
         if (!foundSupported) {
             alert('ไม่พบโมเดลที่รองรับใน API Key ของคุณ ลองใช้คีย์จาก Google AI Studio');
         } else {
@@ -2305,7 +2309,7 @@ window.aiBase64Image = null;
 
 const aiImageInput = document.getElementById('aiImageInput');
 if (aiImageInput) {
-    aiImageInput.addEventListener('change', function(e) {
+    aiImageInput.addEventListener('change', function (e) {
         const file = e.target.files[0];
         if (!file) {
             window.aiBase64Image = null;
@@ -2313,9 +2317,9 @@ if (aiImageInput) {
             document.getElementById('aiImagePreview').innerHTML = '';
             return;
         }
-        
+
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
             window.aiBase64Image = event.target.result;
             document.getElementById('aiImagePreview').innerHTML = `<img src="${window.aiBase64Image}" style="max-width:100%; max-height:300px; border-radius:8px; margin-top:15px; display:block;">`;
             document.getElementById('btnAnalyzeAI').style.display = 'block';
@@ -2324,8 +2328,8 @@ if (aiImageInput) {
     });
 }
 
-window.analyzeImageWithAI = async function() {
-    let apiKey = localStorage.getItem('geminiApiKey');
+window.analyzeImageWithAI = async function () {
+    let apiKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
         alert('กรุณาตั้งค่า Google Gemini API Key ในเมนูตั้งค่าก่อนใช้งาน');
         document.getElementById('aiModal').style.display = 'none';
@@ -2333,7 +2337,7 @@ window.analyzeImageWithAI = async function() {
         return;
     }
     apiKey = apiKey.trim();
-    
+
     if (!window.aiBase64Image) {
         alert('กรุณาอัปโหลดรูปภาพก่อน');
         return;
@@ -2345,14 +2349,14 @@ window.analyzeImageWithAI = async function() {
         document.getElementById('aiModal').style.display = 'none';
         return;
     }
-    
+
     document.getElementById('aiLoading').style.display = 'block';
     document.getElementById('btnAnalyzeAI').disabled = true;
 
     try {
         const base64Data = window.aiBase64Image.split(',')[1];
         const mimeType = window.aiBase64Image.split(';')[0].split(':')[1];
-        
+
         const payload = {
             contents: [{
                 parts: [
@@ -2397,12 +2401,12 @@ window.analyzeImageWithAI = async function() {
 
         const data = await response.json();
         let aiText = data.candidates[0].content.parts[0].text;
-        
+
         // Clean up markdown block if API returned it
         aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-        
+
         const result = JSON.parse(aiText);
-        
+
         // Populate the editor form
         if (result.percent) {
             document.getElementById('taskActualInput').value = result.percent;
@@ -2410,7 +2414,7 @@ window.analyzeImageWithAI = async function() {
         if (result.details) {
             document.querySelector('#editorForm textarea').value = result.details;
         }
-        
+
         // Transfer the file to the editor form so it saves properly
         const editorFileInput = document.querySelector('#editorForm input[type="file"]');
         const aiFileInput = document.getElementById('aiImageInput');
@@ -2418,7 +2422,7 @@ window.analyzeImageWithAI = async function() {
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(aiFileInput.files[0]);
             editorFileInput.files = dataTransfer.files;
-            
+
             // Trigger change event to show preview in editor
             const event = new Event('change', { bubbles: true });
             editorFileInput.dispatchEvent(event);
@@ -2437,7 +2441,7 @@ window.analyzeImageWithAI = async function() {
 };
 
 // --- Home Navigation ---
-window.goHome = function() {
+window.goHome = function () {
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
     });
@@ -2447,22 +2451,22 @@ window.goHome = function() {
 };
 
 // --- Print Report Modal ---
-window.openPrintModal = function() {
+window.openPrintModal = function () {
     document.getElementById('printModal').style.display = 'flex';
 };
 
-window.closePrintModal = function() {
+window.closePrintModal = function () {
     document.getElementById('printModal').style.display = 'none';
 };
 
-window.toggleAllPrintSections = function(checked) {
+window.toggleAllPrintSections = function (checked) {
     document.querySelectorAll('input[name="printSection"]').forEach(cb => {
         cb.checked = checked;
     });
 };
 
 // Sync "select all" checkbox when individual checkboxes change
-document.addEventListener('change', function(e) {
+document.addEventListener('change', function (e) {
     if (e.target.name === 'printSection') {
         const all = document.querySelectorAll('input[name="printSection"]');
         const allChecked = Array.from(all).every(cb => cb.checked);
@@ -2471,9 +2475,9 @@ document.addEventListener('change', function(e) {
     }
 });
 
-window.printSelectedSections = function() {
+window.printSelectedSections = function () {
     const selected = Array.from(document.querySelectorAll('input[name="printSection"]:checked')).map(cb => cb.value);
-    
+
     if (selected.length === 0) {
         alert('\u0E01\u0E23\u0E38\u0E13\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 1 \u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D');
         return;
@@ -2489,7 +2493,7 @@ window.printSelectedSections = function() {
 
     const progress = calculateProjectProgress(p);
     const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-    
+
     // --- TEMPORARY RENDER TRICK ---
     // If the tabs were never opened, the canvas/SVG has 0 size.
     // We temporarily show them off-screen to force render.
@@ -2615,7 +2619,7 @@ window.printSelectedSections = function() {
         if (sCurveCanvas) {
             try {
                 sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
-            } catch(e) {
+            } catch (e) {
                 console.warn('Could not capture S-Curve:', e);
             }
         }
@@ -2680,7 +2684,7 @@ window.printSelectedSections = function() {
     if (selected.includes('disbursement') && p.disbursement) {
         const d = p.disbursement;
         const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num || 0);
-        
+
         let disbRows = '';
         if (d.items && d.items.length > 0) {
             d.items.forEach((item, idx) => {
@@ -2705,9 +2709,9 @@ window.printSelectedSections = function() {
         const disbCanvas = document.getElementById('disbursementChart');
         let disbImg = '';
         if (disbCanvas) {
-            try { disbImg = disbCanvas.toDataURL('image/png', 1.0); } catch(e) {}
+            try { disbImg = disbCanvas.toDataURL('image/png', 1.0); } catch (e) { }
         }
-        
+
         printContent += `
         <div class="print-section" style="page-break-before: always;">
             <h2 class="print-section-title">ข้อมูลเบิกจ่ายงบประมาณ</h2>
@@ -3047,12 +3051,12 @@ window.printSelectedSections = function() {
 let currentDisbUploadType = 'actual';
 let currentDisbWorkbook = null;
 
-window.openDisbursementUploadModal = function(type) {
+window.openDisbursementUploadModal = function (type) {
     currentDisbUploadType = type;
     document.getElementById('disbUploadTitle').innerHTML = type === 'actual' ? '<i class="fa-solid fa-upload"></i> นำเข้าข้อมูลเบิกจ่าย (092)' : '<i class="fa-solid fa-upload"></i> นำเข้าแผนเบิกจ่าย';
     document.getElementById('disbFileType').value = type;
     document.getElementById('disbFileType').disabled = true;
-    
+
     const yearSelect = document.getElementById('disbUploadYear');
     if (yearSelect.options.length === 0) {
         const currentYear = new Date().getFullYear() + 543;
@@ -3064,7 +3068,7 @@ window.openDisbursementUploadModal = function(type) {
             yearSelect.appendChild(opt);
         }
     }
-    
+
     const updateMonthTicks = () => {
         const y = yearSelect.value;
         const mData = window.currentProjectViewData?.disbursement?.monthlyData || {};
@@ -3078,10 +3082,10 @@ window.openDisbursementUploadModal = function(type) {
             }
         });
     };
-    
+
     yearSelect.onchange = updateMonthTicks;
     updateMonthTicks();
-    
+
     document.getElementById('disbMonthGroup').style.display = type === 'actual' ? 'flex' : 'none';
     document.getElementById('disbFileInput').value = '';
     document.getElementById('disbSheetSelector').style.display = 'none';
@@ -3089,53 +3093,53 @@ window.openDisbursementUploadModal = function(type) {
     document.getElementById('disbursementUploadModal').style.display = 'flex';
 };
 
-window.closeDisbursementUploadModal = function() {
+window.closeDisbursementUploadModal = function () {
     document.getElementById('disbursementUploadModal').style.display = 'none';
 };
 
-document.getElementById('disbFileInput').addEventListener('change', function(e) {
+document.getElementById('disbFileInput').addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
+        const workbook = XLSX.read(data, { type: 'array' });
         currentDisbWorkbook = workbook;
-        
+
         const sheetSelect = document.getElementById('disbSheetSelect');
         sheetSelect.innerHTML = '';
-        
+
         workbook.SheetNames.forEach(name => {
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
             sheetSelect.appendChild(option);
         });
-        
+
         if (currentDisbUploadType === 'actual') {
             const zbudr = workbook.SheetNames.find(n => n.toLowerCase().includes('zbudr092'));
             if (zbudr) sheetSelect.value = zbudr;
         } else {
             sheetSelect.value = workbook.SheetNames[0];
         }
-        
+
         document.getElementById('disbSheetSelector').style.display = 'block';
     };
     reader.readAsArrayBuffer(file);
 });
 
-document.getElementById('disbursementUploadForm').addEventListener('submit', function(e) {
+document.getElementById('disbursementUploadForm').addEventListener('submit', function (e) {
     e.preventDefault();
     if (!currentDisbWorkbook) {
         alert('กรุณาเลือกไฟล์ Excel');
         return;
     }
-    
+
     const sheetName = document.getElementById('disbSheetSelect').value;
     const worksheet = currentDisbWorkbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: null});
-    
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
+
     if (currentDisbUploadType === 'actual') {
         const monthStr = document.getElementById('disbUploadMonth').value;
         const yearStr = document.getElementById('disbUploadYear').value;
@@ -3143,7 +3147,7 @@ document.getElementById('disbursementUploadForm').addEventListener('submit', fun
     } else {
         parseDisbursementPlan(data);
     }
-    
+
     closeDisbursementUploadModal();
     saveProjects();
     if (window.currentProjectViewData) {
@@ -3155,10 +3159,10 @@ document.getElementById('disbursementUploadForm').addEventListener('submit', fun
 function parseDisbursement092(data, month) {
     if (!window.currentProjectViewData) return;
     const p = window.currentProjectViewData;
-    
+
     if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], monthlyData: {}, budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
     if (!p.disbursement.monthlyData) p.disbursement.monthlyData = {};
-    
+
     let headerRowIdx = -1;
     for (let i = 0; i < Math.min(20, data.length); i++) {
         if (data[i] && data[i].some(cell => cell && typeof cell === 'string' && (cell.includes('WBS') || cell.includes('วงเงินงบประมาณ')))) {
@@ -3166,12 +3170,12 @@ function parseDisbursement092(data, month) {
             break;
         }
     }
-    
+
     if (headerRowIdx === -1) {
         alert('ไม่พบหัวตาราง WBS หรือ วงเงินงบประมาณ ใน Sheet นี้');
         return;
     }
-    
+
     const headers = data[headerRowIdx];
     const colWbs = headers.findIndex(h => typeof h === 'string' && h.includes('WBS'));
     const colName = headers.findIndex(h => typeof h === 'string' && h.includes('รายการ'));
@@ -3182,7 +3186,7 @@ function parseDisbursement092(data, month) {
     const colCommitment = headers.findIndex(h => typeof h === 'string' && h.includes('ภาระผูกพัน'));
     const colRemaining = headers.findIndex(h => typeof h === 'string' && h.includes('วงเงินคงเหลือยังไม่ดำเนินการ'));
     const colStatus = headers.findIndex(h => typeof h === 'string' && h.includes('สถานะ'));
-    
+
     let colPR = -1, colPO = -1, colGR = -1, colIR = -1;
     for (let i = headerRowIdx; i <= headerRowIdx + 2 && i < data.length; i++) {
         const r = data[i];
@@ -3192,20 +3196,20 @@ function parseDisbursement092(data, month) {
         if (colGR === -1) colGR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('GR') || h.includes('จีอาร์') || h.includes('ตรวจรับ')));
         if (colIR === -1) colIR = r.findIndex(h => typeof h === 'string' && (h.toUpperCase().includes('IR') || h.includes('ไออาร์') || h.includes('ตั้งหนี้')));
     }
-    
+
     const monthData = {
         items: [],
         budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, commitment: 0, remaining: 0
     };
-    
+
     for (let i = headerRowIdx + 1; i < data.length; i++) {
         const row = data[i];
         if (!row || row.length === 0) continue;
-        
+
         const wbs = row[colWbs];
         if (!wbs || typeof wbs !== 'string' || !wbs.includes('I-')) continue;
         if (row[colName] && typeof row[colName] === 'string' && row[colName].startsWith('รวม')) continue;
-        
+
         const b = parseFloat(row[colBudget]) || 0;
         const pp = parseFloat(row[colPaidPrev]) || 0;
         const pc = parseFloat(row[colPaidCurr]) || 0;
@@ -3217,7 +3221,7 @@ function parseDisbursement092(data, month) {
         const ir = colIR !== -1 ? (parseFloat(row[colIR]) || 0) : 0;
         const cmt = colCommitment !== -1 ? (parseFloat(row[colCommitment]) || 0) : (pr + po + gr + ir);
         const rm = parseFloat(row[colRemaining]) || 0;
-        
+
         monthData.items.push({
             name: (row[colName] || '-').toString().trim(),
             wbs: wbs.trim(),
@@ -3234,18 +3238,18 @@ function parseDisbursement092(data, month) {
             status: (row[colStatus] || '').toString().trim()
         });
     }
-    
+
     monthData.budget = monthData.items.reduce((sum, item) => sum + item.budget, 0);
     monthData.paidPrevYear = monthData.items.reduce((sum, item) => sum + item.paidPrev, 0);
     monthData.paidCurrentYear = monthData.items.reduce((sum, item) => sum + item.paidCurr, 0);
     monthData.totalPaid = monthData.items.reduce((sum, item) => sum + item.totalPaid, 0);
     monthData.commitment = monthData.items.reduce((sum, item) => sum + (item.commitment || 0), 0);
     monthData.remaining = monthData.items.reduce((sum, item) => sum + item.remaining, 0);
-    
+
     p.disbursement.monthlyData[month] = monthData;
-    
+
     updateActualFromMonthly(p.disbursement);
-    
+
     // Set to view this month automatically
     p.disbursement.currentViewMonth = month;
     applyDisbursementMonthView(p.disbursement);
@@ -3253,14 +3257,14 @@ function parseDisbursement092(data, month) {
 
 function updateActualFromMonthly(disb) {
     if (!disb.plan || disb.plan.length === 0) {
-        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+        const displayMonths = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
         disb.plan = displayMonths.map(m => ({ month: m, year: '', amount: 0 }));
     }
-    
+
     disb.actual = disb.plan.map(pItem => {
-        const planMonthCode = pItem.month.replace(/[\.\s]/g, '').trim(); 
-        const targetMonths = ['ตค','พย','ธค','มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย'];
-        const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
+        const planMonthCode = pItem.month.replace(/[\.\s]/g, '').trim();
+        const targetMonths = ['ตค', 'พย', 'ธค', 'มค', 'กพ', 'มีค', 'เมย', 'พค', 'มิย', 'กค', 'สค', 'กย'];
+        const displayMonths = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
         const mIndex = targetMonths.indexOf(planMonthCode);
         if (mIndex !== -1) {
             let lookupKey = displayMonths[mIndex] + ' ' + (pItem.year || '');
@@ -3268,7 +3272,7 @@ function updateActualFromMonthly(disb) {
             if (disb.monthlyData[lookupKey]) {
                 return disb.monthlyData[lookupKey].totalPaid;
             }
-            
+
             const keys = Object.keys(disb.monthlyData);
             const fallbackKey = keys.find(k => k.startsWith(displayMonths[mIndex]));
             if (fallbackKey) {
@@ -3284,7 +3288,7 @@ function applyDisbursementMonthView(disb) {
     const m = disb.currentViewMonth;
     const data = disb.monthlyData[m];
     if (!data) return;
-    
+
     disb.items = data.items;
     disb.budget = data.budget;
     disb.paidPrevYear = data.paidPrevYear;
@@ -3294,12 +3298,12 @@ function applyDisbursementMonthView(disb) {
     disb.remaining = data.remaining;
 }
 
-window.changeDisbursementViewMonth = function() {
+window.changeDisbursementViewMonth = function () {
     if (!window.currentProjectViewData || !window.currentProjectViewData.disbursement) return;
     const disb = window.currentProjectViewData.disbursement;
     const select = document.getElementById('disbViewMonthSelect');
     if (select.value === 'latest') return;
-    
+
     disb.currentViewMonth = select.value;
     applyDisbursementMonthView(disb);
     window.renderDisbursementTab(window.currentProjectViewData);
@@ -3308,14 +3312,14 @@ window.changeDisbursementViewMonth = function() {
 function parseDisbursementPlan(data) {
     if (!window.currentProjectViewData) return;
     const p = window.currentProjectViewData;
-    
+
     if (!p.disbursement) p.disbursement = { items: [], plan: [], actual: [], budget: 0, paidPrevYear: 0, paidCurrentYear: 0, totalPaid: 0, remaining: 0 };
-    
+
     // Normalize string by removing dots and spaces
     const normalizeMonth = (m) => m.replace(/[\.\s]/g, '').trim();
-    const targetMonths = ['ตค','พย','ธค','มค','กพ','มีค','เมย','พค','มิย','กค','สค','กย'];
-    const displayMonths = ['ต.ค.','พ.ย.','ธ.ค.','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.'];
-    
+    const targetMonths = ['ตค', 'พย', 'ธค', 'มค', 'กพ', 'มีค', 'เมย', 'พค', 'มิย', 'กค', 'สค', 'กย'];
+    const displayMonths = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
+
     let headerRowIdx = -1;
     for (let i = 0; i < Math.min(20, data.length); i++) {
         if (data[i] && data[i].some(cell => {
@@ -3327,23 +3331,23 @@ function parseDisbursementPlan(data) {
             break;
         }
     }
-    
+
     if (headerRowIdx === -1) {
         alert('ไม่พบแถวเดือน (ต.ค., พ.ย.) ใน Sheet นี้');
         return;
     }
-    
+
     const monthRow = data[headerRowIdx];
     const yearRow = data[headerRowIdx - 1] || [];
     const planCols = [];
     let currentYear = '';
-    
+
     for (let j = 0; j < monthRow.length; j++) {
         if (yearRow[j] && typeof yearRow[j] === 'string' && yearRow[j].includes('ปี')) {
             const match = yearRow[j].match(/\d{4}/);
             if (match) currentYear = match[0];
         }
-        
+
         const cell = monthRow[j];
         if (typeof cell === 'string') {
             const norm = normalizeMonth(cell);
@@ -3353,17 +3357,17 @@ function parseDisbursementPlan(data) {
             }
         }
     }
-    
+
     p.disbursement.plan = planCols.map(c => ({ month: c.month, year: c.year, amount: 0 }));
-    
+
     const colWbs = monthRow.findIndex(h => typeof h === 'string' && h.toUpperCase().includes('WBS'));
-    
+
     for (let i = headerRowIdx + 1; i < data.length; i++) {
         const row = data[i];
         if (!row || row.length === 0) continue;
-        
+
         const hasWbs = colWbs >= 0 && row[colWbs] && typeof row[colWbs] === 'string' && row[colWbs].includes('I-');
-        
+
         if (hasWbs) {
             planCols.forEach((c, idx) => {
                 const val = parseFloat(row[c.col]);
@@ -3375,10 +3379,10 @@ function parseDisbursementPlan(data) {
     }
 }
 
-window.renderDisbursementTab = function(p) {
+window.renderDisbursementTab = function (p) {
     const d = p.disbursement;
     const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num || 0);
-    
+
     if (!d) {
         document.getElementById('disbBudget').textContent = '-';
         document.getElementById('disbPaid').textContent = '-';
@@ -3390,7 +3394,7 @@ window.renderDisbursementTab = function(p) {
         document.getElementById('disbViewMonthSelect').style.display = 'none';
         return;
     }
-    
+
     const monthSelect = document.getElementById('disbViewMonthSelect');
     if (d.monthlyData) {
         Object.keys(d.monthlyData).forEach(k => {
@@ -3399,13 +3403,13 @@ window.renderDisbursementTab = function(p) {
             }
         });
     }
-    
+
     if (d.monthlyData && Object.keys(d.monthlyData).length > 0) {
         monthSelect.style.display = 'inline-block';
         monthSelect.innerHTML = '';
-        
+
         const keys = Object.keys(d.monthlyData);
-        const monthOrder = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
         keys.sort((a, b) => {
             const partsA = a.split(' ');
             const partsB = b.split(' ');
@@ -3416,7 +3420,7 @@ window.renderDisbursementTab = function(p) {
             if (yA !== yB) return parseInt(yA) - parseInt(yB);
             return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
         });
-        
+
         keys.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m;
@@ -3427,34 +3431,34 @@ window.renderDisbursementTab = function(p) {
     } else {
         monthSelect.style.display = 'none';
     }
-    
+
     document.getElementById('disbBudget').textContent = fmt(d.budget);
     document.getElementById('disbPaid').textContent = fmt(d.totalPaid);
     document.getElementById('disbCommitment').textContent = fmt(d.commitment || 0);
     document.getElementById('disbRemaining').textContent = fmt(d.remaining);
-    
+
     const percent = d.budget ? ((d.totalPaid / d.budget) * 100).toFixed(2) : 0;
     document.getElementById('disbPercent').textContent = `${percent}%`;
-    
+
     const tbody = document.getElementById('disbursementTableBody');
     if (d.items && d.items.length > 0) {
         tbody.innerHTML = '';
         let sumBudget = 0, sumTotalPaid = 0, sumBudgetRemaining = 0, sumTotalCommitment = 0;
         let sumPr = 0, sumPo = 0, sumGr = 0, sumIr = 0, sumRemaining = 0;
-        
+
         d.items.forEach((item, idx) => {
             let statusClass = 'disb-status-open';
             if (item.status.includes('CLSD')) statusClass = 'disb-status-clsd';
             if (item.status.includes('PREL')) statusClass = 'disb-status-prel';
-            
+
             let pct = 0;
             if (item.budget && item.budget > 0) {
                 pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
             }
-            
+
             let budgetRemaining = (item.budget || 0) - (item.totalPaid || 0);
             let totalCommitment = (item.pr || 0) + (item.po || 0) + (item.gr || 0) + (item.ir || 0);
-            
+
             sumBudget += item.budget || 0;
             sumTotalPaid += item.totalPaid || 0;
             sumBudgetRemaining += budgetRemaining;
@@ -3464,7 +3468,7 @@ window.renderDisbursementTab = function(p) {
             sumGr += item.gr || 0;
             sumIr += item.ir || 0;
             sumRemaining += item.remaining || 0;
-            
+
             tbody.innerHTML += `
                 <tr>
                     <td style="text-align: center;">${idx + 1}</td>
@@ -3484,7 +3488,7 @@ window.renderDisbursementTab = function(p) {
                 </tr>
             `;
         });
-        
+
         let sumPct = sumBudget > 0 ? ((sumTotalPaid / sumBudget) * 100).toFixed(2) : 0;
         tbody.innerHTML += `
             <tr style="background-color: #f8f9fa; font-weight: bold;">
@@ -3505,46 +3509,46 @@ window.renderDisbursementTab = function(p) {
     } else {
         tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
     }
-    
+
     renderDisbursementChart(p);
 };
 
 window.disbChartInstance = null;
-window.renderDisbursementChart = function(p) {
+window.renderDisbursementChart = function (p) {
     const ctx = document.getElementById('disbursementChart');
     if (!ctx) return;
-    
+
     if (window.disbChartInstance) {
         window.disbChartInstance.destroy();
     }
-    
+
     const d = p.disbursement;
     if (!d || (!d.plan?.length && !d.items?.length)) return;
-    
+
     const labels = [];
     const planData = [];
     const actualData = [];
-    
+
     if (d.plan && d.plan.length > 0) {
         let accPlan = 0;
         let accPlanUpToViewedMonth = 0;
-        
+
         let targetMonthStr = '';
         if (d.currentViewMonth) {
             targetMonthStr = d.currentViewMonth.split(' ')[0]; // Extract "ม.ค." from "ม.ค. 2567"
         }
-        
+
         let foundViewMonthIndex = d.plan.length - 1;
         if (targetMonthStr) {
             const idx = d.plan.findIndex(p => p.month.includes(targetMonthStr));
             if (idx !== -1) foundViewMonthIndex = idx;
         }
-        
+
         d.plan.forEach((pl, idx) => {
             labels.push(`${pl.month} ${pl.year || ''}`.trim());
             accPlan += pl.amount;
             planData.push(accPlan);
-            
+
             if (idx <= foundViewMonthIndex) {
                 actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
                 accPlanUpToViewedMonth += pl.amount;
@@ -3552,18 +3556,18 @@ window.renderDisbursementChart = function(p) {
                 actualData.push(0);
             }
         });
-        
+
         const barLabel = targetMonthStr ? `สะสมถึง ${targetMonthStr}` : 'แผนรวม / จ่ายจริงปีนี้';
         labels.push(barLabel);
         planData.push(accPlanUpToViewedMonth);
         actualData.push(d.paidCurrentYear || 0);
-        
+
     } else if (d.items && d.items.length > 0) {
         labels.push('แผนรวม', 'จ่ายจริงสะสม');
         planData.push(d.budget || 0, 0);
         actualData.push(0, d.totalPaid || 0);
     }
-    
+
     window.disbChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -3592,8 +3596,8 @@ window.renderDisbursementChart = function(p) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return new Intl.NumberFormat('th-TH', { notation: "compact" , compactDisplay: "short" }).format(value);
+                        callback: function (value) {
+                            return new Intl.NumberFormat('th-TH', { notation: "compact", compactDisplay: "short" }).format(value);
                         }
                     }
                 }
@@ -3601,7 +3605,7 @@ window.renderDisbursementChart = function(p) {
             plugins: {
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return context.dataset.label + ': ' + new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(context.raw);
                         }
                     }
@@ -3612,13 +3616,13 @@ window.renderDisbursementChart = function(p) {
 };
 
 // --- AI Chatbox Logic ---
-window.populateChatboxProjects = function() {
+window.populateChatboxProjects = function () {
     const select = document.getElementById('chatProjectSelect');
     if (!select) return;
-    
+
     const currentVal = select.value;
     select.innerHTML = '<option value="all" style="color: black;">พูดคุยทั่วไป (ไม่เจาะจงโครงการ)</option>';
-    
+
     if (typeof projects !== 'undefined') {
         projects.forEach(p => {
             const opt = document.createElement('option');
@@ -3628,13 +3632,13 @@ window.populateChatboxProjects = function() {
             select.appendChild(opt);
         });
     }
-    
+
     if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
         select.value = currentVal;
     }
 };
 
-window.toggleChatbox = function() {
+window.toggleChatbox = function () {
     const chatbox = document.getElementById('chatboxPanel');
     if (chatbox.style.display === 'none' || !chatbox.style.display) {
         populateChatboxProjects();
@@ -3645,13 +3649,13 @@ window.toggleChatbox = function() {
     }
 };
 
-window.handleChatKeyPress = function(event) {
+window.handleChatKeyPress = function (event) {
     if (event.key === 'Enter') {
         sendChatMessage();
     }
 };
 
-window.sendChatMessage = function() {
+window.sendChatMessage = function () {
     const input = document.getElementById('chatInput');
     const msg = input.value.trim();
     if (!msg) return;
@@ -3675,9 +3679,9 @@ function appendMessage(text, sender) {
 }
 
 function botReply(userMsg) {
-    const apiKey = localStorage.getItem('geminiApiKey');
-    
-    if (!apiKey) {
+    const apiKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey.trim() === '') {
         appendMessage("ยังไม่ได้ตั้งค่า Google Gemini API Key ครับ กรุณาไปตั้งค่าที่ปุ่มฟันเฟือง (ตั้งค่าระบบ) ด้านบนขวาก่อนนะครับ", 'bot');
         return;
     }
@@ -3693,7 +3697,7 @@ function botReply(userMsg) {
 
     let modelName = localStorage.getItem('geminiModel') || 'gemini-3.1-flash-lite';
     // Fallback if the user typed it differently or has old model
-    if(modelName === 'gemini-1.5-flash-lite') modelName = 'gemini-3.1-flash-lite'; // Example fallback
+    if (modelName === 'gemini-1.5-flash-lite') modelName = 'gemini-3.1-flash-lite'; // Example fallback
 
     const select = document.getElementById('chatProjectSelect');
     const selectedProjectId = select ? select.value : 'all';
@@ -3705,11 +3709,11 @@ function botReply(userMsg) {
         const p = projects.find(proj => proj.id == selectedProjectId);
         if (p) {
             contextText = `ข้อมูลโครงการที่กำลังพูดถึง:\nชื่อ: ${p.name}\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\nระยะเวลา: ${p.duration || '-'}\nงบประมาณ: ${p.budget || '-'}\n`;
-            
+
             if (p.tasks && p.tasks.length > 0) {
                 contextText += "แผนงานย่อย:\n" + p.tasks.map(t => `- ${t.name}: แผน ${t.weight}% ความก้าวหน้าจริง ${t.actual}%`).join('\n') + "\n";
             }
-            
+
             if (p.disbursement) {
                 const d = p.disbursement;
                 contextText += `ข้อมูลการเบิกจ่าย (Disbursement):\n`;
@@ -3722,7 +3726,7 @@ function botReply(userMsg) {
                     contextText += `- เปอร์เซ็นต์เบิกจ่าย: ${((d.totalPaid / d.budget) * 100).toFixed(2)}%\n`;
                 }
             }
-            
+
             if (p.gallery && p.gallery.length > 0) {
                 let validImages = p.gallery.filter(g => g.url && g.url.startsWith('data:image'));
                 if (validImages.length > 0) {
@@ -3744,15 +3748,15 @@ function botReply(userMsg) {
     }
 
     const systemInstruction = "คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก";
-    
+
     let parts = [];
     if (contextText) {
         parts.push({ "text": contextText });
     }
-    
+
     // Add images
     parts = parts.concat(imageParts);
-    
+
     // Add user message
     parts.push({ "text": "คำถาม: " + userMsg });
 
@@ -3772,40 +3776,40 @@ function botReply(userMsg) {
         },
         body: JSON.stringify(requestBody)
     })
-    .then(response => response.json())
-    .then(data => {
-        const loadingEl = document.getElementById('chatLoadingIndicator');
-        if (loadingEl) loadingEl.remove();
+        .then(response => response.json())
+        .then(data => {
+            const loadingEl = document.getElementById('chatLoadingIndicator');
+            if (loadingEl) loadingEl.remove();
 
-        if (data.error) {
-            console.error('Gemini API Error:', data.error);
-            appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error.message}`, 'bot');
-        } else if (data.candidates && data.candidates.length > 0) {
-            let replyText = data.candidates[0].content.parts[0].text;
-            
-            // Format basic markdown if present (e.g. bold, line breaks)
-            replyText = replyText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            replyText = replyText.replace(/\n/g, '<br>');
+            if (data.error) {
+                console.error('Gemini API Error:', data.error);
+                appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error.message}`, 'bot');
+            } else if (data.candidates && data.candidates.length > 0) {
+                let replyText = data.candidates[0].content.parts[0].text;
 
-            // Create HTML message
-            const div = document.createElement('div');
-            div.className = 'chat-message bot';
-            div.innerHTML = replyText;
-            msgContainer.appendChild(div);
-            msgContainer.scrollTop = msgContainer.scrollHeight;
-        } else {
-            appendMessage("ไม่สามารถประมวลผลคำตอบได้ กรุณาลองใหม่อีกครั้งครับ", 'bot');
-        }
-    })
-    .catch(error => {
-        console.error('Fetch Error:', error);
-        const loadingEl = document.getElementById('chatLoadingIndicator');
-        if (loadingEl) loadingEl.remove();
-        appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
-    });
+                // Format basic markdown if present (e.g. bold, line breaks)
+                replyText = replyText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                replyText = replyText.replace(/\n/g, '<br>');
+
+                // Create HTML message
+                const div = document.createElement('div');
+                div.className = 'chat-message bot';
+                div.innerHTML = replyText;
+                msgContainer.appendChild(div);
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+            } else {
+                appendMessage("ไม่สามารถประมวลผลคำตอบได้ กรุณาลองใหม่อีกครั้งครับ", 'bot');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch Error:', error);
+            const loadingEl = document.getElementById('chatLoadingIndicator');
+            if (loadingEl) loadingEl.remove();
+            appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
+        });
 }
 
-window.openImageModal = function(url) {
+window.openImageModal = function (url) {
     const modal = document.getElementById('imageViewerModal');
     if (modal) {
         document.getElementById('imageViewerSrc').src = url;
@@ -3813,7 +3817,7 @@ window.openImageModal = function(url) {
     }
 };
 
-window.closeImageModal = function() {
+window.closeImageModal = function () {
     const modal = document.getElementById('imageViewerModal');
     if (modal) {
         modal.style.display = 'none';
@@ -3821,7 +3825,7 @@ window.closeImageModal = function() {
     }
 };
 
-window.getStatusBadgeClass = function(status) {
+window.getStatusBadgeClass = function (status) {
     if (status === 'แล้วเสร็จ') return 'status-completed';
     if (status === 'อยู่ระหว่างจัดจ้าง') return 'status-procurement';
     if (status === 'อยู่ระหว่างออกแบบประมาณการ') return 'status-design';
