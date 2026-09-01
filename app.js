@@ -1218,7 +1218,7 @@ window.viewProjectDetails = function(projectId) {
                 
                 div.innerHTML = `
                     ${deleteBtnHTML}
-                    <img src="${item.url}" alt="progress">
+                    <img src="${item.url}" alt="progress" onclick="openImageModal('${item.url}')" style="cursor: zoom-in; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                     <div class="gallery-info">
                         <p><i class="fa-regular fa-calendar"></i> ${item.date}</p>
                         <strong>${item.desc}</strong>
@@ -3792,3 +3792,19 @@ function botReply(userMsg) {
         appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
     });
 }
+
+window.openImageModal = function(url) {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        document.getElementById('imageViewerSrc').src = url;
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeImageModal = function() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('imageViewerSrc').src = '';
+    }
+};

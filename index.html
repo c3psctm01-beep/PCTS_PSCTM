@@ -894,6 +894,14 @@
         </div>
     </div>
 
+    <!-- Image Viewer Modal -->
+    <div id="imageViewerModal" class="modal" style="z-index: 10000; background-color: rgba(0,0,0,0.8);" onclick="closeImageModal()">
+        <div class="modal-content" style="background: transparent; box-shadow: none; display: flex; justify-content: center; align-items: center; height: 100%; border: none; margin: 0; width: 100%;">
+            <span class="close" onclick="closeImageModal()" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; text-shadow: 0 0 5px black;">&times;</span>
+            <img id="imageViewerSrc" src="" style="max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
