@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     /* PEA Theme Colors */
     --pea-purple: #742C81;
     --pea-purple-light: #943A9A;
@@ -276,6 +276,9 @@ html, body {
 }
 .status-active { background-color: #E8F5E9; color: #2E7D32; }
 .status-completed { background-color: #E3F2FD; color: #1565C0; }
+.status-procurement { background-color: #FFF9C4; color: #F57F17; }
+.status-design { background-color: #F3E5F5; color: #7B1FA2; }
+.status-budget { background-color: #FFF3E0; color: #E65100; }
 
 .progress-bar-container {
     width: 100%;

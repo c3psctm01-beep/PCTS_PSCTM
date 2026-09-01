@@ -1,4 +1,4 @@
-// Default Data
+﻿// Default Data
 const defaultProjects = [
     {
         id: 1,
@@ -601,7 +601,7 @@ window.filterDashboard = function(type, event) {
             }
 
             const tr = document.createElement('tr');
-            const statusClass = p.status === 'แล้วเสร็จ' ? 'status-completed' : 'status-active';
+            const statusClass = window.getStatusBadgeClass(p.status);
             const projectType = p.type || 'จ้างเหมา';
             const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
             tr.innerHTML = `
@@ -638,7 +638,7 @@ window.filterDashboard = function(type, event) {
             adminTbody.innerHTML = '';
             projects.forEach(p => {
                 const tr = document.createElement('tr');
-                const statusClass = p.status === 'แล้วเสร็จ' ? 'status-completed' : 'status-active';
+                const statusClass = window.getStatusBadgeClass(p.status);
                 const projectType = p.type || 'จ้างเหมา';
                 const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
                 tr.innerHTML = `
@@ -3807,4 +3807,12 @@ window.closeImageModal = function() {
         modal.style.display = 'none';
         document.getElementById('imageViewerSrc').src = '';
     }
+};
+
+window.getStatusBadgeClass = function(status) {
+    if (status === 'แล้วเสร็จ') return 'status-completed';
+    if (status === 'อยู่ระหว่างจัดจ้าง') return 'status-procurement';
+    if (status === 'อยู่ระหว่างออกแบบประมาณการ') return 'status-design';
+    if (status === 'อยู่ระหว่างรองบประมาณ') return 'status-budget';
+    return 'status-active';
 };
