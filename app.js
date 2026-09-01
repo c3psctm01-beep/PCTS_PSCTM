@@ -3698,6 +3698,19 @@ function botReply(userMsg) {
                 contextText += "แผนงานย่อย:\n" + p.tasks.map(t => `- ${t.name}: แผน ${t.weight}% ความก้าวหน้าจริง ${t.actual}%`).join('\n') + "\n";
             }
             
+            if (p.disbursement) {
+                const d = p.disbursement;
+                contextText += `ข้อมูลการเบิกจ่าย (Disbursement):\n`;
+                if (d.budget) contextText += `- งบประมาณอนุมัติ (WBS): ${d.budget} บาท\n`;
+                if (d.totalPaid) contextText += `- จ่ายแล้วสะสมรวม: ${d.totalPaid} บาท\n`;
+                if (d.paidPrevYear) contextText += `- จ่ายแล้วปีก่อน: ${d.paidPrevYear} บาท\n`;
+                if (d.paidCurrentYear) contextText += `- จ่ายแล้วปีนี้: ${d.paidCurrentYear} บาท\n`;
+                if (d.remaining) contextText += `- คงเหลือ: ${d.remaining} บาท\n`;
+                if (d.budget > 0 && d.totalPaid > 0) {
+                    contextText += `- เปอร์เซ็นต์เบิกจ่าย: ${((d.totalPaid / d.budget) * 100).toFixed(2)}%\n`;
+                }
+            }
+            
             if (p.gallery && p.gallery.length > 0) {
                 let validImages = p.gallery.filter(g => g.url && g.url.startsWith('data:image'));
                 if (validImages.length > 0) {
