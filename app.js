@@ -578,17 +578,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         let active = projects.filter(p => p.status === 'อยู่ระหว่างก่อสร้าง').length;
         let design = projects.filter(p => p.status === 'อยู่ระหว่างออกแบบประมาณการ').length;
         let budget = projects.filter(p => p.status === 'รองบประมาณ').length;
+        let procurement = projects.filter(p => p.status === 'อยู่ระหว่างจัดจ้าง').length;
 
         const elTotal = document.getElementById('statTotalProjects');
         const elActive = document.getElementById('statActiveProjects');
         const elDesign = document.getElementById('statDesignProjects');
         const elBudget = document.getElementById('statBudgetProjects');
+        const elProcurement = document.getElementById('statProcurementProjects');
         const elCompleted = document.getElementById('statCompletedProjects');
 
         if (elTotal) elTotal.innerText = `${total} โครงการ`;
         if (elActive) elActive.innerText = `${active} โครงการ`;
         if (elDesign) elDesign.innerText = `${design} โครงการ`;
         if (elBudget) elBudget.innerText = `${budget} โครงการ`;
+        if (elProcurement) elProcurement.innerText = `${procurement} โครงการ`;
         if (elCompleted) elCompleted.innerText = `${completed} โครงการ`;
 
         // Render Dashboard Table
