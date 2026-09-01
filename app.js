@@ -1,4 +1,4 @@
-﻿// Default Data
+// Default Data
 const defaultProjects = [
     {
         id: 1,
@@ -2237,6 +2237,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- Settings ---
+window.openSettingsModal = function() {
+    const savedKey = localStorage.getItem('geminiApiKey');
+    if (savedKey && document.getElementById('geminiApiKey')) {
+        document.getElementById('geminiApiKey').value = savedKey;
+    }
+    const savedModel = localStorage.getItem('geminiModel');
+    if (savedModel && document.getElementById('geminiModelSelect')) {
+        document.getElementById('geminiModelSelect').value = savedModel;
+    }
+    document.getElementById('settingsModal').style.display = 'flex';
+};
+
 window.saveSettings = function() {
     const key = document.getElementById('geminiApiKey').value;
     const model = document.getElementById('geminiModelSelect').value;
