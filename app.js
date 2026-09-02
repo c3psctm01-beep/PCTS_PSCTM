@@ -3668,6 +3668,7 @@ function botReply(userMsg) {
     const systemInstruction = `คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก\nข้อมูลวันและเวลาปัจจุบันของระบบคือ: ${currentTime}`;
 
     let parts = [];
+    parts.push({ "text": `[คำสั่งระบบ: ${systemInstruction}]\n\n` });
     if (contextText) {
         parts.push({ "text": contextText });
     }
@@ -3680,9 +3681,6 @@ function botReply(userMsg) {
 
     const requestBody = {
         model: modelName,
-        system_instruction: {
-            parts: [{ text: systemInstruction }]
-        },
         contents: [{
             parts: parts
         }]
