@@ -3663,7 +3663,8 @@ function botReply(userMsg) {
         }
     }
 
-    const currentTime = new Date().toLocaleString('th-TH');
+    const now = new Date();
+    const currentTime = `วันที่ ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear() + 543} (ค.ศ. ${now.getFullYear()}) เวลา ${now.toLocaleTimeString('th-TH')}`;
     const systemInstruction = `คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก\nข้อมูลวันและเวลาปัจจุบันของระบบคือ: ${currentTime}`;
 
     let parts = [];
