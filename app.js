@@ -405,6 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginForm').reset();
+            alert('เข้าสู่ระบบสำเร็จ!');
         }
     });
 
@@ -527,14 +528,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 window.updateRole(userRole);
                 if (userRole === 'admin') {
-                    alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
+                    console.log('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
                     window.loadPendingUsers(); // Load users for admin
                 } else if (userRole === 'editor') {
-                    alert('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Editor');
+                    console.log('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Editor');
                 }
             } else {
                 console.warn('Role not found or error, falling back to viewer');
-                alert('ล็อกอินสำเร็จ แต่ไม่พบสิทธิ์ของคุณในระบบ (รหัส UID อาจไม่ตรงในตาราง user_roles หรือลืมกำหนดสิทธิ์) ระบบจะให้สิทธิ์แค่ Viewer ครับ');
                 window.updateRole('viewer'); // fallback
             }
         } else {
