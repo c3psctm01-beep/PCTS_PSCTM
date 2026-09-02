@@ -3627,7 +3627,11 @@ function botReply(userMsg) {
             contextText = `ข้อมูลโครงการที่กำลังพูดถึง:\nชื่อ: ${p.name}\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\nระยะเวลา: ${p.duration || '-'} (เริ่ม: ${p.startDate || '-'} สิ้นสุด: ${p.endDate || '-'})\nงบประมาณ: ${p.budget || '-'}\n`;
 
             if (p.tasks && p.tasks.length > 0) {
-                contextText += "แผนงานย่อย:\n" + p.tasks.map(t => `- ${t.name}: แผน ${t.weight}% ความก้าวหน้าจริง ${t.actual}%`).join('\n') + "\n";
+                contextText += "แผนงานย่อย (รายละเอียดแต่ละงาน):\n" + p.tasks.map(t => {
+                    const s = t.startDate || 'ไม่ระบุ';
+                    const e = t.endDate || 'ไม่ระบุ';
+                    return `- ${t.name}: ค่าน้ำหนักความสำคัญ ${t.weight}% (หมายเหตุ: นี่คือค่าน้ำหนักงาน ไม่ใช่ % ความก้าวหน้าตามแผน), ความก้าวหน้าจริงทำได้ ${t.actual}%, กำหนดการ: เริ่ม ${s} ถึง ${e}`;
+                }).join('\n') + "\n";
             }
 
             if (p.disbursement) {
