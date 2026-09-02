@@ -3665,6 +3665,19 @@ function botReply(userMsg) {
                 }
             }
         }
+    } else if (selectedProjectId === 'all' && typeof projects !== 'undefined') {
+        contextText = "ข้อมูลภาพรวมของทุกโครงการที่มีในระบบ:\n\n";
+        projects.forEach(p => {
+            contextText += `--- โครงการ: ${p.name} ---\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\n`;
+            if (p.tasks && p.tasks.length > 0) {
+                contextText += "แผนงานย่อย (รายละเอียดแต่ละงาน):\n" + p.tasks.map(t => {
+                    const s = t.startDate || 'ไม่ระบุ';
+                    const e = t.endDate || 'ไม่ระบุ';
+                    return `- ${t.name}: ค่าน้ำหนักความสำคัญ ${t.weight}% (หมายเหตุ: นี่คือค่าน้ำหนักงาน ไม่ใช่ % ความก้าวหน้าตามแผน), ความก้าวหน้าจริงทำได้ ${t.actual}%, กำหนดการ: เริ่ม ${s} ถึง ${e}`;
+                }).join('\n') + "\n";
+            }
+            contextText += "\n";
+        });
     }
 
     const now = new Date();
