@@ -27,13 +27,13 @@ serve(async (req) => {
     })
 
     const data = await response.json()
-    
+
     if (!response.ok) {
-       console.error("Gemini API Error:", data);
-       return new Response(JSON.stringify({ error: data.error?.message || 'Failed to generate content' }), {
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-       })
+      console.error("Gemini API Error:", data);
+      return new Response(JSON.stringify({ error: data.error?.message || 'Failed to generate content' }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     return new Response(JSON.stringify(data), {

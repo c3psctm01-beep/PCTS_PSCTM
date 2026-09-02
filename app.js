@@ -3624,7 +3624,7 @@ function botReply(userMsg) {
     if (selectedProjectId !== 'all' && typeof projects !== 'undefined') {
         const p = projects.find(proj => proj.id == selectedProjectId);
         if (p) {
-            contextText = `ข้อมูลโครงการที่กำลังพูดถึง:\nชื่อ: ${p.name}\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\nระยะเวลา: ${p.duration || '-'}\nงบประมาณ: ${p.budget || '-'}\n`;
+            contextText = `ข้อมูลโครงการที่กำลังพูดถึง:\nชื่อ: ${p.name}\nสถานะ: ${p.status}\nผู้รับเหมา: ${p.contractor || '-'}\nระยะเวลา: ${p.duration || '-'} (เริ่ม: ${p.startDate || '-'} สิ้นสุด: ${p.endDate || '-'})\nงบประมาณ: ${p.budget || '-'}\n`;
 
             if (p.tasks && p.tasks.length > 0) {
                 contextText += "แผนงานย่อย:\n" + p.tasks.map(t => `- ${t.name}: แผน ${t.weight}% ความก้าวหน้าจริง ${t.actual}%`).join('\n') + "\n";
@@ -3663,7 +3663,8 @@ function botReply(userMsg) {
         }
     }
 
-    const systemInstruction = "คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก";
+    const currentTime = new Date().toLocaleString('th-TH');
+    const systemInstruction = `คุณคือ PCTS Assistant ผู้ช่วย AI สำหรับระบบติดตามโครงการก่อสร้าง PEA ตอบคำถามเป็นภาษาไทยอย่างเป็นมิตร สุภาพ และกระชับ หากมีข้อมูลโครงการหรือรูปภาพแนบมา ให้วิเคราะห์จากข้อมูลนั้นเป็นหลัก\nข้อมูลวันและเวลาปัจจุบันของระบบคือ: ${currentTime}`;
 
     let parts = [];
     if (contextText) {
