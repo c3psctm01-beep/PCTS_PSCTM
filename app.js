@@ -64,9 +64,8 @@ const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- GEMINI API KEY (HARDCODED) ---
-// นำ API Key ของคุณมาใส่ในเครื่องหมายคำพูดด้านล่างนี้ (หากใส่แล้วไม่ต้องกรอกที่หน้าเว็บอีก)
-window.GEMINI_API_KEY = "AQ.Ab8RN6L9uvz31zOl5evVdcseEHpeHd5UJ5vK6XuG5aL7ZzuGRA";
+// --- GEMINI API KEY ---
+// ไม่ควรนำ API Key มาใส่ใน Source Code เนื่องจากไม่ปลอดภัย ให้ผู้ใช้กรอกผ่านหน้าตั้งค่าแทน
 
 let projects = [];
 
@@ -2251,7 +2250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Settings ---
 window.openSettingsModal = function () {
-    const savedKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
+    const savedKey = localStorage.getItem('geminiApiKey');
     if (savedKey && document.getElementById('geminiApiKey')) {
         document.getElementById('geminiApiKey').value = savedKey;
     }
@@ -2272,45 +2271,16 @@ window.saveSettings = function () {
 };
 
 window.fetchGeminiModels = async function () {
-    let apiKey = document.getElementById('geminiApiKey').value;
-    if (!apiKey || apiKey.trim() === '') {
-        alert('กรุณากรอก API Key ก่อนกดดึงข้อมูล');
-        return;
-    }
-    apiKey = apiKey.trim();
-
-    try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`);
-        }
-        const data = await response.json();
-
-        const select = document.getElementById('geminiModelSelect');
-        select.innerHTML = '';
-
-        let foundSupported = false;
-
-        data.models.forEach(model => {
-            // We only want models that support generateContent and multimodal
-            if (model.supportedGenerationMethods && model.supportedGenerationMethods.includes('generateContent') && model.name.includes('flash')) {
-                const option = document.createElement('option');
-                const modelName = model.name.replace('models/', '');
-                option.value = modelName;
-                option.text = modelName + ' (Supported)';
-                select.appendChild(option);
-                foundSupported = true;
-            }
-        });
-
-        if (!foundSupported) {
-            alert('ไม่พบโมเดลที่รองรับใน API Key ของคุณ ลองใช้คีย์จาก Google AI Studio');
-        } else {
-            alert('ดึงรายชื่อโมเดลสำเร็จแล้ว! เลือกโมเดลที่ต้องการแล้วกดบันทึก');
-        }
-    } catch (err) {
-        alert('ดึงข้อมูลล้มเหลว ตรวจสอบ API Key หรืออินเทอร์เน็ต: ' + err.message);
-    }
+    const select = document.getElementById('geminiModelSelect');
+    select.innerHTML = '';
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+    models.forEach(modelName => {
+        const option = document.createElement('option');
+        option.value = modelName;
+        option.text = modelName + ' (Supported)';
+        select.appendChild(option);
+    });
+    alert('อัปเดตรายชื่อโมเดลแล้ว (เชื่อมต่อผ่าน Supabase)');
 };
 
 // --- AI Analysis Logic ---
@@ -2338,15 +2308,6 @@ if (aiImageInput) {
 }
 
 window.analyzeImageWithAI = async function () {
-    let apiKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
-    if (!apiKey || apiKey.trim() === '') {
-        alert('กรุณาตั้งค่า Google Gemini API Key ในเมนูตั้งค่าก่อนใช้งาน');
-        document.getElementById('aiModal').style.display = 'none';
-        document.getElementById('settingsModal').style.display = 'flex';
-        return;
-    }
-    apiKey = apiKey.trim();
-
     if (!window.aiBase64Image) {
         alert('กรุณาอัปโหลดรูปภาพก่อน');
         return;
@@ -2367,6 +2328,7 @@ window.analyzeImageWithAI = async function () {
         const mimeType = window.aiBase64Image.split(';')[0].split(':')[1];
 
         const payload = {
+            model: localStorage.getItem('geminiModel') || 'gemini-1.5-flash',
             contents: [{
                 parts: [
                     {
@@ -2390,25 +2352,13 @@ window.analyzeImageWithAI = async function () {
             }]
         };
 
-        let selectedModel = localStorage.getItem('geminiModel');
-        if (!selectedModel) {
-            selectedModel = 'gemini-1.5-flash';
-        }
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
+        const { data, error } = await db.functions.invoke('gemini-proxy', {
+            body: payload
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API Error ${response.status}: ${errorText}`);
-        }
+        if (error) throw error;
+        if (data && data.error) throw new Error(data.error);
 
-        const data = await response.json();
         let aiText = data.candidates[0].content.parts[0].text;
 
         // Clean up markdown block if API returned it
@@ -3688,13 +3638,6 @@ function appendMessage(text, sender) {
 }
 
 function botReply(userMsg) {
-    const apiKey = localStorage.getItem('geminiApiKey') || window.GEMINI_API_KEY;
-
-    if (!apiKey || apiKey.trim() === '') {
-        appendMessage("ยังไม่ได้ตั้งค่า Google Gemini API Key ครับ กรุณาไปตั้งค่าที่ปุ่มฟันเฟือง (ตั้งค่าระบบ) ด้านบนขวาก่อนนะครับ", 'bot');
-        return;
-    }
-
     // Show loading message
     const msgContainer = document.getElementById('chatboxMessages');
     const loadingDiv = document.createElement('div');
@@ -3704,9 +3647,7 @@ function botReply(userMsg) {
     msgContainer.appendChild(loadingDiv);
     msgContainer.scrollTop = msgContainer.scrollHeight;
 
-    let modelName = localStorage.getItem('geminiModel') || 'gemini-3.1-flash-lite';
-    // Fallback if the user typed it differently or has old model
-    if (modelName === 'gemini-1.5-flash-lite') modelName = 'gemini-3.1-flash-lite'; // Example fallback
+    let modelName = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
 
     const select = document.getElementById('chatProjectSelect');
     const selectedProjectId = select ? select.value : 'all';
@@ -3770,31 +3711,29 @@ function botReply(userMsg) {
     parts.push({ "text": "คำถาม: " + userMsg });
 
     const requestBody = {
-        "systemInstruction": {
-            "parts": [{ "text": systemInstruction }]
+        model: modelName,
+        systemInstruction: {
+            parts: [{ text: systemInstruction }]
         },
-        "contents": [{
-            "parts": parts
+        contents: [{
+            parts: parts
         }]
     };
 
-    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-    })
-        .then(response => response.json())
-        .then(data => {
-            const loadingEl = document.getElementById('chatLoadingIndicator');
-            if (loadingEl) loadingEl.remove();
+    db.functions.invoke('gemini-proxy', {
+        body: requestBody
+    }).then(({ data, error }) => {
+        const loadingEl = document.getElementById('chatLoadingIndicator');
+        if (loadingEl) loadingEl.remove();
 
-            if (data.error) {
-                console.error('Gemini API Error:', data.error);
-                appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error.message}`, 'bot');
-            } else if (data.candidates && data.candidates.length > 0) {
-                let replyText = data.candidates[0].content.parts[0].text;
+        if (error) {
+            console.error('Supabase Error:', error);
+            appendMessage(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message}`, 'bot');
+        } else if (data && data.error) {
+            console.error('Gemini API Error:', data.error);
+            appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error}`, 'bot');
+        } else if (data && data.candidates && data.candidates.length > 0) {
+            let replyText = data.candidates[0].content.parts[0].text;
 
                 // Format basic markdown if present (e.g. bold, line breaks)
                 replyText = replyText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
