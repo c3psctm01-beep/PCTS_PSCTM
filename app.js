@@ -3680,7 +3680,7 @@ function botReply(userMsg) {
 
     const requestBody = {
         model: modelName,
-        systemInstruction: {
+        system_instruction: {
             parts: [{ text: systemInstruction }]
         },
         contents: [{
