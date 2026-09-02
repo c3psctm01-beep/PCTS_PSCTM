@@ -2249,40 +2249,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- Settings ---
-window.openSettingsModal = function () {
-    const savedKey = localStorage.getItem('geminiApiKey');
-    if (savedKey && document.getElementById('geminiApiKey')) {
-        document.getElementById('geminiApiKey').value = savedKey;
-    }
-    const savedModel = localStorage.getItem('geminiModel');
-    if (savedModel && document.getElementById('geminiModelSelect')) {
-        document.getElementById('geminiModelSelect').value = savedModel;
-    }
-    document.getElementById('settingsModal').style.display = 'flex';
-};
-
-window.saveSettings = function () {
-    const key = document.getElementById('geminiApiKey').value;
-    const model = document.getElementById('geminiModelSelect').value;
-    localStorage.setItem('geminiApiKey', key);
-    localStorage.setItem('geminiModel', model);
-    alert('บันทึกการตั้งค่าเรียบร้อยแล้ว');
-    document.getElementById('settingsModal').style.display = 'none';
-};
-
-window.fetchGeminiModels = async function () {
-    const select = document.getElementById('geminiModelSelect');
-    select.innerHTML = '';
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
-    models.forEach(modelName => {
-        const option = document.createElement('option');
-        option.value = modelName;
-        option.text = modelName + ' (Supported)';
-        select.appendChild(option);
-    });
-    alert('อัปเดตรายชื่อโมเดลแล้ว (เชื่อมต่อผ่าน Supabase)');
-};
-
 // --- AI Analysis Logic ---
 window.aiBase64Image = null;
 

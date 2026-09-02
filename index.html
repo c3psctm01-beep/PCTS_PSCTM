@@ -72,9 +72,7 @@
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-secondary role-admin" onclick="openSettingsModal()" style="padding: 6px 12px; font-size: 12px;" title="ตั้งค่าระบบ">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
+
                     <div id="authButtons" style="display: flex; gap: 10px;">
                     <div class="user-profile" style="display: flex; align-items: center; gap: 15px;">
                         <span id="currentUserRole" style="font-size: 11px; font-weight: 600;">Viewer</span>
@@ -763,28 +761,7 @@
     </div>
     
     <!-- Modal for Settings -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content card" style="max-width: 500px;">
-            <span class="close-modal" onclick="document.getElementById('settingsModal').style.display='none'">&times;</span>
-            <h2>ตั้งค่าระบบ</h2>
-            <div class="pea-form mt-4">
-                <div class="form-group">
-                    <label>Google Gemini API Key</label>
-                    <input type="password" id="geminiApiKey" placeholder="ใส่ API Key ที่นี่...">
-                    <small style="color: var(--text-secondary);">คีย์นี้จะถูกเก็บไว้ในเครื่องของคุณเท่านั้น</small>
-                </div>
-                <div class="form-group">
-                    <label>AI Model</label>
-                    <div style="display: flex; gap: 10px;">
-                        <select id="geminiModelSelect" style="flex: 1;">
-                            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="saveSettings()">บันทึกการตั้งค่า</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Modal for AI CCTV Upload -->
     <div id="aiModal" class="modal">
