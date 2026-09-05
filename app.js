@@ -56,7 +56,65 @@ const defaultProjects = [
                 taskId: 103,
                 taskName: "ขนย้ายติดตั้งฐานราก"
             }
-        ]
+        ],
+        disbursement: {
+            budget: 45000000,
+            paidPrevYear: 12000000,
+            paidCurrentYear: 8500000,
+            totalPaid: 20500000,
+            commitment: 14200000,
+            remaining: 10300000,
+            currentViewMonth: "ก.ค. 2569",
+            monthlyData: {
+                "ก.ค. 2569": {
+                    budget: 45000000,
+                    totalPaid: 20500000,
+                    commitment: 14200000,
+                    remaining: 10300000
+                }
+            },
+            items: [
+                {
+                    name: "งานจัดซื้อที่ดินและปรับปรุงพื้นที่",
+                    wbs: "I-260101-01",
+                    budget: 15000000,
+                    totalPaid: 12000000,
+                    commitment: 2500000,
+                    pr: 0,
+                    po: 2500000,
+                    gr: 0,
+                    ir: 0,
+                    remaining: 500000,
+                    status: "CLSD"
+                },
+                {
+                    name: "งานก่อสร้างสถานีไฟฟ้าและฐานรากอุปกรณ์",
+                    wbs: "I-260101-02",
+                    budget: 18000000,
+                    totalPaid: 6500000,
+                    commitment: 8200000,
+                    pr: 1200000,
+                    po: 5000000,
+                    gr: 1500000,
+                    ir: 500000,
+                    remaining: 3300000,
+                    status: "REL"
+                },
+                {
+                    name: "งานจัดหาและติดตั้งหม้อแปลงและอุปกรณ์ไฟฟ้า 115 kV",
+                    wbs: "I-260101-03",
+                    budget: 12000000,
+                    totalPaid: 2000000,
+                    commitment: 3500000,
+                    pr: 500000,
+                    po: 2000000,
+                    gr: 800000,
+                    ir: 200000,
+                    remaining: 6500000,
+                    status: "PREL"
+                }
+            ]
+        }
     },
     {
         id: 2,
@@ -138,7 +196,7 @@ window.loadProjects = async function () {
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
-                    disbursement: dbProj.disbursement || null
+                    disbursement: (dbProj.disbursement && dbProj.disbursement.items && dbProj.disbursement.items.length > 0) ? dbProj.disbursement : (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || dbProj.disbursement || null)
                 };
             });
         } else {
@@ -2872,8 +2930,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('geminiApiKey').value = savedKey;
     }
 
-    const savedModel = localStorage.getItem('geminiModel');
-    if (savedModel && document.getElementById('geminiModelSelect')) {
+    let savedModel = localStorage.getItem('geminiModel');
+    if (!savedModel || ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash'].includes(savedModel)) {
+        savedModel = 'gemini-3.6-flash';
+        localStorage.setItem('geminiModel', 'gemini-3.6-flash');
+    }
+    if (document.getElementById('geminiModelSelect')) {
         document.getElementById('geminiModelSelect').value = savedModel;
     }
 });
@@ -2923,8 +2985,14 @@ window.analyzeImageWithAI = async function () {
         const base64Data = window.aiBase64Image.split(',')[1];
         const mimeType = window.aiBase64Image.split(';')[0].split(':')[1];
 
+        let modelName = localStorage.getItem('geminiModel') || 'gemini-3.6-flash';
+        if (!modelName || ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash'].includes(modelName)) {
+            modelName = 'gemini-3.6-flash';
+            localStorage.setItem('geminiModel', 'gemini-3.6-flash');
+        }
+
         const payload = {
-            model: localStorage.getItem('geminiModel') || 'gemini-1.5-flash',
+            model: modelName,
             contents: [{
                 parts: [
                     {
@@ -2952,7 +3020,16 @@ window.analyzeImageWithAI = async function () {
             body: payload
         });
 
-        if (error) throw error;
+        if (error) {
+            let errMsg = error.message;
+            if (error.context && typeof error.context.json === 'function') {
+                try {
+                    const errData = await error.context.json();
+                    if (errData && errData.error) errMsg = errData.error;
+                } catch (_) { }
+            }
+            throw new Error(errMsg);
+        }
         if (data && data.error) throw new Error(data.error);
 
         let aiText = data.candidates[0].content.parts[0].text;
@@ -3108,24 +3185,349 @@ window.printSelectedSections = function () {
         }
     }
 
-    // Capture S-Curve and Disbursement images
-    let sCurveImg = '';
-    const sCurveCanvas = document.getElementById('sCurveChart');
-    if (sCurveCanvas && selected.includes('scurve')) {
+    // Helper to generate guaranteed high-resolution S-Curve chart image
+    function getSCurvePrintImage(proj) {
+        if (typeof Chart === 'undefined') return '';
         try {
-            sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
-        } catch (e) {
-            console.warn('Could not capture S-Curve chart:', e);
+            let labels = window.sChart?.data?.labels || [];
+            let planData = window.sChart?.data?.datasets?.[0]?.data || [];
+            let actualData = window.sChart?.data?.datasets?.[1]?.data || [];
+
+            // If sChart data is missing or empty, calculate directly from proj.tasks
+            if (labels.length === 0 && proj && proj.tasks && proj.tasks.length > 0) {
+                let minDate = new Date("2099-01-01");
+                let maxDate = new Date("2000-01-01");
+                proj.tasks.forEach(t => {
+                    if (t.startDate) {
+                        let d = new Date(t.startDate);
+                        if (d < minDate) minDate = d;
+                    }
+                    if (t.endDate) {
+                        let d = new Date(t.endDate);
+                        if (d > maxDate) maxDate = d;
+                    }
+                });
+
+                if (minDate <= maxDate) {
+                    let current = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+                    const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+                    const now = new Date();
+                    let totalWeight = 0;
+                    proj.tasks.forEach(t => totalWeight += parseFloat(t.weight) || 0);
+                    if (totalWeight === 0) totalWeight = 100;
+
+                    let currentActualProj = 0;
+                    proj.tasks.forEach(t => currentActualProj += ((parseFloat(t.actual) || 0) * (parseFloat(t.weight) || 0)) / 100);
+                    currentActualProj = (currentActualProj / totalWeight) * 100;
+
+                    const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+                    let isPastOrCurrentMonth = true;
+
+                    while (current <= endMonth) {
+                        labels.push(thaiMonths[current.getMonth()] + " " + (current.getFullYear() + 543).toString().substring(2));
+                        let eom = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+                        let monthPlan = 0;
+                        proj.tasks.forEach(t => {
+                            if (!t.startDate || !t.endDate) return;
+                            let start = new Date(t.startDate);
+                            let end = new Date(t.endDate);
+                            let w = parseFloat(t.weight) || 0;
+                            if (eom >= end) monthPlan += w;
+                            else if (eom > start) monthPlan += ((eom - start) / (end - start)) * w;
+                        });
+
+                        planData.push(((monthPlan / totalWeight) * 100).toFixed(2));
+
+                        if (isPastOrCurrentMonth) {
+                            if (current.getFullYear() === now.getFullYear() && current.getMonth() === now.getMonth()) {
+                                actualData.push(currentActualProj.toFixed(2));
+                                isPastOrCurrentMonth = false;
+                            } else if (current > now) {
+                                isPastOrCurrentMonth = false;
+                                actualData.push(null);
+                            } else {
+                                let nowPlan = 0;
+                                proj.tasks.forEach(t => {
+                                    if (!t.startDate || !t.endDate) return;
+                                    let start = new Date(t.startDate);
+                                    let end = new Date(t.endDate);
+                                    let w = parseFloat(t.weight) || 0;
+                                    if (now >= end) nowPlan += w;
+                                    else if (now > start) nowPlan += ((now - start) / (end - start)) * w;
+                                });
+                                nowPlan = (nowPlan / totalWeight) * 100;
+                                let ratio = nowPlan > 0 ? currentActualProj / nowPlan : 0;
+                                let estimatedActual = ((monthPlan / totalWeight) * 100) * ratio;
+                                if (estimatedActual > currentActualProj) estimatedActual = currentActualProj;
+                                actualData.push(estimatedActual.toFixed(2));
+                            }
+                        } else {
+                            actualData.push(null);
+                        }
+                        current.setMonth(current.getMonth() + 1);
+                    }
+
+                    if (proj.status === "แล้วเสร็จ") {
+                        actualData = planData.map(d => d);
+                    }
+                }
+            }
+
+            if (labels.length === 0) return '';
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = 1100;
+            offCanvas.height = 430;
+            const ctx = offCanvas.getContext('2d');
+
+            // White background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, 1100, 430);
+
+            // Gradients
+            const gradPurple = ctx.createLinearGradient(0, 0, 0, 390);
+            gradPurple.addColorStop(0, 'rgba(116, 44, 129, 0.35)');
+            gradPurple.addColorStop(0.7, 'rgba(116, 44, 129, 0.06)');
+            gradPurple.addColorStop(1, 'rgba(116, 44, 129, 0.0)');
+
+            const gradGold = ctx.createLinearGradient(0, 0, 0, 390);
+            gradGold.addColorStop(0, 'rgba(243, 156, 18, 0.22)');
+            gradGold.addColorStop(0.7, 'rgba(243, 156, 18, 0.04)');
+            gradGold.addColorStop(1, 'rgba(243, 156, 18, 0.0)');
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'แผนงาน (Plan) %',
+                            data: planData,
+                            borderColor: '#F39C12',
+                            backgroundColor: gradGold,
+                            borderWidth: 3,
+                            borderDash: [6, 4],
+                            fill: true,
+                            tension: 0.38,
+                            pointRadius: 4.5,
+                            pointBackgroundColor: '#F39C12',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'ผลงานจริง (Actual) %',
+                            data: actualData,
+                            borderColor: '#742C81',
+                            backgroundColor: gradPurple,
+                            borderWidth: 3.5,
+                            fill: true,
+                            tension: 0.38,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#742C81',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    animation: false,
+                    layout: {
+                        padding: { top: 15, right: 30, bottom: 15, left: 15 }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                font: { family: 'Prompt, sans-serif', size: 12, weight: '600' },
+                                color: '#64748B'
+                            },
+                            grid: { color: '#E2E8F0' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Prompt, sans-serif', size: 12, weight: '600' },
+                                color: '#334155'
+                            },
+                            grid: { color: '#F1F5F9' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Prompt, sans-serif', size: 13, weight: '600' },
+                                color: '#1E293B',
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+
+            const imgData = offCanvas.toDataURL('image/png', 1.0);
+            chart.destroy();
+            return imgData;
+        } catch (err) {
+            console.error('Error generating print S-Curve image:', err);
+            return '';
+        }
+    }
+
+    // Helper to generate guaranteed high-resolution Disbursement chart image
+    function getDisbursementPrintImage(proj) {
+        if (typeof Chart === 'undefined') return '';
+        try {
+            let labels = window.disbChartInstance?.data?.labels || [];
+            let planData = window.disbChartInstance?.data?.datasets?.[0]?.data || [];
+            let actualData = window.disbChartInstance?.data?.datasets?.[1]?.data || [];
+
+            const d = proj.disbursement;
+            if (labels.length === 0 && d) {
+                if (d.plan && d.plan.length > 0) {
+                    let accPlan = 0;
+                    let accPlanUpToViewedMonth = 0;
+                    let targetMonthStr = d.currentViewMonth ? d.currentViewMonth.split(' ')[0] : '';
+                    let foundViewMonthIndex = d.plan.length - 1;
+                    if (targetMonthStr) {
+                        const idx = d.plan.findIndex(pl => pl.month.includes(targetMonthStr));
+                        if (idx !== -1) foundViewMonthIndex = idx;
+                    }
+
+                    d.plan.forEach((pl, idx) => {
+                        labels.push(`${pl.month} ${pl.year || ''}`.trim());
+                        accPlan += pl.amount;
+                        planData.push(accPlan);
+                        if (idx <= foundViewMonthIndex) {
+                            actualData.push(d.actual && d.actual[idx] ? d.actual[idx] : 0);
+                            accPlanUpToViewedMonth += pl.amount;
+                        } else {
+                            actualData.push(0);
+                        }
+                    });
+
+                    const barLabel = targetMonthStr ? `สะสมถึง ${targetMonthStr}` : 'แผนรวม / จ่ายจริงปีนี้';
+                    labels.push(barLabel);
+                    planData.push(accPlanUpToViewedMonth);
+                    actualData.push(d.paidCurrentYear || 0);
+                } else if (d.items && d.items.length > 0) {
+                    labels.push('แผนรวม', 'จ่ายจริงสะสม');
+                    planData.push(d.budget || 0, 0);
+                    actualData.push(0, d.totalPaid || 0);
+                }
+            }
+
+            if (labels.length === 0) return '';
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = 1100;
+            offCanvas.height = 360;
+            const ctx = offCanvas.getContext('2d');
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, 1100, 360);
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'แผนเบิกจ่าย',
+                            data: planData,
+                            backgroundColor: 'rgba(41, 128, 185, 0.75)',
+                            borderColor: 'rgba(41, 128, 185, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'จ่ายจริง',
+                            data: actualData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    animation: false,
+                    layout: {
+                        padding: { top: 15, right: 25, bottom: 15, left: 15 }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (val) {
+                                    if (val >= 1000000) return (val / 1000000).toFixed(0) + 'M';
+                                    if (val >= 1000) return (val / 1000).toFixed(0) + 'k';
+                                    return val;
+                                },
+                                font: { family: 'Prompt, sans-serif', size: 11 },
+                                color: '#64748B'
+                            },
+                            grid: { color: '#E2E8F0' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { family: 'Prompt, sans-serif', size: 11, weight: '600' },
+                                color: '#334155'
+                            },
+                            grid: { color: '#F1F5F9' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { family: 'Prompt, sans-serif', size: 12, weight: '600' },
+                                color: '#1E293B',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+
+            const imgData = offCanvas.toDataURL('image/png', 1.0);
+            chart.destroy();
+            return imgData;
+        } catch (err) {
+            console.error('Error generating print disbursement image:', err);
+            return '';
+        }
+    }
+
+    // Capture S-Curve and Disbursement images with guaranteed offscreen render
+    let sCurveImg = '';
+    if (selected.includes('scurve')) {
+        const sCurveCanvas = document.getElementById('sCurveChart');
+        if (sCurveCanvas && sCurveCanvas.width > 50 && sCurveCanvas.height > 50) {
+            try {
+                sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
+            } catch (e) {}
+        }
+        if (!sCurveImg || sCurveImg === 'data:,' || sCurveImg.length < 100) {
+            sCurveImg = getSCurvePrintImage(p);
         }
     }
 
     let disbImg = '';
-    const disbCanvas = document.getElementById('disbursementChart');
-    if (disbCanvas && selected.includes('disbursement')) {
-        try {
-            disbImg = disbCanvas.toDataURL('image/png', 1.0);
-        } catch (e) {
-            console.warn('Could not capture Disbursement chart:', e);
+    if (selected.includes('disbursement')) {
+        const disbCanvas = document.getElementById('disbursementChart');
+        if (disbCanvas && disbCanvas.width > 50 && disbCanvas.height > 50) {
+            try {
+                disbImg = disbCanvas.toDataURL('image/png', 1.0);
+            } catch (e) {}
+        }
+        if (!disbImg || disbImg === 'data:,' || disbImg.length < 100) {
+            disbImg = getDisbursementPrintImage(p);
         }
     }
 
@@ -3344,16 +3746,34 @@ window.printSelectedSections = function () {
 
     // --- 6. Gantt Chart Section ---
     if (selected.includes('gantt')) {
-        const ganttSvg = document.querySelector('#ganttChart');
         let ganttContent = '';
+        const allTasks = p.tasks || [];
+
+        // Ensure window.currentGantt is stretched to full printable width (~1440px)
+        if (window.currentGantt) {
+            try {
+                const numCols = (window.currentGantt.dates && window.currentGantt.dates.length > 0) ? window.currentGantt.dates.length : 8;
+                const targetColWidth = Math.max(160, Math.floor(1440 / numCols));
+                window.currentGantt.options.column_width = targetColWidth;
+                window.currentGantt.render();
+            } catch (err) {
+                console.warn('Gantt render error before print:', err);
+            }
+        }
+
+        const ganttSvg = document.querySelector('#ganttChart');
         if (ganttSvg && ganttSvg.innerHTML.trim()) {
             const svgClone = ganttSvg.cloneNode(true);
-            const w = ganttSvg.getAttribute('width') || ganttSvg.getBoundingClientRect().width || 1100;
-            const h = ganttSvg.getAttribute('height') || ganttSvg.getBoundingClientRect().height || 500;
+            const gridBg = ganttSvg.querySelector('.grid-background');
+            const w = gridBg ? parseFloat(gridBg.getAttribute('width')) : (parseFloat(ganttSvg.getAttribute('width')) || 1440);
+            const h = parseFloat(ganttSvg.getAttribute('height')) || 690;
+
             svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
-            svgClone.setAttribute('width', '100%');
-            svgClone.setAttribute('height', 'auto');
-            svgClone.style.maxHeight = '520px';
+            svgClone.removeAttribute('width');
+            svgClone.removeAttribute('height');
+            svgClone.style.width = '100%';
+            svgClone.style.height = 'auto';
+            svgClone.style.display = 'block';
 
             // Explicitly set presentation fill and stroke attributes on elements so print engines render colors
             svgClone.querySelectorAll('.grid-background').forEach(el => el.setAttribute('fill', '#ffffff'));
@@ -3402,6 +3822,15 @@ window.printSelectedSections = function () {
             <div class="print-section-header">
                 <span class="section-icon"><i class="fa-solid fa-chart-gantt"></i></span>
                 <h2 class="print-section-title">แผนผังการดำเนินงานแกนต์ชาร์ต (Gantt Chart Timeline)</h2>
+            </div>
+            <div class="gantt-print-header-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 11.5px; color: #475569;">
+                    <i class="fa-solid fa-list-check" style="color: #742C81;"></i> แผนงานย่อยทั้งหมด: <strong>${allTasks.length} รายการ</strong>
+                </div>
+                <div style="display: flex; gap: 14px; font-size: 11px;">
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 10px; border-radius: 2px; background: #742C81; display: inline-block;"></span> ผลงานจริงสะสม (Actual)</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 10px; border-radius: 2px; background: #E2E8F0; display: inline-block;"></span> แผนงานตามกำหนดการ (Plan)</span>
+                </div>
             </div>
             <div class="gantt-box-print">
                 ${ganttContent || '<p class="no-data-msg">ไม่มีข้อมูลผังแกนต์ชาร์ต</p>'}
@@ -3537,45 +3966,93 @@ window.printSelectedSections = function () {
         const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(num || 0);
 
         let disbRows = '';
+        let sumBudget = 0, sumTotalPaid = 0, sumTotalCommitment = 0;
+        let sumPr = 0, sumPo = 0, sumGr = 0, sumIr = 0, sumRemaining = 0;
+
         if (d.items && d.items.length > 0) {
             d.items.forEach((item, idx) => {
-                let pct = 0;
-                if (item.budget && item.budget > 0) pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
+                const b = parseFloat(item.budget) || 0;
+                const tp = parseFloat(item.totalPaid) || 0;
+                const pr = parseFloat(item.pr) || 0;
+                const po = parseFloat(item.po) || 0;
+                const gr = parseFloat(item.gr) || 0;
+                const ir = parseFloat(item.ir) || 0;
+                const cmt = item.commitment !== undefined && item.commitment !== null && !isNaN(parseFloat(item.commitment))
+                            ? parseFloat(item.commitment)
+                            : (pr + po + gr + ir);
+                const rm = parseFloat(item.remaining) || 0;
+                const pct = b > 0 ? ((tp / b) * 100).toFixed(2) : '0.00';
+
+                sumBudget += b;
+                sumTotalPaid += tp;
+                sumTotalCommitment += cmt;
+                sumPr += pr;
+                sumPo += po;
+                sumGr += gr;
+                sumIr += ir;
+                sumRemaining += rm;
+
+                let statusClass = 'badge-pending';
+                if (item.status && item.status.includes('CLSD')) statusClass = 'badge-success';
+                else if (item.status && (item.status.includes('REL') || item.status.includes('PREL'))) statusClass = 'badge-status';
+
                 disbRows += `
                     <tr>
                         <td class="text-center">${idx + 1}</td>
                         <td><strong>${item.name}</strong></td>
                         <td class="text-center"><code>${item.wbs || '-'}</code></td>
-                        <td class="text-right">${fmt(item.budget)}</td>
-                        <td class="text-right text-success font-bold">${fmt(item.totalPaid)}</td>
-                        <td class="text-right text-danger">${fmt(item.remaining)}</td>
+                        <td class="text-right">${fmt(b)}</td>
+                        <td class="text-right text-success font-bold">${fmt(tp)}</td>
+                        <td class="text-right text-amber font-bold">${fmt(cmt)}</td>
+                        <td class="text-right">${fmt(pr)}</td>
+                        <td class="text-right">${fmt(po)}</td>
+                        <td class="text-right">${fmt(gr)}</td>
+                        <td class="text-right">${fmt(ir)}</td>
+                        <td class="text-right text-danger">${fmt(rm)}</td>
                         <td class="text-center font-bold">${pct}%</td>
-                        <td class="text-center"><span class="badge-status">${item.status || '-'}</span></td>
+                        <td class="text-center"><span class="${statusClass}">${item.status || '-'}</span></td>
                     </tr>`;
             });
         } else {
-            disbRows = '<tr><td colspan="8" class="text-center" style="color: #94A3B8; padding: 20px;">ยังไม่มีข้อมูลรายการเบิกจ่ายงบประมาณ</td></tr>';
+            disbRows = '<tr><td colspan="13" class="text-center" style="color: #94A3B8; padding: 20px;">ยังไม่มีข้อมูลรายการเบิกจ่ายงบประมาณ</td></tr>';
         }
+
+        const overallBudget = parseFloat(d.budget) || sumBudget;
+        const overallPaid = parseFloat(d.totalPaid) || sumTotalPaid;
+        const overallCommitment = (d.commitment !== undefined && d.commitment !== null && !isNaN(parseFloat(d.commitment)) && parseFloat(d.commitment) > 0)
+            ? parseFloat(d.commitment)
+            : sumTotalCommitment;
+        const overallRemaining = parseFloat(d.remaining) || sumRemaining;
+        const overallPct = overallBudget > 0 ? ((overallPaid / overallBudget) * 100).toFixed(2) : '0.00';
 
         printContent += `
         <div class="print-section" style="page-break-before: always;">
             <div class="print-section-header">
                 <span class="section-icon"><i class="fa-solid fa-coins"></i></span>
-                <h2 class="print-section-title">ข้อมูลการเบิกจ่ายงบประมาณโครงการ (Disbursement Summary)</h2>
+                <h2 class="print-section-title">ข้อมูลการเบิกจ่ายงบประมาณโครงการและภาระผูกพัน (Disbursement & Commitments)</h2>
             </div>
             
             <div class="print-disb-kpi-grid">
                 <div class="print-disb-kpi-card" style="border-left: 4px solid #2563EB;">
                     <span class="kpi-label">วงเงินงบประมาณทั้งสิ้น</span>
-                    <span class="kpi-val" style="color: #2563EB;">${fmt(d.budget)}</span>
+                    <span class="kpi-val" style="color: #2563EB;">${fmt(overallBudget)}</span>
                 </div>
                 <div class="print-disb-kpi-card" style="border-left: 4px solid #10B981;">
                     <span class="kpi-label">เบิกจ่ายจริงสะสม</span>
-                    <span class="kpi-val" style="color: #10B981;">${fmt(d.totalPaid)}</span>
+                    <span class="kpi-val" style="color: #10B981;">${fmt(overallPaid)}</span>
+                </div>
+                <div class="print-disb-kpi-card" style="border-left: 4px solid #D97706; background: #FFFBEB;">
+                    <span class="kpi-label">ผลรวมภาระผูกพัน (Commitment)</span>
+                    <span class="kpi-val" style="color: #D97706;">${fmt(overallCommitment)}</span>
+                    <span style="font-size: 9px; color: #B45309; display: block; margin-top: 2px;">PR + PO + GR + IR</span>
                 </div>
                 <div class="print-disb-kpi-card" style="border-left: 4px solid #EF4444;">
                     <span class="kpi-label">งบประมาณคงเหลือ</span>
-                    <span class="kpi-val" style="color: #EF4444;">${fmt(d.remaining)}</span>
+                    <span class="kpi-val" style="color: #EF4444;">${fmt(overallRemaining)}</span>
+                </div>
+                <div class="print-disb-kpi-card" style="border-left: 4px solid #742C81;">
+                    <span class="kpi-label">ร้อยละการเบิกจ่าย</span>
+                    <span class="kpi-val" style="color: #742C81;">${overallPct}%</span>
                 </div>
             </div>
 
@@ -3584,22 +4061,42 @@ window.printSelectedSections = function () {
                 <img src="${disbImg}" alt="Disbursement Chart" class="print-chart-img" style="max-height: 380px;">
             </div>` : ''}
             
-            <table class="wbs-table">
+            <table class="wbs-table" style="font-size: 10.5px;">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">#</th>
+                        <th style="width: 30px;">#</th>
                         <th>รายการเบิกจ่าย</th>
-                        <th style="width: 100px;">รหัส WBS</th>
-                        <th style="width: 125px; text-align: right;">วงเงินงบประมาณ</th>
-                        <th style="width: 125px; text-align: right;">เบิกจ่ายสะสม</th>
-                        <th style="width: 125px; text-align: right;">งบคงเหลือ</th>
-                        <th style="width: 70px;">% เบิก</th>
-                        <th style="width: 100px;">สถานะ</th>
+                        <th style="width: 80px; text-align: center;">WBS</th>
+                        <th style="width: 100px; text-align: right;">งบประมาณ</th>
+                        <th style="width: 100px; text-align: right;">จ่ายจริงสะสม</th>
+                        <th style="width: 105px; text-align: right; background: #5a1e66;">รวมภาระผูกพัน</th>
+                        <th style="width: 75px; text-align: right;">PR</th>
+                        <th style="width: 75px; text-align: right;">PO</th>
+                        <th style="width: 75px; text-align: right;">GR</th>
+                        <th style="width: 75px; text-align: right;">IR</th>
+                        <th style="width: 95px; text-align: right;">งบคงเหลือ</th>
+                        <th style="width: 55px; text-align: center;">% เบิก</th>
+                        <th style="width: 75px; text-align: center;">สถานะ</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${disbRows}
                 </tbody>
+                <tfoot>
+                    <tr class="wbs-total-row" style="background: #F1F5F9; font-weight: bold; border-top: 2px solid #CBD5E1;">
+                        <td colspan="3" style="text-align: right; font-weight: bold; padding-right: 8px;">ผลรวมทั้งหมด (Total Summary)</td>
+                        <td class="text-right font-bold text-plan">${fmt(sumBudget)}</td>
+                        <td class="text-right font-bold text-success">${fmt(sumTotalPaid)}</td>
+                        <td class="text-right font-bold text-amber" style="background: #FEF3C7;">${fmt(sumTotalCommitment)}</td>
+                        <td class="text-right font-bold">${fmt(sumPr)}</td>
+                        <td class="text-right font-bold">${fmt(sumPo)}</td>
+                        <td class="text-right font-bold">${fmt(sumGr)}</td>
+                        <td class="text-right font-bold">${fmt(sumIr)}</td>
+                        <td class="text-right font-bold text-danger">${fmt(sumRemaining)}</td>
+                        <td class="text-center font-bold text-actual">${overallPct}%</td>
+                        <td class="text-center">-</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>`;
     }
@@ -3975,15 +4472,18 @@ window.printSelectedSections = function () {
         .gantt-box-print {
             border: 1px solid #E2E8F0;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             background: white;
-            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: visible;
         }
         .gantt-box-print svg {
-            width: 100%;
-            height: auto;
-            max-height: 520px;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
             background: white;
+            box-sizing: border-box;
         }
         .gantt .grid-background { fill: #ffffff !important; }
         .gantt .grid-header { fill: #f8fafc !important; stroke: #e2e8f0 !important; }
@@ -4113,8 +4613,8 @@ window.printSelectedSections = function () {
         /* Disbursement KPIs */
         .print-disb-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
             margin-bottom: 14px;
         }
         .print-disb-kpi-card {
@@ -4192,6 +4692,7 @@ window.printSelectedSections = function () {
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
         .text-plan { color: #D97706; }
+        .text-amber { color: #D97706; }
         .text-actual { color: #742C81; }
         .text-success { color: #10B981; }
         .text-danger { color: #EF4444; }
@@ -4995,7 +5496,11 @@ function botReply(userMsg) {
     msgContainer.appendChild(loadingDiv);
     msgContainer.scrollTop = msgContainer.scrollHeight;
 
-    let modelName = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
+    let modelName = localStorage.getItem('geminiModel') || 'gemini-3.6-flash';
+    if (!modelName || ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash'].includes(modelName)) {
+        modelName = 'gemini-3.6-flash';
+        localStorage.setItem('geminiModel', 'gemini-3.6-flash');
+    }
 
     const select = document.getElementById('chatProjectSelect');
     const selectedProjectId = select ? select.value : 'all';
@@ -5038,8 +5543,8 @@ function botReply(userMsg) {
                         const mimeType = g.url.substring(g.url.indexOf(':') + 1, g.url.indexOf(';'));
                         const base64Data = g.url.substring(g.url.indexOf(',') + 1);
                         imageParts.push({
-                            "inlineData": {
-                                "mimeType": mimeType,
+                            "inline_data": {
+                                "mime_type": mimeType,
                                 "data": base64Data
                             }
                         });
@@ -5087,18 +5592,33 @@ function botReply(userMsg) {
 
     db.functions.invoke('gemini-proxy', {
         body: requestBody
-    }).then(({ data, error }) => {
+    }).then(async ({ data, error }) => {
         const loadingEl = document.getElementById('chatLoadingIndicator');
         if (loadingEl) loadingEl.remove();
 
         if (error) {
             console.error('Supabase Error:', error);
-            appendMessage(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${error.message}`, 'bot');
+            let errMsg = error.message;
+            if (error.context && typeof error.context.json === 'function') {
+                try {
+                    const errData = await error.context.json();
+                    if (errData && errData.error) errMsg = errData.error;
+                } catch (_) {
+                    try {
+                        const errText = await error.context.text();
+                        if (errText) errMsg = errText;
+                    } catch (__) {}
+                }
+            }
+            appendMessage(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`, 'bot');
         } else if (data && data.error) {
             console.error('Gemini API Error:', data.error);
             appendMessage(`เกิดข้อผิดพลาดจาก API: ${data.error}`, 'bot');
         } else if (data && data.candidates && data.candidates.length > 0) {
-            let replyText = data.candidates[0].content.parts[0].text;
+            const parts = data.candidates[0]?.content?.parts || [];
+            const textPart = parts.find(p => p.text);
+            if (textPart && textPart.text) {
+                let replyText = textPart.text;
 
                 // Format basic markdown if present (e.g. bold, line breaks)
                 replyText = replyText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -5113,13 +5633,16 @@ function botReply(userMsg) {
             } else {
                 appendMessage("ไม่สามารถประมวลผลคำตอบได้ กรุณาลองใหม่อีกครั้งครับ", 'bot');
             }
-        })
-        .catch(error => {
-            console.error('Fetch Error:', error);
-            const loadingEl = document.getElementById('chatLoadingIndicator');
-            if (loadingEl) loadingEl.remove();
-            appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
-        });
+        } else {
+            appendMessage("ไม่สามารถประมวลผลคำตอบได้ กรุณาลองใหม่อีกครั้งครับ", 'bot');
+        }
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        const loadingEl = document.getElementById('chatLoadingIndicator');
+        if (loadingEl) loadingEl.remove();
+        appendMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย กรุณาลองใหม่อีกครั้งครับ", 'bot');
+    });
 }
 
 window.openImageModal = function (url) {
