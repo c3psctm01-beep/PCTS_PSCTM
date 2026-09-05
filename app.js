@@ -27,7 +27,36 @@ const defaultProjects = [
             { id: 115, name: "Settind Relay / End to End Test", startDate: "2026-12-15", endDate: "2026-12-21", weight: 5, actual: 0 },
             { id: 116, name: "AC Withstand Test", startDate: "2026-12-22", endDate: "2026-12-31", weight: 5, actual: 0 }
         ],
-        gallery: []
+        gallery: [
+            {
+                url: "mascot.jpg",
+                date: "2026-06-10",
+                desc: "งานรื้อถอนโครงสร้างเหล็กและฐานรากสถานีเดิมแล้วเสร็จ 80%",
+                taskId: 101,
+                taskName: "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)"
+            },
+            {
+                url: "mascot.jpg",
+                date: "2026-06-14",
+                desc: "ตรวจสอบพื้นที่รื้อถอนเรียบร้อย พร้อมส่งมอบงานรื้อถอน 100%",
+                taskId: 101,
+                taskName: "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)"
+            },
+            {
+                url: "mascot.jpg",
+                date: "2026-06-25",
+                desc: "งานบดอัดและปรับระดับดินบริเวณลานหม้อแปลงไฟฟ้า",
+                taskId: 102,
+                taskName: "ปรับปรุงที่ดิน"
+            },
+            {
+                url: "mascot.jpg",
+                date: "2026-07-05",
+                desc: "งานขนย้ายชิ้นส่วนฐานรากสำเร็จรูปเข้าพื้นที่โครงการ",
+                taskId: 103,
+                taskName: "ขนย้ายติดตั้งฐานราก"
+            }
+        ]
     },
     {
         id: 2,
@@ -108,7 +137,7 @@ window.loadProjects = async function () {
                     details: pDetails,
                     type: pType,
                     tasks: dbProj.tasks || [],
-                    gallery: dbProj.gallery || [],
+                    gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
                     disbursement: dbProj.disbursement || null
                 };
             });
@@ -328,7 +357,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.updateRole = function (role) {
         window.currentRole = role;
-        document.querySelector('[data-target="dashboard-view"]').click();
 
         if (role === 'viewer') {
             roleAdminItems.forEach(el => el.style.display = 'none');
@@ -343,7 +371,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             roleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
         }
+
+        // If currently in Project Details Gallery view, refresh gallery to update Admin buttons
+        if (document.getElementById('project-detail-view')?.classList.contains('active') && window.currentProjectViewData) {
+            window.renderGalleryTab(window.currentProjectViewData, window.currentGalleryFilterTaskId || 'all');
+        }
     };
+
+    if (currentUserRoleText) {
+        currentUserRoleText.style.cursor = 'pointer';
+        currentUserRoleText.title = 'คลิกเพื่อสลับสิทธิ์ทดสอบ (Viewer / Editor / Admin)';
+        currentUserRoleText.onclick = function () {
+            const roles = ['viewer', 'editor', 'admin'];
+            const nextRole = roles[(roles.indexOf(window.currentRole || 'viewer') + 1) % roles.length];
+            window.updateRole(nextRole);
+        };
+    }
 
     window.switchAuthTab = function (tab) {
         const loginSec = document.getElementById('loginSection');
@@ -546,7 +589,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // --- Project View Mode & Search State ---
+    window.currentProjectViewMode = localStorage.getItem('pcts_project_view_mode') || 'cards';
+    window.dashboardSearchQuery = '';
+
+    window.switchProjectView = function (mode) {
+        window.currentProjectViewMode = mode;
+        localStorage.setItem('pcts_project_view_mode', mode);
+
+        const cardsSection = document.getElementById('projectCardsContainer');
+        const tableContainer = document.getElementById('projectTableContainer');
+        const btnCards = document.getElementById('btnViewCards');
+        const btnTable = document.getElementById('btnViewTable');
+
+        if (mode === 'cards') {
+            if (cardsSection) cardsSection.style.display = 'block';
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (btnCards) btnCards.classList.add('active');
+            if (btnTable) btnTable.classList.remove('active');
+        } else {
+            if (cardsSection) cardsSection.style.display = 'none';
+            if (tableContainer) tableContainer.style.display = 'flex';
+            if (btnCards) btnCards.classList.remove('active');
+            if (btnTable) btnTable.classList.add('active');
+        }
+    };
+
+    window.handleDashboardSearch = function (query) {
+        window.dashboardSearchQuery = (query || '').trim().toLowerCase();
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if (clearBtn) {
+            clearBtn.style.display = window.dashboardSearchQuery ? 'block' : 'none';
+        }
+        renderTables();
+    };
+
+    window.clearDashboardSearch = function () {
+        const input = document.getElementById('dashboardSearchInput');
+        if (input) input.value = '';
+        window.handleDashboardSearch('');
+    };
+
     window.currentDashboardFilter = 'all';
+    window.currentStatusFilter = 'all';
+
+    window.filterByStatus = function (status) {
+        window.currentStatusFilter = status;
+        const title = document.getElementById('dashboardTableTitle');
+        if (title) {
+            if (status === 'all') {
+                title.innerText = window.currentDashboardFilter === 'all' ? 'รายการโครงการทั้งหมด' : 'รายการโครงการ: ' + window.currentDashboardFilter;
+            } else {
+                title.innerText = `รายการโครงการ (สถานะ: ${status})`;
+            }
+        }
+        renderTables();
+    };
+
     window.filterDashboard = function (type, event) {
         window.currentDashboardFilter = type;
 
@@ -569,7 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderTables();
     };
 
-    // --- Render Tables ---
+    // --- Render Tables & Cards ---
     window.renderTables = function () {
         // Update Stats
         let total = projects.length;
@@ -593,14 +692,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elProcurement) elProcurement.innerText = `${procurement} โครงการ`;
         if (elCompleted) elCompleted.innerText = `${completed} โครงการ`;
 
-        // Render Dashboard Table
-        const dashboardTbody = document.getElementById('projectTableBody');
-        dashboardTbody.innerHTML = '';
-
+        // Filter projects by type
         let filteredProjects = projects;
         if (window.currentDashboardFilter && window.currentDashboardFilter !== 'all') {
-            filteredProjects = projects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
+            filteredProjects = filteredProjects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
         }
+
+        // Filter projects by status (from stat cards)
+        if (window.currentStatusFilter && window.currentStatusFilter !== 'all') {
+            filteredProjects = filteredProjects.filter(p => p.status === window.currentStatusFilter);
+        }
+
+        // Instant Search filter
+        if (window.dashboardSearchQuery) {
+            const q = window.dashboardSearchQuery;
+            filteredProjects = filteredProjects.filter(p => {
+                const name = (p.name || '').toLowerCase();
+                const contractor = (p.contractor || '').toLowerCase();
+                const supervisor = (p.supervisor || '').toLowerCase();
+                const committee = (p.committee || '').toLowerCase();
+                const status = (p.status || '').toLowerCase();
+                const type = (p.type || '').toLowerCase();
+                return name.includes(q) || contractor.includes(q) || supervisor.includes(q) || committee.includes(q) || status.includes(q) || type.includes(q);
+            });
+        }
+
+        // Render Project Cards Grid
+        const cardsGrid = document.getElementById('projectCardsGrid');
+        const noFoundMsg = document.getElementById('noProjectFoundMessage');
+        if (cardsGrid) cardsGrid.innerHTML = '';
+        if (noFoundMsg) noFoundMsg.style.display = filteredProjects.length === 0 ? 'block' : 'none';
+
+        // Render Dashboard Table
+        const dashboardTbody = document.getElementById('projectTableBody');
+        if (dashboardTbody) dashboardTbody.innerHTML = '';
 
         filteredProjects.forEach(p => {
             const progress = calculateProjectProgress(p);
@@ -608,41 +733,152 @@ document.addEventListener('DOMContentLoaded', async () => {
             p.actual = progress.actual;
 
             let disbPct = 0;
+            let budgetFormatted = '-';
+            let paidFormatted = '-';
             if (p.disbursement && p.disbursement.budget > 0) {
-                disbPct = ((p.disbursement.totalPaid / p.disbursement.budget) * 100).toFixed(2);
+                disbPct = ((p.disbursement.totalPaid / p.disbursement.budget) * 100).toFixed(1);
+                budgetFormatted = Number(p.disbursement.budget).toLocaleString();
+                paidFormatted = Number(p.disbursement.totalPaid).toLocaleString();
             }
 
-            const tr = document.createElement('tr');
             const statusClass = window.getStatusBadgeClass(p.status);
             const projectType = p.type || 'จ้างเหมา';
-            const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
-            tr.innerHTML = `
-                <td><strong>${p.name}</strong></td>
-                <td><span style="${typeClass}">${projectType}</span></td>
-                <td>${p.contractor}</td>
-                <td>${p.supervisor || '-'}</td>
-                <td><span class="status-badge ${statusClass}">${p.status}</span></td>
-                <td style="min-width: 180px;">
-                    <div style="display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
-                        <span style="color: #7f8c8d;">แผนงาน: ${p.plan}%</span>
-                        <span style="color: #3498db; font-weight: 600;">ทำได้: ${p.actual}%</span>
+            const typeClass = projectType === 'ดำเนินการเอง' ? 'project-type-self' : 'project-type-contract';
+            const typeIcon = projectType === 'ดำเนินการเอง' ? 'fa-solid fa-users-gear' : 'fa-solid fa-file-contract';
+
+            // Variance Calculation
+            const planNum = parseFloat(p.plan) || 0;
+            const actNum = parseFloat(p.actual) || 0;
+            const diff = (actNum - planNum).toFixed(1);
+
+            let varianceClass = 'variance-ontrack';
+            let varianceIcon = 'fa-solid fa-check';
+            let varianceText = 'ตรงตามแผนงาน';
+
+            if (p.status === 'แล้วเสร็จ') {
+                varianceClass = 'variance-ahead';
+                varianceIcon = 'fa-solid fa-circle-check';
+                varianceText = 'แล้วเสร็จ 100%';
+            } else if (diff > 0) {
+                varianceClass = 'variance-ahead';
+                varianceIcon = 'fa-solid fa-arrow-trend-up';
+                varianceText = `+${diff}% เร็วกว่าแผน`;
+            } else if (diff < 0) {
+                varianceClass = 'variance-behind';
+                varianceIcon = 'fa-solid fa-arrow-trend-down';
+                varianceText = `${diff}% ช้ากว่าแผน`;
+            }
+
+            const taskCount = p.tasks ? p.tasks.length : 0;
+            const photoCount = p.gallery ? p.gallery.length : 0;
+            const durationText = p.duration || (p.startDate && p.endDate ? `${p.startDate} ถึง ${p.endDate}` : '-');
+
+            // 1. Build & Append Card
+            if (cardsGrid) {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.innerHTML = `
+                    <div class="project-card-header">
+                        <span class="project-type-badge ${typeClass}">
+                            <i class="${typeIcon}"></i> ${projectType}
+                        </span>
+                        <span class="project-status-pill status-badge ${statusClass}">
+                            <span class="status-dot" style="background: currentColor;"></span>
+                            ${p.status}
+                        </span>
                     </div>
-                    <div class="progress-bar-container" style="margin-bottom: 8px;">
-                        <div class="progress-bar-plan" style="width: ${p.plan}%;"></div>
-                        <div class="progress-bar-actual" style="width: ${p.actual}%;"></div>
+                    <div class="project-card-body">
+                        <h3 class="project-card-title" onclick="viewProjectDetails(${p.id})" title="${p.name}">
+                            ${p.name}
+                        </h3>
+                        <div class="project-meta-grid">
+                            <div class="meta-item">
+                                <span class="meta-item-label"><i class="fa-solid fa-building"></i> ผู้รับเหมา</span>
+                                <span class="meta-item-value" title="${p.contractor || '-'}">${p.contractor || '-'}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-item-label"><i class="fa-solid fa-user-tie"></i> ผู้ควบคุมงาน</span>
+                                <span class="meta-item-value" title="${p.supervisor || '-'}">${p.supervisor || '-'}</span>
+                            </div>
+                            <div class="meta-item" style="grid-column: span 2;">
+                                <span class="meta-item-label"><i class="fa-regular fa-calendar"></i> ระยะเวลา</span>
+                                <span class="meta-item-value">${durationText}</span>
+                            </div>
+                        </div>
+                        <div class="card-progress-section">
+                            <div class="card-progress-header">
+                                <span class="progress-title">ความก้าวหน้าโครงการ</span>
+                                <span class="variance-badge ${varianceClass}">
+                                    <i class="${varianceIcon}"></i> ${varianceText}
+                                </span>
+                            </div>
+                            <div class="card-dual-progress" title="แผนงาน: ${p.plan}% | ผลงานจริง: ${p.actual}%">
+                                <div class="card-progress-plan" style="width: ${Math.min(100, planNum)}%;"></div>
+                                <div class="card-progress-actual" style="width: ${Math.min(100, actNum)}%;"></div>
+                            </div>
+                            <div class="card-progress-labels">
+                                <span><span class="chip-dash" style="width:8px;height:8px;border-radius:2px;background:#f59e0b;display:inline-block;vertical-align:middle;margin-right:4px;"></span> แผนงาน: <strong>${p.plan}%</strong></span>
+                                <span><span class="chip-dot" style="width:8px;height:8px;border-radius:50%;background:var(--pea-purple);display:inline-block;vertical-align:middle;margin-right:4px;"></span> ผลจริง: <strong style="color:var(--pea-purple);">${p.actual}%</strong></span>
+                            </div>
+                            <div class="card-disb-wrapper">
+                                <div class="card-disb-header">
+                                    <span style="color:#64748b;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> เบิกจ่าย: <strong>${disbPct}%</strong></span>
+                                    <span style="font-size:10px;color:#94a3b8;">${budgetFormatted !== '-' ? budgetFormatted + ' บาท' : 'ไม่มีข้อมูลงบ'}</span>
+                                </div>
+                                <div class="card-disb-track">
+                                    <div class="card-disb-fill" style="width: ${Math.min(100, parseFloat(disbPct) || 0)}%;"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div style="display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
-                        <span style="color: #27ae60; font-weight: 600;">เบิกจ่าย: ${disbPct}%</span>
+                    <div class="project-card-footer">
+                        <div class="footer-meta-chips">
+                            <span><i class="fa-solid fa-list-check"></i> ${taskCount} งาน</span>
+                            <span><i class="fa-regular fa-images"></i> ${photoCount} รูป</span>
+                        </div>
+                        <button class="btn-card-details" onclick="viewProjectDetails(${p.id})">
+                            ดูรายละเอียด <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
-                    <div class="progress-bar-container" style="background-color: #ecf0f1; height: 5px;">
-                        <div class="progress-bar-actual" style="width: ${disbPct}%; background-color: #2ecc71;"></div>
-                    </div>
-                </td>
-                <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewProjectDetails(${p.id})">ดูรายละเอียด</button></td>
-            `;
-            dashboardTbody.appendChild(tr);
+                `;
+                cardsGrid.appendChild(card);
+            }
+
+            // 2. Build & Append Table Row
+            if (dashboardTbody) {
+                const tr = document.createElement('tr');
+                const tableTypeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
+                tr.innerHTML = `
+                    <td><strong>${p.name}</strong></td>
+                    <td><span style="${tableTypeClass}">${projectType}</span></td>
+                    <td>${p.contractor}</td>
+                    <td>${p.supervisor || '-'}</td>
+                    <td><span class="status-badge ${statusClass}">${p.status}</span></td>
+                    <td style="min-width: 180px;">
+                        <div style="display:flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                            <span style="color: #7f8c8d;">แผน: ${p.plan}%</span>
+                            <span style="color: #3498db; font-weight: 600;">ทำได้: ${p.actual}%</span>
+                        </div>
+                        <div class="progress-bar-container" style="margin-bottom: 6px;">
+                            <div class="progress-bar-plan" style="width: ${p.plan}%;"></div>
+                            <div class="progress-bar-actual" style="width: ${p.actual}%;"></div>
+                        </div>
+                        
+                        <div style="display:flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                            <span style="color: #27ae60; font-weight: 600;">เบิกจ่าย: ${disbPct}%</span>
+                        </div>
+                        <div class="progress-bar-container" style="background-color: #ecf0f1; height: 5px;">
+                            <div class="progress-bar-actual" style="width: ${disbPct}%; background-color: #2ecc71;"></div>
+                        </div>
+                    </td>
+                    <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewProjectDetails(${p.id})">ดูรายละเอียด</button></td>
+                `;
+                dashboardTbody.appendChild(tr);
+            }
         });
+
+        // Apply active view mode
+        window.switchProjectView(window.currentProjectViewMode);
 
         // Render Admin Table
         const adminTbody = document.getElementById('adminProjectTableBody');
@@ -692,8 +928,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.loadProjects();
     renderTables();
 
-    // --- S-Curve Chart.js Initialization ---
-    const ctx = document.getElementById('sCurveChart').getContext('2d');
+    // --- S-Curve Chart.js Initialization (Modern Gradient & Enhanced Tooltips) ---
+    const sCanvas = document.getElementById('sCurveChart');
+    const ctx = sCanvas.getContext('2d');
+
+    // Create Linear Gradients
+    const gradPurple = ctx.createLinearGradient(0, 0, 0, 420);
+    gradPurple.addColorStop(0, 'rgba(116, 44, 129, 0.35)');
+    gradPurple.addColorStop(0.7, 'rgba(116, 44, 129, 0.06)');
+    gradPurple.addColorStop(1, 'rgba(116, 44, 129, 0.0)');
+
+    const gradGold = ctx.createLinearGradient(0, 0, 0, 420);
+    gradGold.addColorStop(0, 'rgba(243, 156, 18, 0.22)');
+    gradGold.addColorStop(0.7, 'rgba(243, 156, 18, 0.04)');
+    gradGold.addColorStop(1, 'rgba(243, 156, 18, 0.0)');
+
     window.sChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -703,40 +952,97 @@ document.addEventListener('DOMContentLoaded', async () => {
                     label: 'แผนงาน (Plan) %',
                     data: sCurveData.plan,
                     borderColor: '#F39C12', // PEA Gold
-                    backgroundColor: 'rgba(243, 156, 18, 0.1)',
-                    borderWidth: 3,
-                    borderDash: [5, 5],
+                    backgroundColor: gradGold,
+                    borderWidth: 2.8,
+                    borderDash: [5, 4],
                     fill: true,
-                    tension: 0.4
+                    tension: 0.38,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#F39C12',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 },
                 {
                     label: 'ผลงานจริง (Actual) %',
                     data: sCurveData.actual,
                     borderColor: '#742C81', // PEA Purple
-                    backgroundColor: 'rgba(116, 44, 129, 0.1)',
-                    borderWidth: 3,
+                    backgroundColor: gradPurple,
+                    borderWidth: 3.2,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.38,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#742C81',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             scales: {
                 y: {
                     beginAtZero: true,
                     max: 100,
-                    title: { display: true, text: 'ความก้าวหน้าสะสม (%)', font: { family: 'Kanit' } }
+                    grid: {
+                        color: 'rgba(226, 232, 240, 0.7)',
+                        borderDash: [3, 3]
+                    },
+                    ticks: {
+                        callback: function (val) { return val + '%'; },
+                        font: { family: 'Prompt', size: 11 }
+                    },
+                    title: { display: true, text: 'ความก้าวหน้าสะสม (%)', font: { family: 'Prompt', weight: '500', size: 12 } }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(226, 232, 240, 0.4)'
+                    },
+                    ticks: {
+                        font: { family: 'Prompt', size: 11 }
+                    }
                 }
             },
             plugins: {
                 legend: {
-                    labels: { font: { family: 'Kanit' } }
+                    display: false // We use our custom modern chips ribbon
                 },
                 tooltip: {
-                    titleFont: { family: 'Kanit' },
-                    bodyFont: { family: 'Kanit' }
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    titleFont: { family: 'Prompt', size: 13, weight: '600' },
+                    bodyFont: { family: 'Sarabun', size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    boxPadding: 4,
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(2) + '%';
+                            }
+                            return label;
+                        },
+                        afterBody: function (contexts) {
+                            if (contexts.length >= 2) {
+                                const planVal = contexts[0].parsed.y;
+                                const actVal = contexts[1].parsed.y;
+                                if (actVal !== null && !isNaN(actVal)) {
+                                    const diff = (actVal - planVal).toFixed(2);
+                                    const icon = diff >= 0 ? '▲ +' : '▼ ';
+                                    const status = diff >= 0 ? 'เร็วกว่าแผน' : 'ล่าช้ากว่าแผน';
+                                    return `ผลต่าง: ${icon}${diff}% (${status})`;
+                                }
+                            }
+                            return '';
+                        }
+                    }
                 }
             }
         }
@@ -1008,6 +1314,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.updateSCurve = function (p) {
     if (!window.sChart) return;
 
+    // S-Curve KPI Elements
+    const elPlanKpi = document.getElementById('scurvePlanKpi');
+    const elActualKpi = document.getElementById('scurveActualKpi');
+    const elVarKpi = document.getElementById('scurveVarianceKpi');
+    const elHealthKpi = document.getElementById('scurveHealthKpi');
+    const elVarIcon = document.getElementById('scurveVarianceIcon');
+    const elHealthIcon = document.getElementById('scurveHealthIcon');
+
     // Find min and max dates
     let minDate = new Date("2099-01-01");
     let maxDate = new Date("2000-01-01");
@@ -1017,6 +1331,10 @@ window.updateSCurve = function (p) {
         window.sChart.data.datasets[0].data = [];
         window.sChart.data.datasets[1].data = [];
         window.sChart.update();
+        if (elPlanKpi) elPlanKpi.innerText = '0.00%';
+        if (elActualKpi) elActualKpi.innerText = '0.00%';
+        if (elVarKpi) elVarKpi.innerText = '0.00%';
+        if (elHealthKpi) elHealthKpi.innerText = 'ไม่มีข้อมูลแผนงาน';
         return;
     }
 
@@ -1109,13 +1427,62 @@ window.updateSCurve = function (p) {
         actualData = planData.map(d => d);
     }
 
+    // Update Chart datasets
     window.sChart.data.labels = labels;
     window.sChart.data.datasets[0].data = planData;
     window.sChart.data.datasets[1].data = actualData;
     window.sChart.update();
-}
 
-// Global function to navigate from table button
+    // Update S-Curve KPI Ribbon
+    const prog = calculateProjectProgress(p);
+    const planVal = parseFloat(prog.plan) || 0;
+    const actVal = parseFloat(prog.actual) || 0;
+    const diff = (actVal - planVal).toFixed(2);
+
+    if (elPlanKpi) elPlanKpi.innerText = `${planVal.toFixed(2)}%`;
+    if (elActualKpi) elActualKpi.innerText = `${actVal.toFixed(2)}%`;
+    if (elVarKpi) {
+        if (p.status === 'แล้วเสร็จ') {
+            elVarKpi.innerText = '100% (แล้วเสร็จ)';
+            elVarKpi.style.color = '#27ae60';
+        } else if (diff > 0) {
+            elVarKpi.innerText = `+${diff}% เร็วกว่าแผน`;
+            elVarKpi.style.color = '#27ae60';
+        } else if (diff < 0) {
+            elVarKpi.innerText = `${diff}% ช้ากว่าแผน`;
+            elVarKpi.style.color = '#e74c3c';
+        } else {
+            elVarKpi.innerText = '0.00% ตรงตามแผน';
+            elVarKpi.style.color = '#2980b9';
+        }
+    }
+
+    if (elHealthKpi) {
+        if (p.status === 'แล้วเสร็จ') {
+            elHealthKpi.innerText = 'แล้วเสร็จสมบูรณ์';
+            elHealthKpi.style.color = '#27ae60';
+            if (elHealthIcon) { elHealthIcon.style.background = 'rgba(46, 204, 113, 0.15)'; elHealthIcon.style.color = '#27ae60'; }
+            if (elVarIcon) { elVarIcon.style.background = 'rgba(46, 204, 113, 0.15)'; elVarIcon.style.color = '#27ae60'; }
+        } else if (diff >= 0) {
+            elHealthKpi.innerText = 'ปกติ (ตาม/เร็วกว่าแผน)';
+            elHealthKpi.style.color = '#27ae60';
+            if (elHealthIcon) { elHealthIcon.style.background = 'rgba(46, 204, 113, 0.15)'; elHealthIcon.style.color = '#27ae60'; }
+            if (elVarIcon) { elVarIcon.style.background = 'rgba(46, 204, 113, 0.15)'; elVarIcon.style.color = '#27ae60'; }
+        } else if (diff >= -10) {
+            elHealthKpi.innerText = 'เฝ้าระวัง (ล่าช้า < 10%)';
+            elHealthKpi.style.color = '#f39c12';
+            if (elHealthIcon) { elHealthIcon.style.background = 'rgba(243, 156, 18, 0.15)'; elHealthIcon.style.color = '#f39c12'; }
+            if (elVarIcon) { elVarIcon.style.background = 'rgba(243, 156, 18, 0.15)'; elVarIcon.style.color = '#f39c12'; }
+        } else {
+            elHealthKpi.innerText = 'วิกฤต (ล่าช้า > 10%)';
+            elHealthKpi.style.color = '#e74c3c';
+            if (elHealthIcon) { elHealthIcon.style.background = 'rgba(231, 76, 60, 0.15)'; elHealthIcon.style.color = '#e74c3c'; }
+            if (elVarIcon) { elVarIcon.style.background = 'rgba(231, 76, 60, 0.15)'; elVarIcon.style.color = '#e74c3c'; }
+        }
+    }
+};
+
+// Global function to navigate from card/table button
 window.viewProjectDetails = function (projectId) {
     const p = projects.find(proj => proj.id === projectId);
     if (p) {
@@ -1150,10 +1517,25 @@ window.viewProjectDetails = function (projectId) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ยังไม่มีข้อมูลแผนงานย่อย</td></tr>';
         }
 
-        // --- Render Gantt Chart ---
+        // --- Render Gantt Chart & KPI Ribbon ---
+        const allTasks = p.tasks || [];
+        const completedTasks = allTasks.filter(t => (parseFloat(t.actual) || 0) >= 100).length;
+        const inProgressTasks = allTasks.filter(t => (parseFloat(t.actual) || 0) > 0 && (parseFloat(t.actual) || 0) < 100).length;
+        const pendingTasks = allTasks.filter(t => (parseFloat(t.actual) || 0) <= 0).length;
+
+        const elGanttTotal = document.getElementById('ganttTotalTasks');
+        const elGanttCompleted = document.getElementById('ganttCompletedTasks');
+        const elGanttInProgress = document.getElementById('ganttInProgressTasks');
+        const elGanttPending = document.getElementById('ganttPendingTasks');
+
+        if (elGanttTotal) elGanttTotal.innerText = allTasks.length;
+        if (elGanttCompleted) elGanttCompleted.innerText = completedTasks;
+        if (elGanttInProgress) elGanttInProgress.innerText = inProgressTasks;
+        if (elGanttPending) elGanttPending.innerText = pendingTasks;
+
         const ganttContainer = document.getElementById('ganttChart');
-        if (p.tasks && p.tasks.length > 0) {
-            const ganttTasks = p.tasks.filter(t => t.startDate && t.endDate).map(t => ({
+        if (allTasks.length > 0) {
+            const ganttTasks = allTasks.filter(t => t.startDate && t.endDate).map(t => ({
                 id: `Task_${t.id}`,
                 name: t.name,
                 start: t.startDate,
@@ -1167,21 +1549,32 @@ window.viewProjectDetails = function (projectId) {
                     window.currentGantt = new Gantt("#ganttChart", ganttTasks, {
                         header_height: 50,
                         view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
-                        bar_height: 25,
-                        bar_corner_radius: 3,
+                        bar_height: 28,
+                        bar_corner_radius: 6,
                         arrow_curve: 5,
                         padding: 18,
                         view_mode: 'Month',
                         date_format: 'YYYY-MM-DD',
                         language: 'en',
                         custom_popup_html: function (task) {
+                            const sDate = new Date(task.start);
+                            const eDate = new Date(task.end);
+                            const durationDays = Math.max(1, Math.round((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1);
+                            const progressColor = task.progress >= 100 ? '#10b981' : (task.progress > 0 ? '#742C81' : '#94a3b8');
+                            const statusText = task.progress >= 100 ? 'เสร็จสิ้น 100%' : (task.progress > 0 ? `กำลังทำ (${task.progress}%)` : 'ยังไม่เริ่ม');
                             return `
-                                <div style="padding: 10px; border-radius: 4px; background: #fff; border: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: Kanit, sans-serif; min-width: 200px;">
-                                    <strong style="display:block; margin-bottom: 5px; color: #742C81;">${task.name}</strong>
-                                    <div style="font-size: 13px; color: #555;">
-                                        <div><strong>เริ่ม:</strong> ${task.start}</div>
-                                        <div><strong>สิ้นสุด:</strong> ${task.end}</div>
-                                        <div><strong>ความก้าวหน้า:</strong> ${task.progress}%</div>
+                                <div style="padding: 12px 14px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.12); font-family: 'Prompt', sans-serif; min-width: 220px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <span style="font-size: 10.5px; font-weight: 700; color: ${progressColor}; background: ${progressColor}18; padding: 2px 8px; border-radius: 10px;">${statusText}</span>
+                                        <span style="font-size: 11px; color: #64748b;"><i class="fa-regular fa-clock"></i> ${durationDays} วัน</span>
+                                    </div>
+                                    <strong style="display: block; font-size: 13px; color: #1e293b; margin-bottom: 8px; line-height: 1.35;">${task.name}</strong>
+                                    <div style="font-size: 11.5px; color: #64748b; margin-bottom: 8px;">
+                                        <div><i class="fa-regular fa-calendar-check" style="color: #3b82f6;"></i> <strong>เริ่ม:</strong> ${task.start}</div>
+                                        <div><i class="fa-regular fa-calendar-xmark" style="color: #ef4444;"></i> <strong>สิ้นสุด:</strong> ${task.end}</div>
+                                    </div>
+                                    <div style="background: #e2e8f0; height: 6px; border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${task.progress}%; height: 100%; background: ${progressColor}; border-radius: 4px;"></div>
                                     </div>
                                 </div>
                             `;
@@ -1206,41 +1599,8 @@ window.viewProjectDetails = function (projectId) {
             ganttContainer.innerHTML = '<text x="20" y="40" fill="#7f8c8d">ยังไม่มีแผนงานย่อย</text>';
         }
 
-        const galleryContainer = document.getElementById('progressGallery');
-        galleryContainer.innerHTML = '';
-        const projGallery = p.gallery || [];
-        const validGallery = projGallery.filter(item => item.url);
-        if (validGallery.length > 0) {
-            validGallery.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'gallery-item';
-                div.style.position = 'relative';
-
-                // Keep the exact same date comparison since this is the only way to uniquely identify it without an ID
-                const deleteBtnHTML = (window.currentRole === 'admin') ? `
-                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;">
-                        <button class="btn btn-secondary role-admin" style="background: rgba(52, 152, 219, 0.9); color: white; padding: 5px 10px; border-radius: 4px;" onclick="editGalleryItemDesc(${p.id}, '${item.date}', '${item.desc}')" title="\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn btn-secondary role-admin" style="background: rgba(231, 76, 60, 0.9); color: white; padding: 5px 10px; border-radius: 4px;" onclick="deleteGalleryItem(${p.id}, '${item.date}', '${item.desc}')" title="\u0E25\u0E1A">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                ` : '';
-
-                div.innerHTML = `
-                    ${deleteBtnHTML}
-                    <img src="${item.url}" alt="progress" onclick="openImageModal('${item.url}')" style="cursor: zoom-in; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                    <div class="gallery-info">
-                        <p><i class="fa-regular fa-calendar"></i> ${item.date}</p>
-                        <strong>${item.desc}</strong>
-                    </div>
-                `;
-                galleryContainer.appendChild(div);
-            });
-        } else {
-            galleryContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1; padding: 20px;">ยังไม่มีรูปภาพความก้าวหน้า</p>';
-        }
+        // --- Render Progress Gallery (Grouped by Sub-Task) ---
+        window.renderGalleryTab(p);
 
         // Update S-Curve
         window.updateSCurve(p);
@@ -1268,48 +1628,305 @@ window.viewProjectDetails = function (projectId) {
     }
 }
 
+// --- Grouped Progress Gallery Logic ---
+window.currentGalleryFilterTaskId = 'all';
+
+window.filterGalleryByTask = function (taskId) {
+    window.currentGalleryFilterTaskId = taskId;
+    if (window.currentProjectViewData) {
+        window.renderGalleryTab(window.currentProjectViewData, taskId);
+    }
+};
+
+window.renderGalleryTab = function (p, selectedTaskId = 'all') {
+    const container = document.getElementById('progressGalleryContainer');
+    const filterSelect = document.getElementById('galleryTaskFilterSelect');
+    const countBadge = document.getElementById('galleryTotalCountBadge');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const projGallery = (p.gallery || []).filter(item => item && item.url);
+    if (countBadge) countBadge.innerText = `${projGallery.length} รูปภาพ`;
+
+    if (projGallery.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 50px 20px; background: #f8fafc; border-radius: 12px; border: 1px dashed var(--border-color);">
+                <i class="fa-regular fa-image" style="font-size: 40px; color: #cbd5e1; margin-bottom: 12px;"></i>
+                <h3 style="font-size: 15px; color: var(--text-secondary); margin-bottom: 5px;">ยังไม่มีรูปภาพความก้าวหน้า</h3>
+                <p style="font-size: 12px; color: #94a3b8;">ผู้ควบคุมงานสามารถอัปโหลดภาพรายงานความก้าวหน้าประจำวันได้ที่เมนู "รายงานความก้าวหน้า (Editor)"</p>
+            </div>
+        `;
+        if (filterSelect) filterSelect.innerHTML = '<option value="all">แสดงทุกแผนงานย่อย (0 ภาพ)</option>';
+        return;
+    }
+
+    // Associate photos with task
+    const taskMap = new Map();
+    if (p.tasks) {
+        p.tasks.forEach(t => {
+            taskMap.set(t.id, {
+                taskId: t.id,
+                taskName: t.name,
+                actual: t.actual || 0,
+                photos: []
+            });
+        });
+    }
+
+    const generalBucket = {
+        taskId: 0,
+        taskName: "ภาพหน้างานทั่วไป / ไม่ระบุแผนงานย่อย",
+        actual: null,
+        photos: []
+    };
+
+    projGallery.forEach(item => {
+        let assigned = false;
+        if (item.taskId && taskMap.has(parseInt(item.taskId))) {
+            taskMap.get(parseInt(item.taskId)).photos.push(item);
+            assigned = true;
+        } else if (p.tasks) {
+            // Try to match task name in desc
+            const matched = p.tasks.find(t => item.desc && item.desc.toLowerCase().includes(t.name.toLowerCase()));
+            if (matched) {
+                taskMap.get(matched.id).photos.push(item);
+                assigned = true;
+            }
+        }
+        if (!assigned) {
+            generalBucket.photos.push(item);
+        }
+    });
+
+    // Populate filterSelect
+    if (filterSelect) {
+        let opts = `<option value="all" ${selectedTaskId === 'all' ? 'selected' : ''}>แสดงทุกแผนงานย่อย (${projGallery.length} ภาพ)</option>`;
+        taskMap.forEach(grp => {
+            if (grp.photos.length > 0) {
+                opts += `<option value="${grp.taskId}" ${String(selectedTaskId) === String(grp.taskId) ? 'selected' : ''}>${grp.taskName} (${grp.photos.length} ภาพ)</option>`;
+            }
+        });
+        if (generalBucket.photos.length > 0) {
+            opts += `<option value="0" ${String(selectedTaskId) === '0' ? 'selected' : ''}>${generalBucket.taskName} (${generalBucket.photos.length} ภาพ)</option>`;
+        }
+        filterSelect.innerHTML = opts;
+    }
+
+    // Render grouped task sections
+    let groupsToRender = [];
+    taskMap.forEach(grp => {
+        if (grp.photos.length > 0) {
+            if (selectedTaskId === 'all' || String(selectedTaskId) === String(grp.taskId)) {
+                groupsToRender.push(grp);
+            }
+        }
+    });
+    if (generalBucket.photos.length > 0 && (selectedTaskId === 'all' || String(selectedTaskId) === '0')) {
+        groupsToRender.push(generalBucket);
+    }
+
+    if (groupsToRender.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                <p>ไม่พบรูปภาพในแผนงานย่อยที่เลือก</p>
+            </div>
+        `;
+        return;
+    }
+
+    groupsToRender.forEach(grp => {
+        const sec = document.createElement('div');
+        sec.className = 'gallery-task-section';
+
+        let progressBadgeHTML = '';
+        if (grp.actual !== null && grp.actual !== undefined) {
+            const isDone = grp.actual >= 100;
+            const bg = isDone ? '#ecfdf5' : '#f5f3ff';
+            const color = isDone ? '#059669' : '#7c3aed';
+            progressBadgeHTML = `<span class="gallery-task-progress-badge" style="background: ${bg}; color: ${color};"><i class="${isDone ? 'fa-solid fa-check-circle' : 'fa-solid fa-spinner'}"></i> ความก้าวหน้า: ${grp.actual}%</span>`;
+        }
+
+        let photosHTML = '';
+        grp.photos.forEach((item) => {
+            const realIndex = (p.gallery || []).indexOf(item);
+            const deleteBtnHTML = (window.currentRole === 'admin') ? `
+                <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; z-index: 10;">
+                    <button class="btn btn-secondary role-admin" style="background: rgba(52, 152, 219, 0.95); color: white; padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="openEditGalleryModal(${p.id}, ${realIndex})" title="แก้ไขรูปภาพ / เลือกแผนงานย่อย">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-secondary role-admin" style="background: rgba(231, 76, 60, 0.95); color: white; padding: 5px 9px; border-radius: 6px; font-size: 11px; cursor: pointer; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="deleteGalleryItem(${p.id}, ${realIndex})" title="ลบรูปภาพ">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            ` : '';
+
+            photosHTML += `
+                <div class="gallery-card">
+                    ${deleteBtnHTML}
+                    <div class="gallery-card-img-wrapper" onclick="openImageModal('${item.url}')">
+                        <img src="${item.url}" alt="${item.desc || 'progress photo'}" loading="lazy" onerror="this.src='mascot.jpg'">
+                        <div class="gallery-card-date-badge">
+                            <i class="fa-regular fa-calendar"></i> ${item.date || '-'}
+                        </div>
+                    </div>
+                    <div class="gallery-card-body">
+                        <p class="gallery-card-desc" title="${item.desc || '-'}">${item.desc || 'ไม่มีคำบรรยาย'}</p>
+                        <span class="gallery-card-task-tag"><i class="fa-solid fa-tag"></i> ${grp.taskName}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        sec.innerHTML = `
+            <div class="gallery-task-header">
+                <div class="gallery-task-title">
+                    <i class="fa-solid fa-layer-group" style="color: var(--pea-purple);"></i>
+                    <span>${grp.taskName}</span>
+                </div>
+                <div class="gallery-task-meta">
+                    ${progressBadgeHTML}
+                    <span class="status-badge" style="background: #f1f5f9; color: #475569; font-size: 11px;">
+                        <i class="fa-regular fa-image"></i> ${grp.photos.length} รูปภาพ
+                    </span>
+                </div>
+            </div>
+            <div class="gallery-task-grid">
+                ${photosHTML}
+            </div>
+        `;
+        container.appendChild(sec);
+    });
+};
+
+// --- Admin Edit Gallery Photo Modal Logic ---
+window.openEditGalleryModal = function (projectId, photoIndex) {
+    const p = projects.find(proj => proj.id === projectId) || window.currentProjectViewData;
+    if (!p || !p.gallery || !p.gallery[photoIndex]) {
+        alert('ไม่พบข้อมูลรูปภาพที่ต้องการแก้ไข');
+        return;
+    }
+
+    const photo = p.gallery[photoIndex];
+    document.getElementById('editGalleryProjectId').value = projectId;
+    document.getElementById('editGalleryPhotoIndex').value = photoIndex;
+
+    const imgPreview = document.getElementById('editGalleryImgPreview');
+    if (imgPreview) {
+        imgPreview.src = photo.url || 'mascot.jpg';
+    }
+
+    // Populate sub-tasks dropdown
+    const taskSelect = document.getElementById('editGalleryTaskSelect');
+    if (taskSelect) {
+        let opts = `<option value="">-- ภาพหน้างานทั่วไป / ไม่ระบุแผนงานย่อย --</option>`;
+        if (p.tasks && p.tasks.length > 0) {
+            p.tasks.forEach(t => {
+                let isSelected = false;
+                if (photo.taskId && String(photo.taskId) === String(t.id)) {
+                    isSelected = true;
+                } else if (!photo.taskId && photo.desc && photo.desc.toLowerCase().includes(t.name.toLowerCase())) {
+                    isSelected = true;
+                }
+                opts += `<option value="${t.id}" ${isSelected ? 'selected' : ''}>${t.id}: ${t.name} (ความก้าวหน้า ${t.actual || 0}%)</option>`;
+            });
+        }
+        taskSelect.innerHTML = opts;
+    }
+
+    const descInput = document.getElementById('editGalleryDescInput');
+    if (descInput) {
+        descInput.value = photo.desc || '';
+    }
+
+    const dateInput = document.getElementById('editGalleryDateInput');
+    if (dateInput) {
+        dateInput.value = photo.date || '';
+    }
+
+    const modal = document.getElementById('editGalleryModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeEditGalleryModal = function () {
+    const modal = document.getElementById('editGalleryModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+window.saveEditGalleryPhoto = async function () {
+    const projectId = parseInt(document.getElementById('editGalleryProjectId').value);
+    const photoIndex = parseInt(document.getElementById('editGalleryPhotoIndex').value);
+    const p = projects.find(proj => proj.id === projectId) || window.currentProjectViewData;
+
+    if (!p || !p.gallery || !p.gallery[photoIndex]) {
+        alert('ไม่พบข้อมูลรูปภาพในระบบ');
+        return;
+    }
+
+    const selectedTaskId = document.getElementById('editGalleryTaskSelect').value;
+    const newDesc = document.getElementById('editGalleryDescInput').value.trim();
+    const newDate = document.getElementById('editGalleryDateInput').value;
+
+    if (selectedTaskId) {
+        const t = p.tasks ? p.tasks.find(tk => String(tk.id) === String(selectedTaskId)) : null;
+        p.gallery[photoIndex].taskId = parseInt(selectedTaskId);
+        p.gallery[photoIndex].taskName = t ? t.name : '';
+    } else {
+        p.gallery[photoIndex].taskId = null;
+        p.gallery[photoIndex].taskName = null;
+    }
+
+    p.gallery[photoIndex].desc = newDesc;
+    if (newDate) {
+        p.gallery[photoIndex].date = newDate;
+    }
+
+    // Save changes to database / localStorage
+    await saveProjects();
+
+    closeEditGalleryModal();
+
+    // Re-render gallery view with updated task grouping
+    window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
+
+    alert('บันทึกการแก้ไขรูปภาพและจัดเข้าแผนงานย่อยเรียบร้อยแล้ว');
+};
+
 window.editGalleryItemDesc = function (projectId, date, desc) {
-    if (window.currentRole !== 'admin') return;
     const p = projects.find(proj => proj.id === projectId);
     if (p && p.gallery) {
         const index = p.gallery.findIndex(g => g.date === date && g.desc === desc);
         if (index !== -1) {
-            const newDesc = prompt('\u0E41\u0E01\u0E49\u0E44\u0E02\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19:', desc);
-            if (newDesc !== null && newDesc.trim() !== '') {
-                p.gallery[index].desc = newDesc.trim();
-                saveProjects();
-
-                window.viewProjectDetails(projectId);
-
-                if (window.calendar) {
-                    window.calendar.refetchEvents();
-                }
-            }
+            window.openEditGalleryModal(projectId, index);
         }
     }
-}
+};
 
-window.deleteGalleryItem = function (projectId, date, desc) {
-    if (confirm('คุณต้องการลบรูปภาพ/ความก้าวหน้านี้ใช่หรือไม่?')) {
-        const p = projects.find(proj => proj.id === projectId);
+window.deleteGalleryItem = async function (projectId, photoIndexOrDate, desc) {
+    if (confirm('คุณต้องการลบรูปภาพความก้าวหน้านี้ใช่หรือไม่?')) {
+        const p = projects.find(proj => proj.id === projectId) || window.currentProjectViewData;
         if (p && p.gallery) {
-            // Find the exact item based on date and description
-            const index = p.gallery.findIndex(g => g.date === date && g.desc === desc);
-            if (index !== -1) {
+            let index = -1;
+            if (typeof photoIndexOrDate === 'number') {
+                index = photoIndexOrDate;
+            } else {
+                index = p.gallery.findIndex(g => g.date === photoIndexOrDate && g.desc === desc);
+            }
+            if (index !== -1 && index < p.gallery.length) {
                 p.gallery.splice(index, 1);
-                saveProjects();
-
-                // Re-render the detail view
-                window.viewProjectDetails(projectId);
-
-                // Also trigger calendar refetch if we are on calendar view or just in background
+                await saveProjects();
+                window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
                 if (window.calendar) {
                     window.calendar.refetchEvents();
                 }
             }
         }
     }
-}
+};
 
 window.changeGanttMode = function (mode) {
     if (window.currentGantt) {
@@ -1321,7 +1938,16 @@ window.changeGanttMode = function (mode) {
             stretchGanttNative(window.currentGantt);
         }
     }
-}
+
+    // Update active button state
+    ['Day', 'Week', 'Month'].forEach(m => {
+        const btn = document.getElementById(`btnGantt${m}`);
+        if (btn) {
+            if (m === mode) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+};
 
 window.stretchGanttNative = function (gantt) {
     if (!gantt || !gantt.dates || gantt.dates.length === 0) return;
@@ -1900,7 +2526,9 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                     p.gallery.push({
                                         url: publicUrl,
                                         date: reportDate,
-                                        desc: (desc || `อัปเดตงาน: ${t.name}`) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : '')
+                                        desc: (desc || `อัปเดตงาน: ${t.name}`) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : ''),
+                                        taskId: t.id,
+                                        taskName: t.name
                                     });
                                 }
 
@@ -1918,7 +2546,9 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                         p.gallery.push({
                             url: null,
                             date: reportDate,
-                            desc: (desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`)) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : '')
+                            desc: (desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`)) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : ''),
+                            taskId: t.id,
+                            taskName: t.name
                         });
                     }
                     processUpdate();
@@ -2404,24 +3034,27 @@ window.printSelectedSections = function () {
     const selected = Array.from(document.querySelectorAll('input[name="printSection"]:checked')).map(cb => cb.value);
 
     if (selected.length === 0) {
-        alert('\u0E01\u0E23\u0E38\u0E13\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 1 \u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D');
+        alert('กรุณาเลือกอย่างน้อย 1 หัวข้อเพื่อพิมพ์รายงาน');
         return;
     }
 
     const p = window.currentProjectViewData;
     if (!p) {
-        alert('\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23');
+        alert('ไม่พบข้อมูลโครงการ');
         return;
     }
 
     closePrintModal();
 
     const progress = calculateProjectProgress(p);
+    const planVal = parseFloat(progress.plan) || 0;
+    const actualVal = parseFloat(progress.actual) || 0;
+    const varianceVal = (actualVal - planVal).toFixed(2);
+    const isAhead = parseFloat(varianceVal) >= 0;
     const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const printTimestamp = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-    // --- TEMPORARY RENDER TRICK ---
-    // If the tabs were never opened, the canvas/SVG has 0 size.
-    // We temporarily show them off-screen to force render.
+    // --- TEMPORARY RENDER TRICK FOR HIDDEN TABS ---
     const tabSCurve = document.getElementById('tabSCurve');
     const tabGantt = document.getElementById('tabGantt');
     const tabDisbursement = document.getElementById('tabDisbursement');
@@ -2433,12 +3066,14 @@ window.printSelectedSections = function () {
         tabSCurve.style.position = 'absolute';
         tabSCurve.style.visibility = 'hidden';
         tabSCurve.style.zIndex = '-9999';
-        // Force a wide landscape ratio for better print layout
         tabSCurve.style.width = '1200px';
-        tabSCurve.style.height = '600px';
+        tabSCurve.style.height = '520px';
+        if (typeof window.updateSCurve === 'function') {
+            window.updateSCurve(p);
+        }
         if (window.sChart) {
             const oldAnim = window.sChart.options.animation;
-            window.sChart.options.animation = false; // Disable animation for instant render
+            window.sChart.options.animation = false;
             window.sChart.resize();
             window.sChart.update();
             window.sChart.options.animation = oldAnim;
@@ -2463,7 +3098,7 @@ window.printSelectedSections = function () {
         tabDisbursement.style.visibility = 'hidden';
         tabDisbursement.style.zIndex = '-9999';
         tabDisbursement.style.width = '1200px';
-        tabDisbursement.style.height = '600px';
+        tabDisbursement.style.height = '500px';
         if (window.disbChartInstance) {
             const oldAnim = window.disbChartInstance.options.animation;
             window.disbChartInstance.options.animation = false;
@@ -2473,44 +3108,120 @@ window.printSelectedSections = function () {
         }
     }
 
-    // Build print content
+    // Capture S-Curve and Disbursement images
+    let sCurveImg = '';
+    const sCurveCanvas = document.getElementById('sCurveChart');
+    if (sCurveCanvas && selected.includes('scurve')) {
+        try {
+            sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
+        } catch (e) {
+            console.warn('Could not capture S-Curve chart:', e);
+        }
+    }
+
+    let disbImg = '';
+    const disbCanvas = document.getElementById('disbursementChart');
+    if (disbCanvas && selected.includes('disbursement')) {
+        try {
+            disbImg = disbCanvas.toDataURL('image/png', 1.0);
+        } catch (e) {
+            console.warn('Could not capture Disbursement chart:', e);
+        }
+    }
+
+    // Build print sections HTML
     let printContent = '';
 
-    // --- Project Info Section ---
+    // --- 1. Executive Summary Ribbon (Always included at top of report) ---
+    printContent += `
+    <div class="print-kpi-ribbon">
+        <div class="print-kpi-card">
+            <span class="print-kpi-label">แผนงานสะสม (Plan)</span>
+            <span class="print-kpi-value text-plan">${planVal.toFixed(2)}%</span>
+            <span class="print-kpi-sub">ตามแผนงานหลัก WBS</span>
+        </div>
+        <div class="print-kpi-card">
+            <span class="print-kpi-label">ผลงานจริงสะสม (Actual)</span>
+            <span class="print-kpi-value text-actual">${actualVal.toFixed(2)}%</span>
+            <span class="print-kpi-sub">ผลดำเนินงานล่าสุด</span>
+        </div>
+        <div class="print-kpi-card">
+            <span class="print-kpi-label">ส่วนต่าง (Variance)</span>
+            <span class="print-kpi-value ${isAhead ? 'text-success' : 'text-danger'}">${isAhead ? '+' : ''}${varianceVal}%</span>
+            <span class="print-kpi-sub">${isAhead ? '● เร็วกว่า / ตามแผน' : '▲ ล่าช้ากว่าแผน'}</span>
+        </div>
+        <div class="print-kpi-card">
+            <span class="print-kpi-label">สถานะโครงการ</span>
+            <span class="print-kpi-value text-status">${p.status || 'อยู่ระหว่างก่อสร้าง'}</span>
+            <span class="print-kpi-sub">${p.duration || 'ระยะเวลาตามสัญญา'}</span>
+        </div>
+    </div>`;
+
+    // --- 2. Project Information Section ---
     if (selected.includes('projectInfo')) {
         printContent += `
         <div class="print-section">
-            <h2 class="print-section-title">\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</h2>
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-circle-info"></i></span>
+                <h2 class="print-section-title">ข้อมูลโครงการ (Project Overview)</h2>
+            </div>
             <table class="info-table">
-                <tr><td class="label-cell">\u0E0A\u0E37\u0E48\u0E2D\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</td><td class="value-cell">${p.name}</td></tr>
-                <tr><td class="label-cell">\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17</td><td class="value-cell">${p.type || '\u0E08\u0E49\u0E32\u0E07\u0E40\u0E2B\u0E21\u0E32'}</td></tr>
-                <tr><td class="label-cell">\u0E1C\u0E39\u0E49\u0E23\u0E31\u0E1A\u0E40\u0E2B\u0E21\u0E32</td><td class="value-cell">${p.contractor || '-'}</td></tr>
-                <tr><td class="label-cell">\u0E1C\u0E39\u0E49\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E07\u0E32\u0E19</td><td class="value-cell">${p.supervisor || '-'}</td></tr>
-                <tr><td class="label-cell">\u0E01\u0E23\u0E23\u0E21\u0E01\u0E32\u0E23\u0E15\u0E23\u0E27\u0E08\u0E23\u0E31\u0E1A</td><td class="value-cell">${p.committee || '-'}</td></tr>
-                <tr><td class="label-cell">\u0E23\u0E30\u0E22\u0E30\u0E40\u0E27\u0E25\u0E32</td><td class="value-cell">${p.duration || '-'}</td></tr>
-                <tr><td class="label-cell">\u0E2A\u0E16\u0E32\u0E19\u0E30</td><td class="value-cell">${p.status}</td></tr>
-                <tr><td class="label-cell">\u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E2A\u0E30\u0E2A\u0E21 (Plan)</td><td class="value-cell" style="color: #E67E22; font-weight: bold;">${progress.plan}%</td></tr>
-                <tr><td class="label-cell">\u0E1C\u0E25\u0E07\u0E32\u0E19\u0E08\u0E23\u0E34\u0E07\u0E2A\u0E30\u0E2A\u0E21 (Actual)</td><td class="value-cell" style="color: #742C81; font-weight: bold;">${progress.actual}%</td></tr>
+                <tr>
+                    <td class="label-cell">ชื่อโครงการ</td>
+                    <td class="value-cell" colspan="3"><strong>${p.name}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">ประเภทการดำเนินงาน</td>
+                    <td class="value-cell">${p.type || 'ดำเนินการเอง'}</td>
+                    <td class="label-cell">ผู้รับจ้าง / หน่วยงาน</td>
+                    <td class="value-cell">${p.contractor || 'การไฟฟ้าส่วนภูมิภาค'}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">ผู้ควบคุมงาน กฟภ.</td>
+                    <td class="value-cell">${p.supervisor || '-'}</td>
+                    <td class="label-cell">คณะกรรมการตรวจรับ</td>
+                    <td class="value-cell">${p.committee || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">ระยะเวลาโครงการ</td>
+                    <td class="value-cell">${p.duration || '-'} (${p.startDate || '-'} ถึง ${p.endDate || '-'})</td>
+                    <td class="label-cell">สถานะปัจจุบัน</td>
+                    <td class="value-cell"><span class="badge-status">${p.status}</span></td>
+                </tr>
+                ${p.details ? `
+                <tr>
+                    <td class="label-cell">รายละเอียดเพิ่มเติม</td>
+                    <td class="value-cell" colspan="3">${p.details}</td>
+                </tr>` : ''}
             </table>
         </div>`;
     }
 
-    // --- WBS Table Section ---
+    // --- 3. WBS Work Breakdown Structure Table Section ---
     if (selected.includes('wbs') && p.tasks && p.tasks.length > 0) {
         let wbsRows = '';
+        let totalW = 0;
         p.tasks.forEach((t, idx) => {
-            const barColor = t.actual >= 100 ? '#27ae60' : '#742C81';
+            const w = parseFloat(t.weight) || 0;
+            const act = parseFloat(t.actual) || 0;
+            totalW += w;
+            const barColor = act >= 100 ? '#10B981' : (act > 0 ? '#742C81' : '#CBD5E1');
             wbsRows += `
                 <tr>
-                    <td style="text-align: center;">${idx + 1}</td>
-                    <td><strong>${t.name}</strong>${t.description ? '<br><span style="font-size: 10px; color: #888;">' + t.description + '</span>' : ''}</td>
-                    <td style="text-align: center;">${t.startDate || '-'}</td>
-                    <td style="text-align: center;">${t.endDate || '-'}</td>
-                    <td style="text-align: center;">${t.weight}%</td>
-                    <td style="text-align: center;">
-                        ${t.actual}%
-                        <div style="background: #eee; border-radius: 4px; height: 6px; margin-top: 3px; overflow: hidden;">
-                            <div style="background: ${barColor}; height: 100%; width: ${t.actual}%; border-radius: 4px;"></div>
+                    <td class="text-center">${idx + 1}</td>
+                    <td>
+                        <strong>${t.name}</strong>
+                        ${t.description ? `<div class="task-desc-sub">${t.description}</div>` : ''}
+                    </td>
+                    <td class="text-center">${t.startDate || '-'}</td>
+                    <td class="text-center">${t.endDate || '-'}</td>
+                    <td class="text-center font-bold">${w.toFixed(2)}%</td>
+                    <td>
+                        <div class="prog-cell-content">
+                            <span class="prog-num font-bold ${act >= 100 ? 'text-success' : ''}">${act.toFixed(2)}%</span>
+                            <div class="print-prog-bar">
+                                <div class="print-prog-fill" style="width: ${Math.min(act, 100)}%; background-color: ${barColor};"></div>
+                            </div>
                         </div>
                     </td>
                 </tr>`;
@@ -2518,97 +3229,312 @@ window.printSelectedSections = function () {
 
         printContent += `
         <div class="print-section">
-            <h2 class="print-section-title">\u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E01\u0E48\u0E2D\u0E2A\u0E23\u0E49\u0E32\u0E07 (WBS)</h2>
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-list-check"></i></span>
+                <h2 class="print-section-title">แผนงานก่อสร้างและผลงานจริง (Work Breakdown Structure - WBS)</h2>
+            </div>
             <table class="wbs-table">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">#</th>
-                        <th>\u0E0A\u0E37\u0E48\u0E2D\u0E07\u0E32\u0E19 (Task)</th>
-                        <th style="width: 100px;">\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48\u0E40\u0E23\u0E34\u0E48\u0E21</th>
-                        <th style="width: 100px;">\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E34\u0E49\u0E19\u0E2A\u0E38\u0E14</th>
-                        <th style="width: 70px;">\u0E19\u0E49\u0E33\u0E2B\u0E19\u0E31\u0E01 (%)</th>
-                        <th style="width: 100px;">\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32 (%)</th>
+                        <th style="width: 45px;">ลำดับ</th>
+                        <th>แผนงานย่อย (Task Name)</th>
+                        <th style="width: 105px;">วันที่เริ่มต้น</th>
+                        <th style="width: 105px;">วันที่สิ้นสุด</th>
+                        <th style="width: 95px;">น้ำหนักงาน</th>
+                        <th style="width: 150px;">ผลงานสะสม</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${wbsRows}
                 </tbody>
+                <tfoot>
+                    <tr class="wbs-total-row">
+                        <td colspan="4" style="text-align: right; font-weight: bold; padding-right: 15px;">รวมแผนงานทั้งหมด (Total)</td>
+                        <td class="text-center font-bold text-plan">${totalW.toFixed(2)}%</td>
+                        <td>
+                            <div class="prog-cell-content">
+                                <span class="prog-num font-bold text-actual">${actualVal.toFixed(2)}%</span>
+                                <div class="print-prog-bar">
+                                    <div class="print-prog-fill" style="width: ${Math.min(actualVal, 100)}%; background-color: #742C81;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>`;
     }
 
-    // --- S-Curve Section ---
+    // --- 4. S-Curve Chart Section ---
     if (selected.includes('scurve')) {
-        const sCurveCanvas = document.getElementById('sCurveChart');
-        let sCurveImg = '';
-        if (sCurveCanvas) {
-            try {
-                sCurveImg = sCurveCanvas.toDataURL('image/png', 1.0);
-            } catch (e) {
-                console.warn('Could not capture S-Curve:', e);
-            }
-        }
         printContent += `
-        <div class="print-section" ${!selected.includes('wbs') ? '' : 'style="page-break-before: always;"'}>
-            <h2 class="print-section-title">S-Curve \u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23</h2>
-            ${sCurveImg ? '<img src="' + sCurveImg + '" style="width: 100%; max-height: 550px; object-fit: contain;">' : '<p style="color: #999; text-align: center;">\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E41\u0E2A\u0E14\u0E07\u0E01\u0E23\u0E32\u0E1F S-Curve</p>'}
+        <div class="print-section" style="page-break-before: always;">
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-chart-line"></i></span>
+                <h2 class="print-section-title">กราฟ S-Curve เปรียบเทียบแผนงานกับผลงานจริง (Plan vs Actual Progress)</h2>
+            </div>
+            <div class="chart-box-print">
+                ${sCurveImg ? `<img src="${sCurveImg}" alt="S-Curve Chart" class="print-chart-img">` : '<p class="no-data-msg">ไม่สามารถประมวลผลกราฟ S-Curve ได้</p>'}
+            </div>
         </div>`;
     }
 
-    // --- Gantt Chart Section ---
+    // --- 5. Monthly S-Curve Numerical Table (Plan vs Actual) ---
+    if (selected.includes('scurveTable')) {
+        let scurveTableRows = '';
+        const sLabels = window.sChart?.data?.labels || [];
+        const sPlans = window.sChart?.data?.datasets?.[0]?.data || [];
+        const sActuals = window.sChart?.data?.datasets?.[1]?.data || [];
+
+        if (sLabels.length > 0) {
+            sLabels.forEach((lbl, idx) => {
+                const pVal = sPlans[idx] !== undefined && sPlans[idx] !== null ? parseFloat(sPlans[idx]).toFixed(2) : '-';
+                const hasAct = sActuals[idx] !== undefined && sActuals[idx] !== null && sActuals[idx] !== '';
+                const aVal = hasAct ? parseFloat(sActuals[idx]).toFixed(2) : '-';
+                
+                let diffVal = '-';
+                let statusLabel = '<span class="badge-pending">รอรายงาน</span>';
+                if (hasAct && pVal !== '-') {
+                    const diff = (parseFloat(aVal) - parseFloat(pVal)).toFixed(2);
+                    const diffNum = parseFloat(diff);
+                    if (diffNum >= 0) {
+                        diffVal = `<span class="text-success font-bold">+${diff}%</span>`;
+                        statusLabel = '<span class="badge-success">ตามแผน / เร็วกว่า</span>';
+                    } else {
+                        diffVal = `<span class="text-danger font-bold">${diff}%</span>`;
+                        statusLabel = '<span class="badge-danger">ล่าช้ากว่าแผน</span>';
+                    }
+                }
+
+                scurveTableRows += `
+                    <tr>
+                        <td class="text-center">${idx + 1}</td>
+                        <td class="font-bold text-center">${lbl}</td>
+                        <td class="text-center text-plan font-bold">${pVal !== '-' ? pVal + '%' : '-'}</td>
+                        <td class="text-center text-actual font-bold">${aVal !== '-' ? aVal + '%' : '-'}</td>
+                        <td class="text-center">${diffVal}</td>
+                        <td class="text-center">${statusLabel}</td>
+                    </tr>`;
+            });
+
+            printContent += `
+            <div class="print-section">
+                <div class="print-section-header">
+                    <span class="section-icon"><i class="fa-solid fa-table-cells"></i></span>
+                    <h2 class="print-section-title">ตารางตัวเลขความก้าวหน้าสะสมรายเดือน (S-Curve Monthly Performance)</h2>
+                </div>
+                <table class="wbs-table monthly-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">เดือนที่</th>
+                            <th>งวดเดือน (Month)</th>
+                            <th style="width: 140px;">แผนงานสะสม (Plan %)</th>
+                            <th style="width: 140px;">ผลงานจริงสะสม (Actual %)</th>
+                            <th style="width: 130px;">ส่วนต่าง (Variance %)</th>
+                            <th style="width: 150px;">สถานะการดำเนินงาน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${scurveTableRows}
+                    </tbody>
+                </table>
+            </div>`;
+        }
+    }
+
+    // --- 6. Gantt Chart Section ---
     if (selected.includes('gantt')) {
         const ganttSvg = document.querySelector('#ganttChart');
         let ganttContent = '';
         if (ganttSvg && ganttSvg.innerHTML.trim()) {
             const svgClone = ganttSvg.cloneNode(true);
-            const w = ganttSvg.getAttribute('width') || ganttSvg.getBoundingClientRect().width;
-            const h = ganttSvg.getAttribute('height') || ganttSvg.getBoundingClientRect().height;
-            if (w && h) {
-                svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
-                svgClone.setAttribute('width', '100%');
-                svgClone.setAttribute('height', 'auto');
-                svgClone.style.maxHeight = '550px';
-            }
+            const w = ganttSvg.getAttribute('width') || ganttSvg.getBoundingClientRect().width || 1100;
+            const h = ganttSvg.getAttribute('height') || ganttSvg.getBoundingClientRect().height || 500;
+            svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svgClone.setAttribute('width', '100%');
+            svgClone.setAttribute('height', 'auto');
+            svgClone.style.maxHeight = '520px';
+
+            // Explicitly set presentation fill and stroke attributes on elements so print engines render colors
+            svgClone.querySelectorAll('.grid-background').forEach(el => el.setAttribute('fill', '#ffffff'));
+            svgClone.querySelectorAll('.grid-header').forEach(el => {
+                el.setAttribute('fill', '#f8fafc');
+                el.setAttribute('stroke', '#e2e8f0');
+            });
+            svgClone.querySelectorAll('.grid-row').forEach((el, i) => {
+                el.setAttribute('fill', i % 2 === 0 ? '#ffffff' : '#f8fafc');
+            });
+            svgClone.querySelectorAll('.row-line').forEach(el => el.setAttribute('stroke', '#f1f5f9'));
+            svgClone.querySelectorAll('.tick').forEach(el => el.setAttribute('stroke', '#e2e8f0'));
+            svgClone.querySelectorAll('.bar-wrapper .bar').forEach(el => {
+                el.setAttribute('fill', '#E2E8F0');
+                el.setAttribute('rx', '6');
+                el.setAttribute('ry', '6');
+            });
+            svgClone.querySelectorAll('.bar-wrapper .bar-progress').forEach(el => {
+                el.setAttribute('fill', '#742C81');
+                el.setAttribute('rx', '6');
+                el.setAttribute('ry', '6');
+            });
+            svgClone.querySelectorAll('.bar-label').forEach(el => {
+                el.setAttribute('fill', '#1E293B');
+                el.setAttribute('font-weight', '600');
+                el.setAttribute('font-family', 'Prompt, sans-serif');
+                el.setAttribute('font-size', '11px');
+            });
+            svgClone.querySelectorAll('text').forEach(el => {
+                if (!el.getAttribute('fill')) el.setAttribute('fill', '#64748B');
+                el.setAttribute('font-family', 'Prompt, Sarabun, sans-serif');
+            });
+            svgClone.querySelectorAll('.upper-text').forEach(el => {
+                el.setAttribute('fill', '#475569');
+                el.setAttribute('font-weight', '600');
+            });
+            svgClone.querySelectorAll('.lower-text').forEach(el => {
+                el.setAttribute('fill', '#64748B');
+            });
+
             ganttContent = svgClone.outerHTML;
         }
+
         printContent += `
         <div class="print-section" style="page-break-before: always;">
-            <h2 class="print-section-title">Gantt Chart \u0E41\u0E1C\u0E19\u0E07\u0E32\u0E19\u0E22\u0E48\u0E2D\u0E22</h2>
-            <div style="overflow: hidden;">
-                ${ganttContent || '<p style="color: #999; text-align: center;">\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25 Gantt Chart</p>'}
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-chart-gantt"></i></span>
+                <h2 class="print-section-title">แผนผังการดำเนินงานแกนต์ชาร์ต (Gantt Chart Timeline)</h2>
+            </div>
+            <div class="gantt-box-print">
+                ${ganttContent || '<p class="no-data-msg">ไม่มีข้อมูลผังแกนต์ชาร์ต</p>'}
             </div>
         </div>`;
     }
 
-    // --- Gallery Section ---
+    // --- 7. Progress Photo Gallery (Grouped by Sub-Tasks) ---
     if (selected.includes('gallery') && p.gallery && p.gallery.length > 0) {
         const validGallery = p.gallery.filter(item => item.url);
         if (validGallery.length > 0) {
-            let galleryItems = '';
+            // Group photos by taskId / taskName
+            const taskGroups = {};
+            const tasksList = p.tasks || [];
+
+            tasksList.forEach(t => {
+                taskGroups[t.id] = {
+                    id: t.id,
+                    name: t.name,
+                    actual: t.actual || 0,
+                    photos: []
+                };
+            });
+
+            const unassignedPhotos = [];
+
             validGallery.forEach(item => {
-                galleryItems += `
-                    <div class="gallery-print-item">
-                        <img src="${item.url}" onerror="this.style.display='none'">
-                        <div class="gallery-print-info">
-                            <span>${item.date || '-'}</span>
-                            <strong>${item.desc || '-'}</strong>
+                let matched = false;
+                if (item.taskId && taskGroups[item.taskId]) {
+                    taskGroups[item.taskId].photos.push(item);
+                    matched = true;
+                } else if (item.taskName) {
+                    const found = tasksList.find(t => t.name === item.taskName);
+                    if (found && taskGroups[found.id]) {
+                        taskGroups[found.id].photos.push(item);
+                        matched = true;
+                    }
+                } else if (item.desc) {
+                    const found = tasksList.find(t => item.desc.includes(t.name));
+                    if (found && taskGroups[found.id]) {
+                        taskGroups[found.id].photos.push(item);
+                        matched = true;
+                    }
+                }
+                if (!matched) {
+                    unassignedPhotos.push(item);
+                }
+            });
+
+            let galleryHtml = '';
+
+            // Render each task group that has photos
+            Object.values(taskGroups).forEach(group => {
+                if (group.photos.length > 0) {
+                    let photoCards = '';
+                    group.photos.forEach(item => {
+                        photoCards += `
+                            <div class="gallery-print-card">
+                                <div class="gallery-print-img-wrapper">
+                                    <img src="${item.url}" onerror="this.src='mascot.jpg'" alt="${item.desc || 'ภาพความก้าวหน้า'}">
+                                    <span class="gallery-print-date-badge">${item.date || '-'}</span>
+                                </div>
+                                <div class="gallery-print-caption">
+                                    <strong>${item.desc || group.name}</strong>
+                                </div>
+                            </div>`;
+                    });
+
+                    galleryHtml += `
+                    <div class="gallery-print-task-block">
+                        <div class="gallery-print-task-header">
+                            <span class="gallery-print-task-title">
+                                <i class="fa-solid fa-folder-open" style="color: #742C81; margin-right: 6px;"></i> ${group.name}
+                            </span>
+                            <div class="gallery-print-task-meta">
+                                <span class="badge-task-progress">ความก้าวหน้างาน: ${group.actual}%</span>
+                                <span class="badge-photo-count">${group.photos.length} รูป</span>
+                            </div>
+                        </div>
+                        <div class="gallery-print-grid">
+                            ${photoCards}
                         </div>
                     </div>`;
+                }
             });
+
+            // Render unassigned photos if any
+            if (unassignedPhotos.length > 0) {
+                let generalCards = '';
+                unassignedPhotos.forEach(item => {
+                    generalCards += `
+                        <div class="gallery-print-card">
+                            <div class="gallery-print-img-wrapper">
+                                <img src="${item.url}" onerror="this.src='mascot.jpg'" alt="${item.desc || 'ภาพความก้าวหน้า'}">
+                                <span class="gallery-print-date-badge">${item.date || '-'}</span>
+                            </div>
+                            <div class="gallery-print-caption">
+                                <strong>${item.desc || 'ภาพหน้างานทั่วไป'}</strong>
+                            </div>
+                        </div>`;
+                });
+
+                galleryHtml += `
+                <div class="gallery-print-task-block">
+                    <div class="gallery-print-task-header">
+                        <span class="gallery-print-task-title">
+                            <i class="fa-regular fa-images" style="color: #64748B; margin-right: 6px;"></i> ภาพหน้างานทั่วไป / ไม่ระบุแผนงานย่อย
+                        </span>
+                        <div class="gallery-print-task-meta">
+                            <span class="badge-photo-count">${unassignedPhotos.length} รูป</span>
+                        </div>
+                    </div>
+                    <div class="gallery-print-grid">
+                        ${generalCards}
+                    </div>
+                </div>`;
+            }
+
             printContent += `
             <div class="print-section" style="page-break-before: always;">
-                <h2 class="print-section-title">\u0E23\u0E39\u0E1B\u0E20\u0E32\u0E1E\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32</h2>
-                <div class="gallery-print-grid">
-                    ${galleryItems}
+                <div class="print-section-header">
+                    <span class="section-icon"><i class="fa-solid fa-camera-retro"></i></span>
+                    <h2 class="print-section-title">รูปภาพความก้าวหน้าหน้างานก่อสร้าง (จัดกลุ่มตามแผนงานย่อย)</h2>
                 </div>
+                ${galleryHtml}
             </div>`;
         }
     }
 
-    // --- Disbursement Section ---
+    // --- 8. Disbursement Section ---
     if (selected.includes('disbursement') && p.disbursement) {
         const d = p.disbursement;
-        const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num || 0);
+        const fmt = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(num || 0);
 
         let disbRows = '';
         if (d.items && d.items.length > 0) {
@@ -2617,58 +3543,58 @@ window.printSelectedSections = function () {
                 if (item.budget && item.budget > 0) pct = ((item.totalPaid / item.budget) * 100).toFixed(2);
                 disbRows += `
                     <tr>
-                        <td style="text-align: center;">${idx + 1}</td>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;"><code>${item.wbs}</code></td>
-                        <td style="text-align: right;">${fmt(item.budget)}</td>
-                        <td style="text-align: right;">${fmt(item.totalPaid)}</td>
-                        <td style="text-align: right;">${fmt(item.remaining)}</td>
-                        <td style="text-align: right;">${pct}%</td>
-                        <td style="text-align: center;">${item.status || '-'}</td>
+                        <td class="text-center">${idx + 1}</td>
+                        <td><strong>${item.name}</strong></td>
+                        <td class="text-center"><code>${item.wbs || '-'}</code></td>
+                        <td class="text-right">${fmt(item.budget)}</td>
+                        <td class="text-right text-success font-bold">${fmt(item.totalPaid)}</td>
+                        <td class="text-right text-danger">${fmt(item.remaining)}</td>
+                        <td class="text-center font-bold">${pct}%</td>
+                        <td class="text-center"><span class="badge-status">${item.status || '-'}</span></td>
                     </tr>`;
             });
         } else {
-            disbRows = '<tr><td colspan="8" style="text-align:center; color: #999;">ยังไม่มีข้อมูลรายการเบิกจ่าย</td></tr>';
-        }
-
-        const disbCanvas = document.getElementById('disbursementChart');
-        let disbImg = '';
-        if (disbCanvas) {
-            try { disbImg = disbCanvas.toDataURL('image/png', 1.0); } catch (e) { }
+            disbRows = '<tr><td colspan="8" class="text-center" style="color: #94A3B8; padding: 20px;">ยังไม่มีข้อมูลรายการเบิกจ่ายงบประมาณ</td></tr>';
         }
 
         printContent += `
         <div class="print-section" style="page-break-before: always;">
-            <h2 class="print-section-title">ข้อมูลเบิกจ่ายงบประมาณ</h2>
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-coins"></i></span>
+                <h2 class="print-section-title">ข้อมูลการเบิกจ่ายงบประมาณโครงการ (Disbursement Summary)</h2>
+            </div>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
-                    <strong style="display: block; color: #555; font-size: 11px;">วงเงินงบประมาณ</strong>
-                    <span style="color: #2980b9; font-weight: bold; font-size: 14px;">${fmt(d.budget)}</span>
+            <div class="print-disb-kpi-grid">
+                <div class="print-disb-kpi-card" style="border-left: 4px solid #2563EB;">
+                    <span class="kpi-label">วงเงินงบประมาณทั้งสิ้น</span>
+                    <span class="kpi-val" style="color: #2563EB;">${fmt(d.budget)}</span>
                 </div>
-                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
-                    <strong style="display: block; color: #555; font-size: 11px;">จ่ายจริงสะสม</strong>
-                    <span style="color: #27ae60; font-weight: bold; font-size: 14px;">${fmt(d.totalPaid)}</span>
+                <div class="print-disb-kpi-card" style="border-left: 4px solid #10B981;">
+                    <span class="kpi-label">เบิกจ่ายจริงสะสม</span>
+                    <span class="kpi-val" style="color: #10B981;">${fmt(d.totalPaid)}</span>
                 </div>
-                <div style="flex: 1; border: 1px solid #ccc; padding: 10px; text-align: center; border-radius: 6px;">
-                    <strong style="display: block; color: #555; font-size: 11px;">งบคงเหลือ</strong>
-                    <span style="color: #e74c3c; font-weight: bold; font-size: 14px;">${fmt(d.remaining)}</span>
+                <div class="print-disb-kpi-card" style="border-left: 4px solid #EF4444;">
+                    <span class="kpi-label">งบประมาณคงเหลือ</span>
+                    <span class="kpi-val" style="color: #EF4444;">${fmt(d.remaining)}</span>
                 </div>
             </div>
 
-            ${disbImg ? '<img src="' + disbImg + '" style="width: 100%; max-height: 400px; object-fit: contain; margin-bottom: 20px;">' : ''}
+            ${disbImg ? `
+            <div class="chart-box-print" style="margin-bottom: 20px;">
+                <img src="${disbImg}" alt="Disbursement Chart" class="print-chart-img" style="max-height: 380px;">
+            </div>` : ''}
             
             <table class="wbs-table">
                 <thead>
                     <tr>
-                        <th style="width: 30px;">#</th>
-                        <th>รายการ</th>
-                        <th>WBS</th>
-                        <th>วงเงินงบประมาณ</th>
-                        <th>จ่ายจริงสะสม</th>
-                        <th>งบคงเหลือ</th>
-                        <th>%</th>
-                        <th>สถานะ</th>
+                        <th style="width: 40px;">#</th>
+                        <th>รายการเบิกจ่าย</th>
+                        <th style="width: 100px;">รหัส WBS</th>
+                        <th style="width: 125px; text-align: right;">วงเงินงบประมาณ</th>
+                        <th style="width: 125px; text-align: right;">เบิกจ่ายสะสม</th>
+                        <th style="width: 125px; text-align: right;">งบคงเหลือ</th>
+                        <th style="width: 70px;">% เบิก</th>
+                        <th style="width: 100px;">สถานะ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2678,243 +3604,665 @@ window.printSelectedSections = function () {
         </div>`;
     }
 
-    // --- RESTORE ORIGINAL STYLES ---
+    // --- 9. Official 3-Party Signatures Block ---
+    if (selected.includes('signatures')) {
+        printContent += `
+        <div class="print-section signatures-section">
+            <div class="print-section-header">
+                <span class="section-icon"><i class="fa-solid fa-file-signature"></i></span>
+                <h2 class="print-section-title">การตรวจรับและรับรองรายงานความก้าวหน้าโครงการ</h2>
+            </div>
+            <div class="signatures-grid">
+                <div class="signature-card">
+                    <div class="sig-title">ผู้ควบคุมงาน</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-dots">..................................................................</div>
+                    <div class="sig-name">( ${p.supervisor || '......................................................'} )</div>
+                    <div class="sig-position">ผู้ควบคุมงาน การไฟฟ้าส่วนภูมิภาค</div>
+                    <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                </div>
+                <div class="signature-card">
+                    <div class="sig-title">${p.type === 'ดำเนินการเอง' ? 'หัวหน้าชุดงาน / ผู้ปฏิบัติงาน' : 'ผู้รับจ้าง / ผู้แทนผู้รับจ้าง'}</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-dots">..................................................................</div>
+                    <div class="sig-name">( ${p.contractor || '......................................................'} )</div>
+                    <div class="sig-position">${p.type === 'ดำเนินการเอง' ? 'การไฟฟ้าส่วนภูมิภาค' : 'ผู้รับจ้างตามสัญญา'}</div>
+                    <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                </div>
+                <div class="signature-card">
+                    <div class="sig-title">ประธานกรรมการตรวจรับพัสดุ</div>
+                    <div class="sig-space"></div>
+                    <div class="sig-dots">..................................................................</div>
+                    <div class="sig-name">( ${p.committee || '......................................................'} )</div>
+                    <div class="sig-position">ประธานกรรมการตรวจรับพัสดุ</div>
+                    <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // --- RESTORE ORIGINAL TAB STYLES ---
     if (tabSCurve) tabSCurve.setAttribute('style', origSCurveStyle);
     if (tabGantt) tabGantt.setAttribute('style', origGanttStyle);
     if (tabDisbursement && selected.includes('disbursement')) tabDisbursement.setAttribute('style', origDisbStyle);
 
-    // Create print window
-    const printWindow = window.open('', '_blank', 'width=1100,height=800');
+    // --- OPEN POPUP PRINT WINDOW ---
+    const printWindow = window.open('', '_blank', 'width=1200,height=880');
+    if (!printWindow) {
+        alert('กรุณาอนุญาตให้เปิดหน้าต่างป๊อปอัป (Popup) เพื่อพิมพ์รายงาน PDF');
+        return;
+    }
+
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19 - ${p.name}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>รายงานความก้าวหน้าโครงการ - ${p.name}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
     <style>
         @page {
             size: A4 landscape;
-            margin: 12mm 15mm;
+            margin: 10mm 12mm 12mm 12mm;
         }
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
         body {
             font-family: 'Sarabun', sans-serif;
-            color: #333;
-            font-size: 12px;
+            color: #1E293B;
+            background-color: #FFFFFF;
+            font-size: 11.5px;
             line-height: 1.5;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
-        h1, h2, h3 {
+        h1, h2, h3, h4, .font-prompt {
             font-family: 'Prompt', sans-serif;
         }
 
-        /* Header */
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #742C81;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-        }
-        .report-header h1 {
-            font-size: 20px;
-            color: #742C81;
-            margin-bottom: 3px;
-        }
-        .report-header .subtitle {
-            font-size: 11px;
-            color: #777;
-        }
-        .report-header .logo {
-            text-align: right;
-            color: #742C81;
-        }
-        .report-header .logo .pcts {
-            font-family: 'Prompt', sans-serif;
-            font-size: 22px;
-            font-weight: 700;
-        }
-        .report-header .logo .sub {
-            font-size: 10px;
-            color: #999;
-        }
-
-        /* Sections */
-        .print-section {
-            margin-bottom: 20px;
-        }
-        .print-section-title {
-            font-size: 15px;
-            color: #742C81;
-            border-bottom: 2px solid #E2E8F0;
-            padding-bottom: 5px;
-            margin-bottom: 12px;
-        }
-
-        /* Info Table */
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .info-table td {
-            padding: 6px 12px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 12px;
-        }
-        .info-table .label-cell {
-            width: 180px;
-            font-weight: 600;
-            color: #555;
-            background: #fafafa;
-        }
-        .info-table .value-cell {
-            color: #333;
-        }
-
-        /* WBS Table */
-        .wbs-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-        }
-        .wbs-table th {
-            background: #742C81;
-            color: white;
-            padding: 8px 6px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .wbs-table td {
-            padding: 6px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
-        .wbs-table tr:nth-child(even) {
-            background: #fafafa;
-        }
-        .wbs-table tr:hover {
-            background: #f5f0f7;
-        }
-
-        /* Gallery */
-        .gallery-print-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-        .gallery-print-item {
-            border: 1px solid #eee;
-            border-radius: 6px;
-            overflow: hidden;
-            background: #fff;
-        }
-        .gallery-print-item img {
-            width: 100%;
-            height: 180px;
-            object-fit: contain;
-            display: block;
-        }
-        .gallery-print-info {
-            padding: 5px 8px;
-            background: #fafafa;
-        }
-        .gallery-print-info span {
-            font-size: 10px;
-            color: #999;
-            display: block;
-        }
-        .gallery-print-info strong {
-            font-size: 11px;
-            color: #333;
-        }
-
-        /* Footer */
-        .report-footer {
-            margin-top: 30px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 10px;
-            color: #999;
-        }
-
-        /* Print button - hide on actual print */
+        /* Screen Action Toolbar */
         .print-action-bar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: #742C81;
-            padding: 10px 20px;
+            background: linear-gradient(135deg, #742C81 0%, #531B5E 100%);
+            padding: 12px 24px;
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            justify-content: space-between;
+            align-items: center;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
         }
-        .print-action-bar button {
-            padding: 8px 24px;
-            border: none;
-            border-radius: 6px;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .print-action-bar .btn-print {
-            background: white;
-            color: #742C81;
-        }
-        .print-action-bar .btn-close {
-            background: rgba(255,255,255,0.2);
+        .print-action-info {
             color: white;
+            font-size: 13px;
+        }
+        .print-action-info strong {
+            font-family: 'Prompt', sans-serif;
+            font-size: 15px;
+            margin-right: 8px;
+        }
+        .print-action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-print-action {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-family: 'Prompt', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-print-confirm {
+            background: #F59E0B;
+            color: #1E1E2D;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+        .btn-print-confirm:hover {
+            background: #D97706;
+            transform: translateY(-1px);
+        }
+        .btn-print-close {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-print-close:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
 
-        /* === Page-break & fit-to-page rules === */
+        /* Document Container */
+        .report-page-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        /* Official PEA Header */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #742C81;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+        .report-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .pea-emblem-badge {
+            width: 48px;
+            height: 48px;
+            background: #742C81;
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 3px 8px rgba(116, 44, 129, 0.3);
+        }
+        .report-title-block h1 {
+            font-size: 18px;
+            color: #742C81;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 3px;
+        }
+        .report-title-block .doc-subtitle {
+            font-size: 11.5px;
+            color: #64748B;
+        }
+        .report-header-right {
+            text-align: right;
+        }
+        .brand-pcts {
+            font-family: 'Prompt', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #742C81;
+            letter-spacing: 0.5px;
+        }
+        .brand-sub {
+            font-size: 9.5px;
+            color: #94A3B8;
+            letter-spacing: 0.3px;
+        }
+        .report-meta-tag {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 10.5px;
+            color: #64748B;
+            background: #F8FAFC;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* Executive KPI Ribbon */
+        .print-kpi-ribbon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .print-kpi-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+        }
+        .print-kpi-label {
+            display: block;
+            font-size: 10.5px;
+            color: #64748B;
+            margin-bottom: 3px;
+            font-family: 'Prompt', sans-serif;
+            font-weight: 500;
+        }
+        .print-kpi-value {
+            display: block;
+            font-family: 'Prompt', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        .print-kpi-sub {
+            font-size: 9.5px;
+            color: #94A3B8;
+        }
+
+        /* Sections */
         .print-section {
+            margin-bottom: 22px;
             page-break-inside: avoid;
             break-inside: avoid;
         }
-        .wbs-table tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
+        .print-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
         }
-        .wbs-table thead {
-            display: table-header-group;
+        .section-icon {
+            color: #742C81;
+            font-size: 14px;
         }
-        .info-table tr {
-            page-break-inside: avoid;
-            break-inside: avoid;
+        .print-section-title {
+            font-size: 14px;
+            color: #742C81;
+            font-weight: 600;
         }
-        .gallery-print-item {
-            page-break-inside: avoid;
-            break-inside: avoid;
+
+        /* Tables */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 11.5px;
         }
-        .gallery-print-grid {
-            page-break-inside: auto;
+        .info-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            border-right: 1px solid #E2E8F0;
         }
-        img {
-            max-width: 100%;
-            max-height: 650px;
-            object-fit: contain;
+        .info-table .label-cell {
+            width: 160px;
+            background: #F8FAFC;
+            color: #475569;
+            font-weight: 600;
         }
-        svg {
-            max-width: 100%;
-            max-height: 650px;
+        .info-table .value-cell {
+            color: #1E293B;
+        }
+
+        .wbs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
             overflow: hidden;
         }
+        .wbs-table thead th {
+            background: #742C81;
+            color: white;
+            padding: 8px 8px;
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            text-align: left;
+            border-right: 1px solid rgba(255,255,255,0.15);
+        }
+        .wbs-table tbody td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #E2E8F0;
+            border-right: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+        .wbs-table tbody tr:nth-child(even) {
+            background-color: #F8FAFC;
+        }
+        .wbs-total-row td {
+            background: #F1F5F9;
+            font-family: 'Prompt', sans-serif;
+            padding: 8px;
+            border-top: 2px solid #CBD5E1;
+        }
+        .task-desc-sub {
+            font-size: 9.5px;
+            color: #64748B;
+            margin-top: 1px;
+        }
 
+        /* Progress Bars */
+        .prog-cell-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .prog-num {
+            width: 48px;
+            text-align: right;
+            font-size: 10.5px;
+        }
+        .print-prog-bar {
+            flex: 1;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .print-prog-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        /* Chart Images */
+        .chart-box-print {
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 12px;
+            background: white;
+            text-align: center;
+        }
+        .print-chart-img {
+            max-width: 100%;
+            max-height: 480px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        .gantt-box-print {
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            overflow: hidden;
+        }
+        .gantt-box-print svg {
+            width: 100%;
+            height: auto;
+            max-height: 520px;
+            background: white;
+        }
+        .gantt .grid-background { fill: #ffffff !important; }
+        .gantt .grid-header { fill: #f8fafc !important; stroke: #e2e8f0 !important; }
+        .gantt .grid-row { fill: #ffffff !important; }
+        .gantt .grid-row:nth-child(even) { fill: #f8fafc !important; }
+        .gantt .row-line { stroke: #f1f5f9 !important; }
+        .gantt .tick { stroke: #e2e8f0 !important; }
+        .gantt .today-highlight { fill: rgba(245, 158, 11, 0.15) !important; }
+        .gantt .bar-wrapper .bar {
+            fill: #E2E8F0 !important;
+            rx: 6px !important;
+            ry: 6px !important;
+        }
+        .gantt .bar-wrapper .bar-progress {
+            fill: #742C81 !important;
+            rx: 6px !important;
+            ry: 6px !important;
+        }
+        .gantt .bar-label {
+            fill: #1e293b !important;
+            font-weight: 600 !important;
+            font-size: 11px !important;
+            font-family: 'Prompt', sans-serif !important;
+        }
+        .gantt text {
+            font-family: 'Prompt', 'Sarabun', sans-serif !important;
+            font-size: 10px !important;
+            fill: #64748b !important;
+        }
+        .gantt .upper-text {
+            fill: #475569 !important;
+            font-weight: 600 !important;
+        }
+        .gantt .lower-text {
+            fill: #64748b !important;
+        }
+
+        /* Grouped Progress Gallery */
+        .gallery-print-task-block {
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            background: white;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .gallery-print-task-header {
+            background: #F8FAFC;
+            padding: 8px 14px;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gallery-print-task-title {
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            color: #1E293B;
+        }
+        .gallery-print-task-meta {
+            display: flex;
+            gap: 8px;
+        }
+        .badge-task-progress {
+            background: #EAE0F0;
+            color: #742C81;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+        .badge-photo-count {
+            background: #E2E8F0;
+            color: #475569;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+        .gallery-print-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 12px;
+        }
+        .gallery-print-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #FFFFFF;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .gallery-print-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            background: #F1F5F9;
+        }
+        .gallery-print-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .gallery-print-date-badge {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(15, 23, 42, 0.75);
+            color: white;
+            font-size: 9.5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .gallery-print-caption {
+            padding: 8px 10px;
+            background: #FAFAFA;
+            font-size: 10.5px;
+            color: #334155;
+            line-height: 1.4;
+            min-height: 38px;
+        }
+
+        /* Disbursement KPIs */
+        .print-disb-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .print-disb-kpi-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            text-align: center;
+        }
+        .print-disb-kpi-card .kpi-label {
+            display: block;
+            font-size: 10.5px;
+            color: #64748B;
+            margin-bottom: 2px;
+        }
+        .print-disb-kpi-card .kpi-val {
+            font-family: 'Prompt', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        /* Signatures Section */
+        .signatures-section {
+            margin-top: 24px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .signature-card {
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 16px 12px 14px;
+            text-align: center;
+            background: #FFFFFF;
+        }
+        .sig-title {
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            font-size: 11.5px;
+            color: #334155;
+            margin-bottom: 30px;
+        }
+        .sig-space {
+            height: 30px;
+        }
+        .sig-dots {
+            font-size: 11px;
+            color: #94A3B8;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        .sig-name {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 4px;
+        }
+        .sig-position {
+            font-size: 10px;
+            color: #64748B;
+            margin-bottom: 12px;
+        }
+        .sig-date {
+            font-size: 10px;
+            color: #94A3B8;
+        }
+
+        /* Badges & Utility Colors */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .text-plan { color: #D97706; }
+        .text-actual { color: #742C81; }
+        .text-success { color: #10B981; }
+        .text-danger { color: #EF4444; }
+        .badge-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10.5px;
+            font-weight: 600;
+            background: #EAE0F0;
+            color: #742C81;
+        }
+        .badge-success {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-weight: 600;
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .badge-danger {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-weight: 600;
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .badge-pending {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-weight: 600;
+            background: #F1F5F9;
+            color: #64748B;
+        }
+        .no-data-msg {
+            color: #94A3B8;
+            font-style: italic;
+            padding: 24px;
+            text-align: center;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 24px;
+            padding-top: 10px;
+            border-top: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 9.5px;
+            color: #94A3B8;
+        }
+
+        /* Print Media Queries */
         @media print {
-            .print-action-bar { display: none !important; }
-            body { padding-top: 0 !important; }
+            .print-action-bar {
+                display: none !important;
+            }
+            body {
+                padding-top: 0 !important;
+                background: white !important;
+            }
+            .report-page-container {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
             .print-section {
                 page-break-inside: avoid;
                 break-inside: avoid;
@@ -2929,41 +4277,75 @@ window.printSelectedSections = function () {
             .wbs-table thead {
                 display: table-header-group;
             }
-            .gallery-print-item {
+            .gallery-print-task-block {
                 page-break-inside: avoid;
                 break-inside: avoid;
             }
-            img, svg {
-                max-height: 650px;
+            .signatures-section {
                 page-break-inside: avoid;
+                break-inside: avoid;
             }
         }
         @media screen {
-            body { padding-top: 50px; }
+            body {
+                padding-top: 60px;
+                background-color: #F1F5F9;
+            }
+            .report-page-container {
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                margin-top: 20px;
+                margin-bottom: 30px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Screen Action Bar -->
     <div class="print-action-bar">
-        <button class="btn-print" onclick="window.print()">\u0E1E\u0E34\u0E21\u0E1E\u0E4C / \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01 PDF</button>
-        <button class="btn-close" onclick="window.close()">\u0E1B\u0E34\u0E14\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E48\u0E32\u0E07</button>
+        <div class="print-action-info">
+            <strong><i class="fa-solid fa-file-lines"></i> รายงานความก้าวหน้าโครงการก่อสร้าง (PCTS)</strong>
+            <span>${p.name}</span>
+        </div>
+        <div class="print-action-buttons">
+            <button class="btn-print-action btn-print-confirm" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> พิมพ์รายงาน / บันทึก PDF
+            </button>
+            <button class="btn-print-action btn-print-close" onclick="window.close()">
+                <i class="fa-solid fa-xmark"></i> ปิดหน้านี้
+            </button>
+        </div>
     </div>
 
-    <div class="report-header">
-        <div>
-            <h1>${p.name}</h1>
-            <div class="subtitle">\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E04\u0E27\u0E32\u0E21\u0E01\u0E49\u0E32\u0E27\u0E2B\u0E19\u0E49\u0E32\u0E42\u0E04\u0E23\u0E07\u0E01\u0E32\u0E23 \u0E13 \u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 ${today}</div>
+    <!-- Main Printable Content Container -->
+    <div class="report-page-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="report-header-left">
+                <div class="pea-emblem-badge">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="report-title-block">
+                    <h1>${p.name}</h1>
+                    <div class="doc-subtitle">รายงานติดตามและประเมินผลความก้าวหน้าโครงการก่อสร้าง &bull; ข้อมูล ณ วันที่ ${today}</div>
+                </div>
+            </div>
+            <div class="report-header-right">
+                <div class="brand-pcts">PCTS</div>
+                <div class="brand-sub">PEA Construction Tracking System</div>
+                <span class="report-meta-tag">พิมพ์เมื่อ: ${printTimestamp}</span>
+            </div>
         </div>
-        <div class="logo">
-            <div class="pcts">PCTS</div>
-            <div class="sub">PEA Construction Tracking System</div>
+
+        ${printContent}
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <span>ระบบติดตามและบริหารโครงการก่อสร้าง การไฟฟ้าส่วนภูมิภาค (PCTS)</span>
+            <span>เอกสารนี้สร้างขึ้นโดยระบบอัตโนมัติ &bull; วันที่ ${today}</span>
         </div>
-    </div>
-
-    ${printContent}
-
-    <div class="report-footer">
-        PEA Construction Tracking System (PCTS) &mdash; \u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E40\u0E21\u0E37\u0E48\u0E2D ${today}
     </div>
 </body>
 </html>`);

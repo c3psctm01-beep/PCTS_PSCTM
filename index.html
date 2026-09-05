@@ -92,43 +92,43 @@
                 <section id="dashboard-view" class="view-section active">
                     <h1 class="page-title">โครงการก่อสร้างทั้งหมด</h1>
                     <div class="stats-cards">
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-building"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('all')" style="cursor: pointer;" title="คลิกเพื่อดูทั้งหมด">
+                            <div class="stat-icon" style="background: rgba(116, 44, 129, 0.1); color: var(--pea-purple);"><i class="fa-solid fa-building"></i></div>
                             <div class="stat-info">
                                 <h3>โครงการทั้งหมด</h3>
                                 <p id="statTotalProjects">0 โครงการ</p>
                             </div>
                         </div>
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('อยู่ระหว่างก่อสร้าง')" style="cursor: pointer;" title="คลิกเพื่อดูโครงการอยู่ระหว่างก่อสร้าง">
+                            <div class="stat-icon" style="background: rgba(46, 204, 113, 0.12); color: #27ae60;"><i class="fa-solid fa-spinner"></i></div>
                             <div class="stat-info">
                                 <h3>อยู่ระหว่างก่อสร้าง</h3>
                                 <p id="statActiveProjects">0 โครงการ</p>
                             </div>
                         </div>
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-pen-ruler"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('อยู่ระหว่างออกแบบประมาณการ')" style="cursor: pointer;" title="คลิกเพื่อดูโครงการออกแบบประมาณการ">
+                            <div class="stat-icon" style="background: rgba(155, 89, 182, 0.12); color: #8e44ad;"><i class="fa-solid fa-pen-ruler"></i></div>
                             <div class="stat-info">
                                 <h3>ออกแบบประมาณการ</h3>
                                 <p id="statDesignProjects">0 โครงการ</p>
                             </div>
                         </div>
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('รองบประมาณ')" style="cursor: pointer;" title="คลิกเพื่อดูโครงการรองบประมาณ">
+                            <div class="stat-icon" style="background: rgba(243, 156, 18, 0.12); color: #e67e22;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                             <div class="stat-info">
                                 <h3>รองบประมาณ</h3>
                                 <p id="statBudgetProjects">0 โครงการ</p>
                             </div>
                         </div>
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-file-signature"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('อยู่ระหว่างจัดจ้าง')" style="cursor: pointer;" title="คลิกเพื่อดูโครงการอยู่ระหว่างจัดจ้าง">
+                            <div class="stat-icon" style="background: rgba(241, 196, 15, 0.15); color: #d4ac0d;"><i class="fa-solid fa-file-signature"></i></div>
                             <div class="stat-info">
                                 <h3>อยู่ระหว่างจัดจ้าง</h3>
                                 <p id="statProcurementProjects">0 โครงการ</p>
                             </div>
                         </div>
-                        <div class="card stat-card">
-                            <div class="stat-icon"><i class="fa-solid fa-check-double"></i></div>
+                        <div class="card stat-card" onclick="filterByStatus('แล้วเสร็จ')" style="cursor: pointer;" title="คลิกเพื่อดูโครงการแล้วเสร็จ">
+                            <div class="stat-icon" style="background: rgba(52, 152, 219, 0.12); color: #2980b9;"><i class="fa-solid fa-check-double"></i></div>
                             <div class="stat-info">
                                 <h3>แล้วเสร็จ</h3>
                                 <p id="statCompletedProjects">0 โครงการ</p>
@@ -136,13 +136,47 @@
                         </div>
                     </div>
 
-                    <div class="project-tabs" style="margin-top: 5px;">
-                        <button class="tablinks active" onclick="filterDashboard('all', event)"><i class="fa-solid fa-building"></i> ทั้งหมด</button>
-                        <button class="tablinks" onclick="filterDashboard('ดำเนินการเอง', event)"><i class="fa-solid fa-users-gear"></i> ดำเนินการเอง</button>
-                        <button class="tablinks" onclick="filterDashboard('จ้างเหมา', event)"><i class="fa-solid fa-file-contract"></i> จ้างเหมา</button>
+                    <!-- Dashboard Controls Toolbar -->
+                    <div class="dashboard-controls-bar card" style="margin-top: 8px; margin-bottom: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1;">
+                            <div class="project-tabs" style="margin-top: 0;">
+                                <button class="tablinks active" onclick="filterDashboard('all', event)"><i class="fa-solid fa-building"></i> ทั้งหมด</button>
+                                <button class="tablinks" onclick="filterDashboard('ดำเนินการเอง', event)"><i class="fa-solid fa-users-gear"></i> ดำเนินการเอง</button>
+                                <button class="tablinks" onclick="filterDashboard('จ้างเหมา', event)"><i class="fa-solid fa-file-contract"></i> จ้างเหมา</button>
+                            </div>
+                            <!-- Search Bar -->
+                            <div class="search-box-wrapper" style="position: relative; min-width: 240px; flex: 1; max-width: 380px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8a99ad; font-size: 13px;"></i>
+                                <input type="text" id="dashboardSearchInput" placeholder="ค้นหาชื่อโครงการ, ผู้รับเหมา, ผู้ควบคุม..." oninput="handleDashboardSearch(this.value)" style="width: 100%; padding: 8px 12px 8px 34px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 12px; background: #f8fafc; outline: none; transition: all 0.2s;">
+                                <span id="clearSearchBtn" onclick="clearDashboardSearch()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #aaa; cursor: pointer; display: none; font-size: 16px; font-weight: bold;">&times;</span>
+                            </div>
+                        </div>
+
+                        <!-- View Switcher (Cards vs Table) -->
+                        <div class="view-mode-switcher">
+                            <button id="btnViewCards" class="view-mode-btn active" onclick="switchProjectView('cards')" title="มุมมองการ์ด (Card View)">
+                                <i class="fa-solid fa-grip"></i> การ์ด
+                            </button>
+                            <button id="btnViewTable" class="view-mode-btn" onclick="switchProjectView('table')" title="มุมมองตาราง (Table View)">
+                                <i class="fa-solid fa-list"></i> ตาราง
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="project-list card flex-table-card">
+                    <!-- Project Cards Container (Default View) -->
+                    <div id="projectCardsContainer" class="project-cards-section">
+                        <div id="projectCardsGrid" class="project-cards-grid">
+                            <!-- Cards inserted via JS -->
+                        </div>
+                        <div id="noProjectFoundMessage" style="display: none; text-align: center; padding: 40px 20px; background: white; border-radius: var(--border-radius); border: 1px dashed var(--border-color); margin-top: 10px;">
+                            <i class="fa-solid fa-folder-open" style="font-size: 40px; color: #bdc3c7; margin-bottom: 10px;"></i>
+                            <h3 style="color: var(--text-secondary); font-size: 15px;">ไม่พบโครงการที่ค้นหา</h3>
+                            <p style="color: #95a5a6; font-size: 12px;">โปรดลองใช้คำค้นอื่น หรือเลือกตัวกรองประเภทโครงการทั้งหมด</p>
+                        </div>
+                    </div>
+
+                    <!-- Project Table View (Alternative) -->
+                    <div id="projectTableContainer" class="project-list card flex-table-card" style="display: none;">
                         <h2 id="dashboardTableTitle">รายการโครงการทั้งหมด</h2>
                         <div class="table-responsive">
                             <table class="pea-table">
@@ -219,36 +253,137 @@
 
                     <!-- Tab: Gantt -->
                     <div id="tabGantt" class="tabcontent" style="display: none;">
-                    <div class="card mt-4">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <h2 style="margin: 0;">Gantt Chart แผนงานย่อย</h2>
-                            <div>
-                                <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 12px;" onclick="changeGanttMode('Week')">สัปดาห์</button>
-                                <button class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 12px;" onclick="changeGanttMode('Month')">เดือน</button>
+                        <!-- Gantt KPI Ribbon -->
+                        <div class="gantt-kpi-ribbon">
+                            <div class="gantt-kpi-card">
+                                <span class="gantt-kpi-num" id="ganttTotalTasks">0</span>
+                                <span class="gantt-kpi-text">แผนงานย่อยทั้งหมด</span>
+                            </div>
+                            <div class="gantt-kpi-card">
+                                <span class="gantt-kpi-num" style="color: #27ae60;" id="ganttCompletedTasks">0</span>
+                                <span class="gantt-kpi-text">เสร็จสิ้น 100%</span>
+                            </div>
+                            <div class="gantt-kpi-card">
+                                <span class="gantt-kpi-num" style="color: var(--pea-purple);" id="ganttInProgressTasks">0</span>
+                                <span class="gantt-kpi-text">กำลังดำเนินการ</span>
+                            </div>
+                            <div class="gantt-kpi-card">
+                                <span class="gantt-kpi-num" style="color: #95a5a6;" id="ganttPendingTasks">0</span>
+                                <span class="gantt-kpi-text">ยังไม่เริ่ม</span>
                             </div>
                         </div>
-                        <div style="overflow-x: auto; padding-bottom: 20px; text-align: center; width: 100%;">
-                            <svg id="ganttChart" style="margin: 0 auto;"></svg>
+
+                        <div class="card mt-4">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                    <h2 style="margin: 0; font-size: 15px;"><i class="fa-solid fa-stream" style="color: var(--pea-purple);"></i> Gantt Chart แผนงานย่อย</h2>
+                                    <!-- Legend -->
+                                    <div class="gantt-legend" style="display: flex; gap: 12px; font-size: 11px;">
+                                        <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #27ae60; display: inline-block;"></span> เสร็จสิ้น 100%</span>
+                                        <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: var(--pea-purple); display: inline-block;"></span> กำลังดำเนินการ</span>
+                                        <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #bdc3c7; display: inline-block;"></span> ยังไม่เริ่ม</span>
+                                    </div>
+                                </div>
+                                <div class="gantt-mode-switcher">
+                                    <button class="btn-gantt-mode" id="btnGanttDay" onclick="changeGanttMode('Day')">วัน</button>
+                                    <button class="btn-gantt-mode" id="btnGanttWeek" onclick="changeGanttMode('Week')">สัปดาห์</button>
+                                    <button class="btn-gantt-mode active" id="btnGanttMonth" onclick="changeGanttMode('Month')">เดือน</button>
+                                </div>
+                            </div>
+                            <div style="overflow-x: auto; padding-bottom: 20px; text-align: center; width: 100%; min-height: 250px;">
+                                <svg id="ganttChart" style="margin: 0 auto; min-width: 100%;"></svg>
+                            </div>
                         </div>
-                    </div>
                     </div> <!-- End Tab Gantt -->
 
                     <!-- Tab: S-Curve -->
                     <div id="tabSCurve" class="tabcontent" style="display: none;">
-                    <div class="chart-container card mt-4">
-                        <h2>S-Curve ความก้าวหน้าโครงการ</h2>
-                        <canvas id="sCurveChart"></canvas>
-                    </div>
+                        <!-- S-Curve KPI Ribbon -->
+                        <div class="scurve-kpi-ribbon">
+                            <div class="scurve-kpi-card">
+                                <div class="scurve-kpi-icon" style="background: rgba(243, 156, 18, 0.15); color: #e67e22;">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                </div>
+                                <div>
+                                    <div class="scurve-kpi-label">แผนงานสะสมปัจจุบัน</div>
+                                    <div class="scurve-kpi-val" id="scurvePlanKpi">0.00%</div>
+                                </div>
+                            </div>
+                            <div class="scurve-kpi-card">
+                                <div class="scurve-kpi-icon" style="background: rgba(116, 44, 129, 0.15); color: var(--pea-purple);">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <div class="scurve-kpi-label">ผลงานจริงสะสม</div>
+                                    <div class="scurve-kpi-val" id="scurveActualKpi">0.00%</div>
+                                </div>
+                            </div>
+                            <div class="scurve-kpi-card">
+                                <div class="scurve-kpi-icon" id="scurveVarianceIcon" style="background: rgba(46, 204, 113, 0.15); color: #27ae60;">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                </div>
+                                <div>
+                                    <div class="scurve-kpi-label">ผลต่างเทียบแผนงาน</div>
+                                    <div class="scurve-kpi-val" id="scurveVarianceKpi">0.00%</div>
+                                </div>
+                            </div>
+                            <div class="scurve-kpi-card">
+                                <div class="scurve-kpi-icon" id="scurveHealthIcon" style="background: rgba(52, 152, 219, 0.15); color: #2980b9;">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div>
+                                    <div class="scurve-kpi-label">สถานะประเมิน</div>
+                                    <div class="scurve-kpi-val" id="scurveHealthKpi" style="font-size: 15px;">ปกติ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container card mt-4" style="height: 480px; position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                                <h2 style="margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-chart-line" style="color: var(--pea-purple);"></i>
+                                    S-Curve ความก้าวหน้าสะสมโครงการ
+                                </h2>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <span class="scurve-legend-chip plan-chip"><span class="chip-dash"></span> แผนงาน (Plan)</span>
+                                    <span class="scurve-legend-chip actual-chip"><span class="chip-dot"></span> ผลงานจริง (Actual)</span>
+                                </div>
+                            </div>
+                            <div style="position: relative; height: calc(100% - 45px); width: 100%;">
+                                <canvas id="sCurveChart"></canvas>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Tab: Gallery -->
                     <div id="tabGallery" class="tabcontent" style="display: none;">
-                    <div class="gallery-container card mt-4">
-                        <h2>รูปภาพความก้าวหน้าล่าสุด</h2>
-                        <div class="gallery-grid" id="progressGallery">
-                            <!-- ภาพจาก JS -->
+                        <div class="card mt-4">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                                <div>
+                                    <h2 style="margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-images" style="color: var(--pea-purple);"></i>
+                                        รูปภาพความก้าวหน้าโครงการ (แบ่งตามหัวข้อแผนงานย่อย)
+                                    </h2>
+                                    <p style="font-size: 11.5px; color: var(--text-secondary); margin: 3px 0 0 0;">
+                                        ภาพถ่ายหน้างานจริงที่รายงานผ่านระบบ แยกตามแต่ละแผนงานย่อย
+                                    </p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <label style="font-size: 12px; font-weight: 600; color: #475569;"><i class="fa-solid fa-filter"></i> เลือกแผนงานย่อย:</label>
+                                    <select id="galleryTaskFilterSelect" onchange="filterGalleryByTask(this.value)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px; outline: none; background: #f8fafc; min-width: 220px; font-family: inherit;">
+                                        <option value="all">แสดงทุกแผนงานย่อย</option>
+                                    </select>
+                                    <span id="galleryTotalCountBadge" class="status-badge" style="background: rgba(116, 44, 129, 0.1); color: var(--pea-purple); font-size: 11px;">
+                                        0 รูปภาพ
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Grouped Task Gallery Container -->
+                            <div id="progressGalleryContainer" class="gallery-task-groups">
+                                <!-- Task Sections injected via JS -->
+                            </div>
                         </div>
-                    </div>
                     </div> <!-- End Tab Gallery -->
 
                     <!-- Tab: Calendar -->
@@ -826,25 +961,37 @@
                     <input type="checkbox" name="printSection" value="scurve" checked>
                     <span class="print-checkmark"></span>
                     <i class="fa-solid fa-chart-line" style="color: #27ae60;"></i>
-                    S-Curve ความก้าวหน้า
+                    กราฟ S-Curve ความก้าวหน้า
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="scurveTable" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-table" style="color: #16a085;"></i>
+                    ตารางตัวเลข S-Curve รายเดือน (Plan vs Actual)
                 </label>
                 <label class="print-checkbox-label">
                     <input type="checkbox" name="printSection" value="gantt" checked>
                     <span class="print-checkmark"></span>
                     <i class="fa-solid fa-stream" style="color: #e67e22;"></i>
-                    Gantt Chart
+                    Gantt Chart แผนงานย่อย
                 </label>
                 <label class="print-checkbox-label">
                     <input type="checkbox" name="printSection" value="gallery" checked>
                     <span class="print-checkmark"></span>
                     <i class="fa-solid fa-images" style="color: #8e44ad;"></i>
-                    รูปภาพความก้าวหน้า
+                    รูปภาพความก้าวหน้า (แบ่งตามแผนงานย่อย)
                 </label>
                 <label class="print-checkbox-label">
                     <input type="checkbox" name="printSection" value="disbursement" checked>
                     <span class="print-checkmark"></span>
                     <i class="fa-solid fa-coins" style="color: #f1c40f;"></i>
                     เบิกจ่ายงบประมาณ
+                </label>
+                <label class="print-checkbox-label">
+                    <input type="checkbox" name="printSection" value="signatures" checked>
+                    <span class="print-checkmark"></span>
+                    <i class="fa-solid fa-file-signature" style="color: #34495e;"></i>
+                    ส่วนลงนามรับรองรายงาน 3 ฝ่าย (ผู้ควบคุมงาน, ผู้รับจ้าง, คณะกรรมการ)
                 </label>
             </div>
             
@@ -853,6 +1000,57 @@
                     <i class="fa-solid fa-print"></i> พิมพ์รายงาน
                 </button>
                 <button class="btn btn-secondary" style="padding: 10px;" onclick="closePrintModal()">
+                    ยกเลิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Admin Edit Progress Photo -->
+    <div id="editGalleryModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 10050;">
+        <div class="modal-content card" style="max-width: 520px; padding: 25px;">
+            <span class="close-modal" onclick="closeEditGalleryModal()">&times;</span>
+            <h2 style="color: var(--pea-purple); margin-bottom: 5px;">
+                <i class="fa-solid fa-pen-to-square"></i> แก้ไขรูปภาพความก้าวหน้า
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">กำหนดแผนงานย่อยและแก้ไขข้อมูลรูปภาพสำหรับผู้ดูแลระบบ</p>
+            
+            <input type="hidden" id="editGalleryProjectId">
+            <input type="hidden" id="editGalleryPhotoIndex">
+            
+            <div style="text-align: center; margin-bottom: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+                <img id="editGalleryImgPreview" src="" alt="Photo Preview" style="max-height: 180px; max-width: 100%; object-fit: contain; border-radius: 6px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-main);">
+                    <i class="fa-solid fa-folder-tree" style="color: var(--pea-purple);"></i> เลือกแผนงานย่อย (Sub-Task) *
+                </label>
+                <select id="editGalleryTaskSelect" style="width: 100%; padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; background: white;">
+                    <!-- Injected dynamically -->
+                </select>
+                <small style="display: block; color: var(--text-muted); font-size: 11px; margin-top: 4px;">รูปภาพจะถูกย้ายไปจัดกลุ่มในแผนงานย่อยที่เลือกโดยอัตโนมัติ</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-main);">
+                    <i class="fa-solid fa-comment-dots" style="color: #2980b9;"></i> คำบรรยายภาพ / รายละเอียดงาน
+                </label>
+                <textarea id="editGalleryDescInput" rows="3" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; resize: vertical; box-sizing: border-box;" placeholder="ระบุคำบรรยายภาพ..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-main);">
+                    <i class="fa-solid fa-calendar-day" style="color: #e67e22;"></i> วันที่บันทึกภาพ
+                </label>
+                <input type="date" id="editGalleryDateInput" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-primary" style="flex: 1; padding: 10px; font-weight: 600;" onclick="saveEditGalleryPhoto()">
+                    <i class="fa-solid fa-check"></i> บันทึกข้อมูล
+                </button>
+                <button class="btn btn-secondary" style="padding: 10px;" onclick="closeEditGalleryModal()">
                     ยกเลิก
                 </button>
             </div>
