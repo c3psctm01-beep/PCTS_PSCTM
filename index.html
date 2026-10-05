@@ -211,7 +211,8 @@
                             <p id="detailProjectInfo">ผู้รับเหมา: บริษัท ตัวอย่าง จำกัด | ระยะเวลา: 1 ม.ค. 2569 - 31 ธ.ค. 2569</p>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn role-editor" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-clipboard-check"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
                             <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
                         </div>
                     </div>
@@ -376,6 +377,9 @@
                                     <span id="galleryTotalCountBadge" class="status-badge" style="background: rgba(116, 44, 129, 0.1); color: var(--pea-purple); font-size: 11px;">
                                         0 รูปภาพ
                                     </span>
+                                    <button class="btn role-editor" style="padding: 6px 14px; font-size: 12px; background: var(--pea-purple); color: white; border-radius: 8px;" onclick="openWorkReportModal()">
+                                        <i class="fa-solid fa-file-pdf"></i> ออกรายงานผลงานตามช่วงวันที่
+                                    </button>
                                 </div>
                             </div>
                             
@@ -481,7 +485,8 @@
                 <section id="admin-view" class="view-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                         <h1 class="page-title" style="margin-bottom: 0;">จัดการโครงการและแผนงาน (Admin)</h1>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn role-admin" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-file-invoice"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
                             <button class="btn" style="background-color: #f39c12; color: white;" onclick="document.getElementById('importExcelInput').click()"><i class="fa-solid fa-upload"></i> นำเข้าข้อมูล (Excel)</button>
                             <input type="file" id="importExcelInput" style="display:none;" accept=".xlsx, .xls">
                         </div>
@@ -624,11 +629,16 @@
 
                 <!-- Editor View -->
                 <section id="editor-view" class="view-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h1 class="page-title">รายงานความก้าวหน้าประจำวัน (Editor)</h1>
-                        <button class="btn btn-secondary" onclick="document.getElementById('aiModal').style.display='flex'" style="background-color: var(--pea-purple); color: white;">
-                            <i class="fa-solid fa-robot"></i> ใช้ AI ประเมินจากภาพ CCTV
-                        </button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h1 class="page-title" style="margin-bottom: 0;">รายงานความก้าวหน้าประจำวัน (Editor)</h1>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" onclick="openWorkReportModal()" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%);">
+                                <i class="fa-solid fa-file-invoice"></i> รายงานผลงานประจำวัน/ช่วงเวลา (PDF)
+                            </button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('aiModal').style.display='flex'" style="background-color: var(--pea-purple); color: white;">
+                                <i class="fa-solid fa-robot"></i> ใช้ AI ประเมินจากภาพ CCTV
+                            </button>
+                        </div>
                     </div>
                     <div class="card mt-4">
                         <form id="editorForm" class="pea-form">
@@ -1024,6 +1034,123 @@
         </div>
     </div>
 
+    <!-- Modal for Work Operations & Daily Log Report (Admin & Editor) -->
+    <div id="workReportModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 10040;">
+        <div class="modal-content card" style="max-width: 840px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 24px; border-radius: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <div>
+                    <h2 style="color: var(--pea-purple); margin: 0 0 4px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-file-invoice"></i> รายงานผลการปฏิบัติงานตามช่วงวันที่
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 12.5px; margin: 0;">
+                        เลือกช่วงวันที่ดำเนินงานเพื่อออกรายงานสรุปผลงาน พร้อมคำอธิบายและรูปภาพ สำหรับพิมพ์หรือบันทึกเป็น PDF แนบประกอบเอกสาร
+                    </p>
+                </div>
+                <span class="close-modal" onclick="closeWorkReportModal()" style="position: static; font-size: 26px; line-height: 1;">&times;</span>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="work-report-controls card" style="background: #f8fafc; border: 1px solid var(--border-color); padding: 16px; border-radius: 10px; margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                            <i class="fa-solid fa-building" style="color: var(--pea-purple);"></i> เลือกโครงการ
+                        </label>
+                        <select id="workReportProjectSelect" onchange="onWorkReportProjectChange()" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: white; font-family: inherit;">
+                            <!-- Injected via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 5px;">
+                            <i class="fa-solid fa-filter" style="color: var(--pea-purple);"></i> แผนงานย่อย (Task)
+                        </label>
+                        <select id="workReportTaskSelect" onchange="generateWorkReportPreview()" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: white; font-family: inherit;">
+                            <option value="all">ทุกแผนงานย่อย</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date Selection Row -->
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                        <i class="fa-solid fa-calendar-days" style="color: #d97706;"></i> เลือกวันที่ดำเนินงาน (ช่วงเวลาที่ต้องการรายงาน)
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 150px;">
+                            <span style="font-size: 12px; color: var(--text-secondary);">ตั้งแต่:</span>
+                            <input type="date" id="workReportStartDate" onchange="generateWorkReportPreview()" style="flex: 1; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; font-family: inherit;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 150px;">
+                            <span style="font-size: 12px; color: var(--text-secondary);">ถึง:</span>
+                            <input type="date" id="workReportEndDate" onchange="generateWorkReportPreview()" style="flex: 1; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; font-family: inherit;">
+                        </div>
+                    </div>
+
+                    <!-- Date Presets -->
+                    <div class="report-date-presets" style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-preset-chip" onclick="setWorkReportDatePreset('today')">วันนี้</button>
+                        <button type="button" class="btn-preset-chip" onclick="setWorkReportDatePreset('yesterday')">เมื่อวาน</button>
+                        <button type="button" class="btn-preset-chip" onclick="setWorkReportDatePreset('last7')">7 วันล่าสุด</button>
+                        <button type="button" class="btn-preset-chip" onclick="setWorkReportDatePreset('thisMonth')">เดือนนี้</button>
+                        <button type="button" class="btn-preset-chip" onclick="setWorkReportDatePreset('all')">ทุกช่วงเวลา</button>
+                    </div>
+                </div>
+
+                <!-- Options Row -->
+                <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 12px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #334155;">
+                        <input type="checkbox" id="workReportPhotosOnly" onchange="generateWorkReportPreview()">
+                        <span>แสดงเฉพาะรายการที่มีรูปภาพ</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #334155;">
+                        <input type="checkbox" id="workReportIncludeSignatures" checked>
+                        <span>รวมส่วนลงนามรับรอง 3 ฝ่าย (ผู้ควบคุมงาน/ผู้รับจ้าง/กก.ตรวจรับ)</span>
+                    </label>
+                    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 11.5px;">รูปแบบกระดาษ:</span>
+                        <select id="workReportOrientation" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 11.5px; background: white; font-family: inherit;">
+                            <option value="portrait" selected>แนวตั้ง (A4 Portrait)</option>
+                            <option value="landscape">แนวนอน (A4 Landscape)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Header & Summary -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3 style="margin: 0; font-size: 13.5px; color: #1e293b;">
+                        <i class="fa-solid fa-list-check" style="color: var(--pea-purple);"></i> ตัวอย่างรายการผลงานที่จะออกรายงาน
+                    </h3>
+                    <span id="workReportResultBadge" class="status-badge" style="background: rgba(116, 44, 129, 0.1); color: var(--pea-purple); font-size: 11px;">0 รายการ</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn-subtle" onclick="toggleWorkReportSelectAll(true)" style="font-size: 11px; padding: 3px 8px;">เลือกทั้งหมด</button>
+                    <span style="color: #cbd5e1;">|</span>
+                    <button type="button" class="btn-subtle" onclick="toggleWorkReportSelectAll(false)" style="font-size: 11px; padding: 3px 8px;">ยกเลิกทั้งหมด</button>
+                </div>
+            </div>
+
+            <!-- Preview List Container -->
+            <div id="workReportPreviewList" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #ffffff; margin-bottom: 20px;">
+                <!-- Items rendered via JS -->
+            </div>
+
+            <!-- Modal Actions Footer -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button type="button" class="btn btn-secondary" onclick="closeWorkReportModal()" style="min-width: 90px; padding: 10px 16px;">
+                    ปิด
+                </button>
+                <button type="button" class="btn" style="background: #27ae60; color: white; padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;" onclick="downloadWorkReportPDF()">
+                    <i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printWorkReport()" style="padding: 10px 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-print"></i> พิมพ์รายงาน (Print)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal for PDF Generation Progress / Loading Overlay -->
     <div id="pdfLoadingModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 10099; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);">
         <div class="card" style="max-width: 360px; width: 90%; text-align: center; padding: 30px 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
@@ -1140,7 +1267,7 @@
     <!-- Toastify JS -->
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
 </body>
 
 </html>

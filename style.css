@@ -2011,3 +2011,97 @@ html, body {
     box-shadow: 0 4px 10px rgba(230, 126, 34, 0.45);
 }
 
+/* ========================================================
+   WORK OPERATIONS & PHOTO REPORT MODAL (ADMIN & EDITOR)
+   ======================================================== */
+.work-report-controls {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.btn-preset-chip {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 4px 11px;
+    border-radius: 14px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-preset-chip:hover,
+.btn-preset-chip.active {
+    background: var(--pea-purple);
+    color: white;
+    border-color: var(--pea-purple);
+    box-shadow: 0 2px 5px rgba(116, 44, 129, 0.25);
+}
+
+.btn-subtle {
+    background: none;
+    border: none;
+    color: var(--pea-purple);
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.btn-subtle:hover {
+    color: #531B5E;
+}
+
+.work-report-preview-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+    background: #ffffff;
+    transition: all 0.15s ease;
+}
+
+.work-report-preview-card:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.work-report-preview-thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.work-report-preview-thumb:hover {
+    transform: scale(1.04);
+}
+
+.work-report-preview-noimg {
+    width: 72px;
+    height: 72px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+
