@@ -6,7 +6,10 @@ const defaultProjects = [
         type: "ดำเนินการเอง",
         contractor: "กฟภ.",
         supervisor: "นายสมชาย ใจดี",
-        committee: "คณะกรรมการชุดที่ 2",
+        committee: "นายประสิทธิ์ วงศ์สุวรรณ, นายวิชาญ มั่งคั่ง, นางสาวศิริพร บุญรักษา",
+        committee1: "นายประสิทธิ์ วงศ์สุวรรณ",
+        committee2: "นายวิชาญ มั่งคั่ง",
+        committee3: "นางสาวศิริพร บุญรักษา",
         duration: "7 เดือน",
         status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
@@ -139,7 +142,10 @@ const defaultProjects = [
         type: "จ้างเหมา",
         contractor: "บริษัท รับเหมาไฟฟ้า จำกัด",
         supervisor: "นายสมชาย ใจดี",
-        committee: "คณะกรรมการชุดที่ 2",
+        committee: "นายสมศักดิ์ ภักดี, นายกิตติศักดิ์ เจริญพร, นายนิกร สว่างวงศ์",
+        committee1: "นายสมศักดิ์ ภักดี",
+        committee2: "นายกิตติศักดิ์ เจริญพร",
+        committee3: "นายนิกร สว่างวงศ์",
         duration: "7 เดือน",
         status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
@@ -183,6 +189,9 @@ window.loadProjects = async function () {
                 let pType = 'จ้างเหมา';
                 let pSupervisor = '';
                 let pCommittee = '';
+                let pCommittee1 = '';
+                let pCommittee2 = '';
+                let pCommittee3 = '';
                 let pDetails = dbProj.details || '';
 
                 if (pDetails.includes('[TYPE:')) {
@@ -193,9 +202,37 @@ window.loadProjects = async function () {
                     const match = pDetails.match(/\[SUP:(.*?)\]/);
                     if (match) { pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
+                if (pDetails.includes('[COM1:')) {
+                    const match1 = pDetails.match(/\[COM1:(.*?)\]/);
+                    if (match1) { pCommittee1 = match1[1]; pDetails = pDetails.replace(match1[0], ''); }
+                }
+                if (pDetails.includes('[COM2:')) {
+                    const match2 = pDetails.match(/\[COM2:(.*?)\]/);
+                    if (match2) { pCommittee2 = match2[1]; pDetails = pDetails.replace(match2[0], ''); }
+                }
+                if (pDetails.includes('[COM3:')) {
+                    const match3 = pDetails.match(/\[COM3:(.*?)\]/);
+                    if (match3) { pCommittee3 = match3[1]; pDetails = pDetails.replace(match3[0], ''); }
+                }
                 if (pDetails.includes('[COM:')) {
                     const match = pDetails.match(/\[COM:(.*?)\]/);
                     if (match) { pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                }
+
+                // If committee1/2/3 not found separately, split from pCommittee
+                if (!pCommittee1 && !pCommittee2 && !pCommittee3 && pCommittee) {
+                    const parts = pCommittee.split(/[,/|\n]+/).map(s => s.trim()).filter(Boolean);
+                    pCommittee1 = parts[0] || '';
+                    pCommittee2 = parts[1] || '';
+                    pCommittee3 = parts[2] || '';
+                }
+                const defProj = defaultProjects.find(dp => dp.id === dbProj.id);
+                if (!pCommittee1 && defProj?.committee1) pCommittee1 = defProj.committee1;
+                if (!pCommittee2 && defProj?.committee2) pCommittee2 = defProj.committee2;
+                if (!pCommittee3 && defProj?.committee3) pCommittee3 = defProj.committee3;
+                if (!pCommittee && defProj?.committee) pCommittee = defProj.committee;
+                if (!pCommittee && (pCommittee1 || pCommittee2 || pCommittee3)) {
+                    pCommittee = [pCommittee1, pCommittee2, pCommittee3].filter(Boolean).join(', ');
                 }
 
                 return {
@@ -209,6 +246,9 @@ window.loadProjects = async function () {
                     contractor: dbProj.contractor,
                     supervisor: pSupervisor,
                     committee: pCommittee,
+                    committee1: pCommittee1,
+                    committee2: pCommittee2,
+                    committee3: pCommittee3,
                     details: pDetails,
                     type: pType,
                     tasks: dbProj.tasks || [],
@@ -340,7 +380,7 @@ window.saveProjects = async function (projectId = null) {
             start_date: p.startDate || null,
             end_date: p.endDate || null,
             contractor: p.contractor || '',
-            details: `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}]${p.details || ''}`,
+            details: `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}]${p.details || ''}`,
             tasks: p.tasks || [],
             gallery: p.gallery || [],
             disbursement: p.disbursement || null
@@ -1003,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (p.disbursement && p.disbursement.plan && p.disbursement.plan.length > 0) {
                 const planComp = calcDisbursementPlanComparison(p.disbursement);
                 if (planComp && planComp.hasPlan && planComp.percentStr !== '-') {
-                    planCompareTag = ` <span title="เทียบแผนสะสม (${planComp.monthLabel})" style="color: ${planComp.color}; font-size: 10.5px; font-weight: 600; margin-left: 3px;">(${planComp.percentStr})</span>`;
+                    planCompareTag = `<span class="card-disb-plan-chip" title="เทียบแผนสะสม (${planComp.monthLabel})" style="color: ${planComp.color}; background: ${planComp.color}18; border-color: ${planComp.color}40;">(${planComp.percentStr})</span>`;
                 }
             }
 
@@ -1088,8 +1128,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div class="card-disb-wrapper">
                                 <div class="card-disb-header">
-                                    <span style="color:#64748b;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> เบิกจ่าย: <strong>${disbPct}%</strong>${planCompareTag}</span>
-                                    <span style="font-size:10px;color:#94a3b8;">${budgetFormatted !== '-' ? budgetFormatted + ' บาท' : 'ไม่มีข้อมูลงบ'}</span>
+                                    <div class="card-disb-left">
+                                        <span class="card-disb-stat"><i class="fa-solid fa-coins" style="color:#10b981;"></i> เบิกจ่าย: <strong>${disbPct}%</strong></span>
+                                        ${planCompareTag}
+                                    </div>
+                                    <span class="card-disb-budget">${budgetFormatted !== '-' ? budgetFormatted + ' บาท' : 'ไม่มีข้อมูลงบ'}</span>
                                 </div>
                                 <div class="card-disb-track">
                                     <div class="card-disb-fill" style="width: ${Math.min(100, parseFloat(disbPct) || 0)}%;"></div>
@@ -2331,13 +2374,32 @@ window.openProjectModal = function (id = null) {
             document.getElementById('projectTypeInput').value = project.type || 'จ้างเหมา';
             document.getElementById('projectContractorInput').value = project.contractor;
             document.getElementById('projectSupervisorInput').value = project.supervisor || '';
-            document.getElementById('projectCommitteeInput').value = project.committee || '';
+
+            // Populate 3 committee fields
+            let c1 = project.committee1 || '';
+            let c2 = project.committee2 || '';
+            let c3 = project.committee3 || '';
+            if (!c1 && !c2 && !c3 && project.committee) {
+                const parts = project.committee.split(/[,/|\n]+/).map(s => s.trim()).filter(Boolean);
+                c1 = parts[0] || '';
+                c2 = parts[1] || '';
+                c3 = parts[2] || '';
+            }
+            if (document.getElementById('projectCommittee1Input')) document.getElementById('projectCommittee1Input').value = c1;
+            if (document.getElementById('projectCommittee2Input')) document.getElementById('projectCommittee2Input').value = c2;
+            if (document.getElementById('projectCommittee3Input')) document.getElementById('projectCommittee3Input').value = c3;
+            if (document.getElementById('projectCommitteeInput')) document.getElementById('projectCommitteeInput').value = project.committee || '';
+
             document.getElementById('projectDurationInput').value = project.duration || '';
             document.getElementById('projectStatusInput').value = project.status;
         }
     } else {
         title.innerText = 'เพิ่มโครงการใหม่';
         if (copyGroup) copyGroup.style.display = 'block';
+        if (document.getElementById('projectCommittee1Input')) document.getElementById('projectCommittee1Input').value = '';
+        if (document.getElementById('projectCommittee2Input')) document.getElementById('projectCommittee2Input').value = '';
+        if (document.getElementById('projectCommittee3Input')) document.getElementById('projectCommittee3Input').value = '';
+        if (document.getElementById('projectCommitteeInput')) document.getElementById('projectCommitteeInput').value = '';
     }
 
     modal.style.display = 'flex';
@@ -2369,7 +2431,16 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
     const type = document.getElementById('projectTypeInput').value;
     const contractor = document.getElementById('projectContractorInput').value;
     const supervisor = document.getElementById('projectSupervisorInput').value;
-    const committee = document.getElementById('projectCommitteeInput').value;
+
+    const c1 = document.getElementById('projectCommittee1Input')?.value.trim() || '';
+    const c2 = document.getElementById('projectCommittee2Input')?.value.trim() || '';
+    const c3 = document.getElementById('projectCommittee3Input')?.value.trim() || '';
+    const committeeList = [c1, c2, c3].filter(Boolean);
+    const committee = committeeList.join(', ');
+    if (document.getElementById('projectCommitteeInput')) {
+        document.getElementById('projectCommitteeInput').value = committee;
+    }
+
     const duration = document.getElementById('projectDurationInput').value;
     const status = document.getElementById('projectStatusInput').value;
 
@@ -2382,6 +2453,9 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
             project.contractor = contractor;
             project.supervisor = supervisor;
             project.committee = committee;
+            project.committee1 = c1;
+            project.committee2 = c2;
+            project.committee3 = c3;
             project.duration = duration;
             project.status = status;
         }
@@ -2412,6 +2486,9 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
             contractor: contractor,
             supervisor: supervisor,
             committee: committee,
+            committee1: c1,
+            committee2: c2,
+            committee3: c3,
             duration: duration,
             status: status,
             tasks: initialTasks
@@ -4546,7 +4623,7 @@ window.buildReportPayload = function (selected) {
                     <div class="sig-title">ประธานกรรมการตรวจรับพัสดุ</div>
                     <div class="sig-space"></div>
                     <div class="sig-dots">..................................................................</div>
-                    <div class="sig-name">( ${p.committee || '......................................................'} )</div>
+                    <div class="sig-name">( ${p.committee1 || p.committee || '......................................................'} )</div>
                     <div class="sig-position">ประธานกรรมการตรวจรับพัสดุ</div>
                     <div class="sig-date">วันที่ ......... / ......... / .................</div>
                 </div>
@@ -6877,7 +6954,7 @@ window.buildWorkReportPayload = function () {
                         <div class="sig-title">ประธานกรรมการตรวจรับพัสดุ</div>
                         <div class="sig-space"></div>
                         <div class="sig-dots">..................................................................</div>
-                        <div class="sig-name">( ${p.committee || '......................................................'} )</div>
+                        <div class="sig-name">( ${p.committee1 || p.committee || '......................................................'} )</div>
                         <div class="sig-position">ประธานกรรมการตรวจรับพัสดุ</div>
                         <div class="sig-date">วันที่ ......... / ......... / .................</div>
                     </div>
@@ -7352,7 +7429,7 @@ window.buildWorkReportPayload = function () {
             </tr>
             <tr>
                 <td class="label-cell">ประธานกรรมการตรวจรับ:</td>
-                <td class="value-cell">${p.committee || '-'}</td>
+                <td class="value-cell">${p.committee1 || p.committee || '-'}</td>
                 <td class="label-cell">ช่วงเวลาที่รายงาน:</td>
                 <td class="value-cell"><strong style="color: #742C81;">${datePeriodText}</strong></td>
             </tr>

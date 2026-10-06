@@ -730,8 +730,30 @@
                     <input type="text" id="projectSupervisorInput" required>
                 </div>
                 <div class="form-group">
-                    <label>กรรมการตรวจรับ</label>
-                    <input type="text" id="projectCommitteeInput" required>
+                    <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span><i class="fa-solid fa-users" style="color: var(--pea-purple); margin-right: 4px;"></i> คณะกรรมการตรวจรับพัสดุ (3 ท่าน)</span>
+                    </label>
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div>
+                            <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; display: block; font-weight: 500;">
+                                <i class="fa-solid fa-user-tie" style="color: var(--pea-purple); margin-right: 4px;"></i> 1. ประธานกรรมการตรวจรับ
+                            </span>
+                            <input type="text" id="projectCommittee1Input" placeholder="ระบุชื่อ-นามสกุล ประธานกรรมการตรวจรับ" required style="width: 100%;">
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; display: block; font-weight: 500;">
+                                <i class="fa-solid fa-user" style="color: #64748b; margin-right: 4px;"></i> 2. กรรมการตรวจรับ
+                            </span>
+                            <input type="text" id="projectCommittee2Input" placeholder="ระบุชื่อ-นามสกุล กรรมการตรวจรับ (ท่านที่ 2)" style="width: 100%;">
+                        </div>
+                        <div>
+                            <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; display: block; font-weight: 500;">
+                                <i class="fa-solid fa-user" style="color: #64748b; margin-right: 4px;"></i> 3. กรรมการตรวจรับ
+                            </span>
+                            <input type="text" id="projectCommittee3Input" placeholder="ระบุชื่อ-นามสกุล กรรมการตรวจรับ (ท่านที่ 3)" style="width: 100%;">
+                        </div>
+                    </div>
+                    <input type="hidden" id="projectCommitteeInput">
                 </div>
                 <div class="form-group">
                     <label>ระยะเวลาตามสัญญาจ้าง</label>
