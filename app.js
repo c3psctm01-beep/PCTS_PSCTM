@@ -425,7 +425,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             roleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.textContent = 'Editor (ผู้ควบคุมงาน)';
         } else if (role === 'admin') {
-            roleAdminItems.forEach(el => el.style.display = '');
+            roleAdminItems.forEach(el => {
+                if (el.id === 'btnDeleteDisbMonth') {
+                    const hasData = window.currentProjectViewData?.disbursement?.monthlyData && Object.keys(window.currentProjectViewData.disbursement.monthlyData).length > 0;
+                    el.style.display = hasData ? 'inline-flex' : 'none';
+                } else {
+                    el.style.display = '';
+                }
+            });
             roleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
         }
@@ -2424,7 +2431,7 @@ window.editWbsTask = function (projectId, taskId) {
     document.getElementById('taskStartDate').value = t.startDate || '';
     document.getElementById('taskEndDate').value = t.endDate || '';
     document.getElementById('taskWeightInput').value = t.weight || '';
-    
+
     const curAct = (t.actual !== undefined && t.actual !== null && t.actual !== '') ? parseFloat(t.actual) : 0;
     const adminInput = document.getElementById('taskActualAdminInput');
     adminInput.value = curAct;
@@ -5301,6 +5308,13 @@ window.openDisbursementUploadModal = function (type) {
     yearSelect.onchange = updateMonthTicks;
     updateMonthTicks();
 
+    // Default upload month to currently viewed month if available
+    const monthSelect = document.getElementById('disbUploadMonth');
+    if (window.currentProjectViewData?.disbursement?.currentViewMonth) {
+        const viewedM = window.currentProjectViewData.disbursement.currentViewMonth.split(' ')[0];
+        if (viewedM) monthSelect.value = viewedM;
+    }
+
     document.getElementById('disbMonthGroup').style.display = type === 'actual' ? 'flex' : 'none';
     document.getElementById('disbFileInput').value = '';
     document.getElementById('disbSheetSelector').style.display = 'none';
@@ -5484,13 +5498,16 @@ function updateActualFromMonthly(disb) {
         if (mIndex !== -1) {
             let lookupKey = displayMonths[mIndex] + ' ' + (pItem.year || '');
             lookupKey = lookupKey.trim();
-            if (disb.monthlyData[lookupKey]) {
+            if (disb.monthlyData && disb.monthlyData[lookupKey]) {
                 return disb.monthlyData[lookupKey].totalPaid;
             }
 
-            const keys = Object.keys(disb.monthlyData);
-            const fallbackKey = keys.find(k => k.startsWith(displayMonths[mIndex]));
-            if (fallbackKey) {
+            const keys = Object.keys(disb.monthlyData || {});
+            const fallbackKey = keys.find(k => {
+                if (!pItem.year) return k.startsWith(displayMonths[mIndex]);
+                return k.trim() === displayMonths[mIndex];
+            });
+            if (fallbackKey && disb.monthlyData[fallbackKey]) {
                 return disb.monthlyData[fallbackKey].totalPaid;
             }
         }
@@ -5522,6 +5539,64 @@ window.changeDisbursementViewMonth = function () {
     disb.currentViewMonth = select.value;
     applyDisbursementMonthView(disb);
     window.renderDisbursementTab(window.currentProjectViewData);
+};
+
+window.deleteCurrentDisbursementMonth = async function () {
+    if (window.currentRole !== 'admin') {
+        alert('ฟังก์ชันนี้สามารถใช้งานได้เฉพาะผู้ดูแลระบบ (Admin) เท่านั้น');
+        return;
+    }
+    if (!window.currentProjectViewData || !window.currentProjectViewData.disbursement) return;
+    const p = window.currentProjectViewData;
+    const disb = p.disbursement;
+
+    const select = document.getElementById('disbViewMonthSelect');
+    const monthToDelete = (select && select.value && select.value !== 'latest') ? select.value : disb.currentViewMonth;
+
+    if (!monthToDelete || !disb.monthlyData || !disb.monthlyData[monthToDelete]) {
+        alert('ไม่พบข้อมูลเดือนที่ต้องการลบ');
+        return;
+    }
+
+    const confirmMsg = `คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลเบิกจ่ายประจำเดือน "${monthToDelete}" ของโครงการนี้?\n\n(ยอดและรายการเบิกจ่ายของเดือนนี้จะถูกลบออก และกราฟจะถูกคำนวณใหม่)`;
+    if (!confirm(confirmMsg)) return;
+
+    delete disb.monthlyData[monthToDelete];
+
+    const remainingKeys = Object.keys(disb.monthlyData);
+    if (remainingKeys.length > 0) {
+        const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        remainingKeys.sort((a, b) => {
+            const partsA = a.split(' ');
+            const partsB = b.split(' ');
+            const mA = partsA[0];
+            const yA = partsA[1] || '0';
+            const mB = partsB[0];
+            const yB = partsB[1] || '0';
+            if (yA !== yB) return parseInt(yA) - parseInt(yB);
+            return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+        });
+        disb.currentViewMonth = remainingKeys[remainingKeys.length - 1];
+        applyDisbursementMonthView(disb);
+    } else {
+        disb.currentViewMonth = null;
+        disb.items = [];
+        disb.paidPrevYear = 0;
+        disb.paidCurrentYear = 0;
+        disb.totalPaid = 0;
+        disb.commitment = 0;
+        disb.remaining = disb.budget || 0;
+    }
+
+    updateActualFromMonthly(disb);
+
+    const saved = await saveProjects(p.id);
+    if (saved) {
+        window.renderDisbursementTab(p);
+        alert(`ลบข้อมูลเบิกจ่ายประจำเดือน "${monthToDelete}" เรียบร้อยแล้ว`);
+    } else {
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    }
 };
 
 function parseDisbursementPlan(data) {
@@ -5607,10 +5682,13 @@ window.renderDisbursementTab = function (p) {
         document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
         if (window.disbChartInstance) window.disbChartInstance.destroy();
         document.getElementById('disbViewMonthSelect').style.display = 'none';
+        const deleteBtn = document.getElementById('btnDeleteDisbMonth');
+        if (deleteBtn) deleteBtn.style.display = 'none';
         return;
     }
 
     const monthSelect = document.getElementById('disbViewMonthSelect');
+    const deleteBtn = document.getElementById('btnDeleteDisbMonth');
     if (d.monthlyData) {
         Object.keys(d.monthlyData).forEach(k => {
             if (!k.includes(' ')) {
@@ -5621,6 +5699,7 @@ window.renderDisbursementTab = function (p) {
 
     if (d.monthlyData && Object.keys(d.monthlyData).length > 0) {
         monthSelect.style.display = 'inline-block';
+        if (deleteBtn) deleteBtn.style.display = (window.currentRole === 'admin') ? 'inline-flex' : 'none';
         monthSelect.innerHTML = '';
 
         const keys = Object.keys(d.monthlyData);
@@ -5645,6 +5724,7 @@ window.renderDisbursementTab = function (p) {
         });
     } else {
         monthSelect.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'none';
     }
 
     document.getElementById('disbBudget').textContent = fmt(d.budget);
