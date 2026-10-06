@@ -65,9 +65,26 @@ const defaultProjects = [
             commitment: 14200000,
             remaining: 10300000,
             currentViewMonth: "ก.ค. 2569",
+            plan: [
+                { month: 'ต.ค.', year: '2568', amount: 500000 },
+                { month: 'พ.ย.', year: '2568', amount: 800000 },
+                { month: 'ธ.ค.', year: '2568', amount: 1000000 },
+                { month: 'ม.ค.', year: '2569', amount: 800000 },
+                { month: 'ก.พ.', year: '2569', amount: 1200000 },
+                { month: 'มี.ค.', year: '2569', amount: 1200000 },
+                { month: 'เม.ย.', year: '2569', amount: 900000 },
+                { month: 'พ.ค.', year: '2569', amount: 1000000 },
+                { month: 'มิ.ย.', year: '2569', amount: 1100000 },
+                { month: 'ก.ค.', year: '2569', amount: 1000000 },
+                { month: 'ส.ค.', year: '2569', amount: 1500000 },
+                { month: 'ก.ย.', year: '2569', amount: 1000000 }
+            ],
+            actual: [500000, 800000, 1000000, 750000, 1150000, 1200000, 850000, 950000, 1050000, 8500000, 0, 0],
             monthlyData: {
                 "ก.ค. 2569": {
                     budget: 45000000,
+                    paidPrevYear: 12000000,
+                    paidCurrentYear: 8500000,
                     totalPaid: 20500000,
                     commitment: 14200000,
                     remaining: 10300000
@@ -198,6 +215,13 @@ window.loadProjects = async function () {
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
                     disbursement: (() => {
                         let disb = dbProj.disbursement || (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || null);
+                        if (disb) {
+                            const defDisb = defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement;
+                            if ((!disb.plan || disb.plan.length === 0) && defDisb && defDisb.plan) {
+                                disb.plan = JSON.parse(JSON.stringify(defDisb.plan));
+                                disb.actual = defDisb.actual ? JSON.parse(JSON.stringify(defDisb.actual)) : [];
+                            }
+                        }
                         if (disb && disb.monthlyData && Object.keys(disb.monthlyData).length > 0) {
                             const mKeys = Object.keys(disb.monthlyData);
                             const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -339,6 +363,120 @@ window.saveProjects = async function (projectId = null) {
         return false;
     }
 }
+
+function calcDisbursementPlanComparison(disb, targetMonth) {
+    if (!disb || !disb.plan || !Array.isArray(disb.plan) || disb.plan.length === 0) {
+        return {
+            hasPlan: false,
+            percent: null,
+            percentStr: '-',
+            diffPct: null,
+            accPlan: 0,
+            actual: 0,
+            monthLabel: '',
+            status: 'no_plan',
+            badgeText: 'ยังไม่มีแผนเบิกจ่าย',
+            color: '#94a3b8'
+        };
+    }
+
+    const monthToUse = targetMonth || disb.currentViewMonth || '';
+    let targetMonthStr = '';
+    let targetYearStr = '';
+    if (monthToUse) {
+        const parts = monthToUse.trim().split(' ');
+        targetMonthStr = parts[0] || '';
+        targetYearStr = parts[1] || '';
+    }
+
+    let foundIdx = -1;
+    // 1. Try matching month and year
+    if (targetMonthStr && targetYearStr) {
+        foundIdx = disb.plan.findIndex(pl => pl.month.includes(targetMonthStr) && (pl.year ? pl.year.includes(targetYearStr) : true));
+    }
+    // 2. Try matching month only
+    if (foundIdx === -1 && targetMonthStr) {
+        foundIdx = disb.plan.findIndex(pl => pl.month.includes(targetMonthStr));
+    }
+    // 3. Fallback to last plan month
+    if (foundIdx === -1) {
+        foundIdx = disb.plan.length - 1;
+    }
+
+    let accPlan = 0;
+    for (let i = 0; i <= foundIdx; i++) {
+        accPlan += (parseFloat(disb.plan[i].amount) || 0);
+    }
+
+    const planItem = disb.plan[foundIdx];
+    const monthLabel = planItem ? `${planItem.month} ${planItem.year || ''}`.trim() : (monthToUse || 'ล่าสุด');
+
+    // Get actual disbursement for target month
+    let actual = 0;
+    if (monthToUse && disb.monthlyData && disb.monthlyData[monthToUse]) {
+        const mData = disb.monthlyData[monthToUse];
+        actual = (mData.paidCurrentYear !== undefined && mData.paidCurrentYear !== null && mData.paidCurrentYear > 0)
+            ? parseFloat(mData.paidCurrentYear)
+            : (parseFloat(mData.totalPaid) || 0);
+    } else if (disb.paidCurrentYear !== undefined && disb.paidCurrentYear !== null && disb.paidCurrentYear > 0) {
+        actual = parseFloat(disb.paidCurrentYear);
+    } else {
+        actual = parseFloat(disb.totalPaid) || 0;
+    }
+
+    if (accPlan <= 0) {
+        return {
+            hasPlan: true,
+            percent: actual > 0 ? 100 : 0,
+            percentStr: actual > 0 ? '100.00%' : '0.00%',
+            diffPct: 0,
+            accPlan: 0,
+            actual: actual,
+            monthLabel: monthLabel,
+            status: 'zero_plan',
+            badgeText: 'ไม่มีแผนในเดือนนี้',
+            color: '#64748b'
+        };
+    }
+
+    const pct = (actual / accPlan) * 100;
+    const diff = pct - 100;
+    let status = 'ontrack';
+    let color = '#0284c7';
+    let badgeText = '';
+
+    if (pct >= 100) {
+        status = 'ahead';
+        color = '#10b981';
+        badgeText = `+${diff.toFixed(2)}% เร็วกว่าแผน`;
+    } else if (pct >= 90) {
+        status = 'ontrack';
+        color = '#0284c7';
+        badgeText = `${diff.toFixed(2)}% ตามแผน`;
+    } else if (pct >= 75) {
+        status = 'behind';
+        color = '#f59e0b';
+        badgeText = `${diff.toFixed(2)}% ช้ากว่าแผน`;
+    } else {
+        status = 'delayed';
+        color = '#ef4444';
+        badgeText = `${diff.toFixed(2)}% ต่ำกว่าเป้าหมาย`;
+    }
+
+    return {
+        hasPlan: true,
+        percent: pct,
+        percentStr: `${pct.toFixed(2)}%`,
+        diffPct: diff,
+        accPlan: accPlan,
+        actual: actual,
+        monthLabel: monthLabel,
+        status: status,
+        badgeText: badgeText,
+        color: color
+    };
+}
+window.calcDisbursementPlanComparison = calcDisbursementPlanComparison;
 
 function calculateProjectProgress(p) {
     if (!p.tasks || p.tasks.length === 0) return { plan: 0, actual: 0 };
@@ -861,6 +999,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 paidFormatted = Number(disbPaid).toLocaleString();
             }
 
+            let planCompareTag = '';
+            if (p.disbursement && p.disbursement.plan && p.disbursement.plan.length > 0) {
+                const planComp = calcDisbursementPlanComparison(p.disbursement);
+                if (planComp && planComp.hasPlan && planComp.percentStr !== '-') {
+                    planCompareTag = ` <span title="เทียบแผนสะสม (${planComp.monthLabel})" style="color: ${planComp.color}; font-size: 10.5px; font-weight: 600; margin-left: 3px;">(${planComp.percentStr})</span>`;
+                }
+            }
+
             const statusClass = window.getStatusBadgeClass(p.status);
             const projectType = p.type || 'จ้างเหมา';
             const typeClass = projectType === 'ดำเนินการเอง' ? 'project-type-self' : 'project-type-contract';
@@ -942,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div class="card-disb-wrapper">
                                 <div class="card-disb-header">
-                                    <span style="color:#64748b;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> เบิกจ่าย: <strong>${disbPct}%</strong></span>
+                                    <span style="color:#64748b;"><i class="fa-solid fa-coins" style="color:#10b981;"></i> เบิกจ่าย: <strong>${disbPct}%</strong>${planCompareTag}</span>
                                     <span style="font-size:10px;color:#94a3b8;">${budgetFormatted !== '-' ? budgetFormatted + ' บาท' : 'ไม่มีข้อมูลงบ'}</span>
                                 </div>
                                 <div class="card-disb-track">
@@ -985,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         
                         <div style="display:flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
-                            <span style="color: #27ae60; font-weight: 600;">เบิกจ่าย: ${disbPct}%</span>
+                            <span style="color: #27ae60; font-weight: 600;">เบิกจ่าย: ${disbPct}%${planCompareTag}</span>
                         </div>
                         <div class="progress-bar-container" style="background-color: #ecf0f1; height: 5px;">
                             <div class="progress-bar-actual" style="width: ${disbPct}%; background-color: #2ecc71;"></div>
@@ -4282,6 +4428,14 @@ window.buildReportPayload = function (selected) {
         const overallRemaining = parseFloat(d.remaining) || sumRemaining;
         const overallPct = overallBudget > 0 ? ((overallPaid / overallBudget) * 100).toFixed(2) : '0.00';
 
+        const printPlanComp = calcDisbursementPlanComparison(d, d.currentViewMonth);
+        const printPlanColor = printPlanComp.color;
+        const printPlanLabel = printPlanComp.monthLabel ? ` (${printPlanComp.monthLabel})` : '';
+        let printPlanSub = '';
+        if (printPlanComp.hasPlan && printPlanComp.accPlan > 0) {
+            printPlanSub = `จ่ายจริง ${fmt(printPlanComp.actual)} / แผน ${fmt(printPlanComp.accPlan)}`;
+        }
+
         printContent += `
         <div class="print-section pdf-page-break-before" style="page-break-before: always;">
             <div class="print-section-header">
@@ -4308,8 +4462,13 @@ window.buildReportPayload = function (selected) {
                     <span class="kpi-val" style="color: #EF4444;">${fmt(overallRemaining)}</span>
                 </div>
                 <div class="print-disb-kpi-card" style="border-left: 4px solid #742C81;">
-                    <span class="kpi-label">ร้อยละการเบิกจ่าย</span>
+                    <span class="kpi-label">ร้อยละเบิกจ่าย (งบรวม)</span>
                     <span class="kpi-val" style="color: #742C81;">${overallPct}%</span>
+                </div>
+                <div class="print-disb-kpi-card" style="border-left: 4px solid ${printPlanColor};">
+                    <span class="kpi-label">เบิกจ่ายเทียบแผนสะสม${printPlanLabel}</span>
+                    <span class="kpi-val" style="color: ${printPlanColor};">${printPlanComp.percentStr}</span>
+                    ${printPlanSub ? `<span style="font-size: 8.5px; color: #64748B; display: block; margin-top: 2px;">${printPlanSub}</span>` : ''}
                 </div>
             </div>
 
@@ -4876,8 +5035,8 @@ window.buildReportPayload = function (selected) {
         /* Disbursement KPIs */
         .print-disb-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
             margin-bottom: 14px;
         }
         .print-disb-kpi-card {
@@ -5740,6 +5899,8 @@ function parseDisbursementPlan(data) {
             });
         }
     }
+
+    updateActualFromMonthly(p.disbursement);
 }
 
 window.renderDisbursementTab = function (p) {
@@ -5752,6 +5913,14 @@ window.renderDisbursementTab = function (p) {
         document.getElementById('disbCommitment').textContent = '-';
         document.getElementById('disbRemaining').textContent = '-';
         document.getElementById('disbPercent').textContent = '-';
+        const planVal = document.getElementById('disbPlanPercent');
+        if (planVal) { planVal.textContent = '-'; planVal.style.color = '#0284c7'; }
+        const planSub = document.getElementById('disbPlanSub');
+        if (planSub) { planSub.textContent = ''; planSub.style.display = 'none'; }
+        const planCard = document.getElementById('disbPlanCard');
+        if (planCard) planCard.style.borderColor = '#0284c7';
+        const planLabel = document.getElementById('disbPlanLabel');
+        if (planLabel) planLabel.textContent = 'เบิกจ่ายเทียบแผนสะสม (ล่าสุด)';
         document.getElementById('disbursementTableBody').innerHTML = '<tr><td colspan="14" style="text-align:center; color: #999;">ยังไม่มีข้อมูลเบิกจ่าย — กรุณานำเข้าไฟล์ Excel</td></tr>';
         if (window.disbChartInstance) window.disbChartInstance.destroy();
         document.getElementById('disbViewMonthSelect').style.display = 'none';
@@ -5812,6 +5981,48 @@ window.renderDisbursementTab = function (p) {
 
     const percent = d.budget ? ((d.totalPaid / d.budget) * 100).toFixed(2) : 0;
     document.getElementById('disbPercent').textContent = `${percent}%`;
+
+    // Render Actual vs Latest Monthly Cumulative Plan Comparison Card
+    const planComp = calcDisbursementPlanComparison(d, d.currentViewMonth);
+    const planVal = document.getElementById('disbPlanPercent');
+    const planSub = document.getElementById('disbPlanSub');
+    const planCard = document.getElementById('disbPlanCard');
+    const planLabel = document.getElementById('disbPlanLabel');
+
+    if (planVal) {
+        planVal.textContent = planComp.percentStr;
+        planVal.style.color = planComp.color;
+    }
+    if (planCard) {
+        planCard.style.borderColor = planComp.color;
+    }
+    if (planLabel) {
+        planLabel.textContent = `เบิกจ่ายเทียบแผนสะสม (${planComp.monthLabel || 'ล่าสุด'})`;
+    }
+    if (planSub) {
+        if (!planComp.hasPlan) {
+            planSub.style.display = 'block';
+            planSub.innerHTML = '<span style="color: #94a3b8; font-size: 10px;"><i class="fa-solid fa-cloud-arrow-up"></i> ยังไม่ได้นำเข้าแผนเบิกจ่าย</span>';
+        } else if (planComp.accPlan > 0) {
+            planSub.style.display = 'block';
+            let badgeClass = 'badge-ontrack';
+            let icon = 'fa-check';
+            if (planComp.status === 'ahead') { badgeClass = 'badge-ahead'; icon = 'fa-arrow-trend-up'; }
+            else if (planComp.status === 'behind') { badgeClass = 'badge-behind'; icon = 'fa-arrow-trend-down'; }
+            else if (planComp.status === 'delayed') { badgeClass = 'badge-delayed'; icon = 'fa-triangle-exclamation'; }
+
+            planSub.innerHTML = `
+                <div style="font-size: 10.5px; color: #64748b; margin-bottom: 2px;">
+                    จ่ายจริง: <strong>${fmt(planComp.actual)}</strong><br>
+                    แผนสะสม: <strong>${fmt(planComp.accPlan)}</strong>
+                </div>
+                <div class="disb-card-badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${planComp.badgeText}</div>
+            `;
+        } else {
+            planSub.style.display = 'block';
+            planSub.innerHTML = `<span style="color: #94a3b8; font-size: 10px;">แผนสะสม ${planComp.monthLabel}: 0 บาท</span>`;
+        }
+    }
 
     const tbody = document.getElementById('disbursementTableBody');
     if (d.items && d.items.length > 0) {
