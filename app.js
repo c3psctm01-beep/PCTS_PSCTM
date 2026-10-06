@@ -196,7 +196,36 @@ window.loadProjects = async function () {
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
-                    disbursement: (dbProj.disbursement && dbProj.disbursement.items && dbProj.disbursement.items.length > 0) ? dbProj.disbursement : (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || dbProj.disbursement || null)
+                    disbursement: (() => {
+                        let disb = dbProj.disbursement || (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || null);
+                        if (disb && disb.monthlyData && Object.keys(disb.monthlyData).length > 0) {
+                            const mKeys = Object.keys(disb.monthlyData);
+                            const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                            mKeys.sort((a, b) => {
+                                const partsA = a.split(' ');
+                                const partsB = b.split(' ');
+                                const mA = partsA[0];
+                                const yA = partsA[1] || '0';
+                                const mB = partsB[0];
+                                const yB = partsB[1] || '0';
+                                if (yA !== yB) return parseInt(yA) - parseInt(yB);
+                                return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+                            });
+                            const latestKey = mKeys[mKeys.length - 1];
+                            const latestData = disb.monthlyData[latestKey];
+                            if (latestData) {
+                                disb.currentViewMonth = latestKey;
+                                disb.items = latestData.items || [];
+                                disb.budget = latestData.budget || 0;
+                                disb.paidPrevYear = latestData.paidPrevYear || 0;
+                                disb.paidCurrentYear = latestData.paidCurrentYear || 0;
+                                disb.totalPaid = latestData.totalPaid || 0;
+                                disb.commitment = latestData.commitment || 0;
+                                disb.remaining = latestData.remaining || 0;
+                            }
+                        }
+                        return disb;
+                    })()
                 };
             });
         } else {
@@ -797,13 +826,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             p.plan = progress.plan;
             p.actual = progress.actual;
 
+            let disbBudget = (p.disbursement && p.disbursement.budget) ? p.disbursement.budget : 0;
+            let disbPaid = (p.disbursement && p.disbursement.totalPaid) ? p.disbursement.totalPaid : 0;
+
+            if (p.disbursement && p.disbursement.monthlyData) {
+                const mKeys = Object.keys(p.disbursement.monthlyData);
+                if (mKeys.length > 0) {
+                    const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    mKeys.sort((a, b) => {
+                        const partsA = a.split(' ');
+                        const partsB = b.split(' ');
+                        const mA = partsA[0];
+                        const yA = partsA[1] || '0';
+                        const mB = partsB[0];
+                        const yB = partsB[1] || '0';
+                        if (yA !== yB) return parseInt(yA) - parseInt(yB);
+                        return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+                    });
+                    const latestKey = mKeys[mKeys.length - 1];
+                    const latestData = p.disbursement.monthlyData[latestKey];
+                    if (latestData && latestData.budget > 0) {
+                        disbBudget = latestData.budget;
+                        disbPaid = latestData.totalPaid;
+                    }
+                }
+            }
+
             let disbPct = 0;
             let budgetFormatted = '-';
             let paidFormatted = '-';
-            if (p.disbursement && p.disbursement.budget > 0) {
-                disbPct = ((p.disbursement.totalPaid / p.disbursement.budget) * 100).toFixed(1);
-                budgetFormatted = Number(p.disbursement.budget).toLocaleString();
-                paidFormatted = Number(p.disbursement.totalPaid).toLocaleString();
+            if (disbBudget > 0) {
+                disbPct = ((disbPaid / disbBudget) * 100).toFixed(1);
+                budgetFormatted = Number(disbBudget).toLocaleString();
+                paidFormatted = Number(disbPaid).toLocaleString();
             }
 
             const statusClass = window.getStatusBadgeClass(p.status);
@@ -1675,6 +1730,24 @@ window.viewProjectDetails = function (projectId) {
         window.updateSCurve(p);
 
         window.currentProjectViewData = p;
+        if (p.disbursement && p.disbursement.monthlyData && Object.keys(p.disbursement.monthlyData).length > 0) {
+            const mKeys = Object.keys(p.disbursement.monthlyData);
+            const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            mKeys.sort((a, b) => {
+                const partsA = a.split(' ');
+                const partsB = b.split(' ');
+                const mA = partsA[0];
+                const yA = partsA[1] || '0';
+                const mB = partsB[0];
+                const yB = partsB[1] || '0';
+                if (yA !== yB) return parseInt(yA) - parseInt(yB);
+                return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
+            });
+            p.disbursement.currentViewMonth = mKeys[mKeys.length - 1];
+            if (typeof applyDisbursementMonthView === 'function') {
+                applyDisbursementMonthView(p.disbursement);
+            }
+        }
         if (typeof window.renderDisbursementTab === 'function') {
             window.renderDisbursementTab(p);
         }
@@ -5714,6 +5787,11 @@ window.renderDisbursementTab = function (p) {
             if (yA !== yB) return parseInt(yA) - parseInt(yB);
             return monthOrder.indexOf(mA) - monthOrder.indexOf(mB);
         });
+
+        if (!d.currentViewMonth || !keys.includes(d.currentViewMonth)) {
+            d.currentViewMonth = keys[keys.length - 1];
+            applyDisbursementMonthView(d);
+        }
 
         keys.forEach(m => {
             const opt = document.createElement('option');
