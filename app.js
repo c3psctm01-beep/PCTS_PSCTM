@@ -659,9 +659,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (role === 'viewer') {
             roleAdminItems.forEach(el => el.style.display = 'none');
             roleEditorItems.forEach(el => el.style.display = 'none');
-            currentUserRoleText.textContent = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
-                ? 'Viewer (โหมดทดสอบ)'
-                : 'Viewer (บุคคลทั่วไป)';
+            currentUserRoleText.className = 'user-role-badge role-badge-viewer';
+            currentUserRoleText.innerHTML = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
+                ? '<i class="fa-solid fa-user"></i> Viewer (โหมดทดสอบ)'
+                : '<i class="fa-solid fa-user"></i> Viewer (บุคคลทั่วไป)';
 
             // หากเปิดหน้าที่ต้องใช้สิทธิ์ Admin หรือ Editor อยู่ ให้สลับกลับหน้า dashboard
             const activeSec = document.querySelector('.view-section.active');
@@ -675,9 +676,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (role === 'editor') {
             roleAdminItems.forEach(el => el.style.display = 'none');
             roleEditorItems.forEach(el => el.style.display = '');
-            currentUserRoleText.textContent = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
-                ? 'Editor (โหมดทดสอบ)'
-                : 'Editor (ผู้ควบคุมงาน)';
+            currentUserRoleText.className = 'user-role-badge role-badge-editor';
+            currentUserRoleText.innerHTML = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
+                ? '<i class="fa-solid fa-user-gear"></i> Editor (โหมดทดสอบ)'
+                : '<i class="fa-solid fa-user-gear"></i> Editor (ผู้ควบคุมงาน)';
 
             // หากเปิดหน้า Admin อยู่ ให้สลับกลับหน้า dashboard
             const activeSec = document.querySelector('.view-section.active');
@@ -698,7 +700,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
             roleEditorItems.forEach(el => el.style.display = '');
-            currentUserRoleText.textContent = 'Admin (ผู้ดูแลระบบ)';
+            currentUserRoleText.className = 'user-role-badge role-badge-admin';
+            currentUserRoleText.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Admin (ผู้ดูแลระบบ)';
         }
 
         // If currently in Project Details Gallery view, refresh gallery to update Admin buttons
@@ -1859,12 +1862,21 @@ window.viewProjectDetails = function (projectId) {
     const p = projects.find(proj => proj.id === projectId);
     if (p) {
         document.getElementById('detailProjectTitle').innerText = p.name;
+        const statusColors = {
+            'อยู่ระหว่างก่อสร้าง': { bg: 'rgba(39, 174, 96, 0.12)', color: '#27ae60' },
+            'อยู่ระหว่างจัดจ้าง': { bg: 'rgba(212, 172, 13, 0.15)', color: '#d4ac0d' },
+            'ออกแบบประมาณการ': { bg: 'rgba(142, 68, 173, 0.12)', color: '#8e44ad' },
+            'รองบประมาณ': { bg: 'rgba(230, 126, 34, 0.12)', color: '#e67e22' },
+            'แล้วเสร็จ': { bg: 'rgba(41, 128, 185, 0.12)', color: '#2980b9' }
+        };
+        const sColor = statusColors[p.status] || { bg: '#f1f5f9', color: '#64748b' };
+
         document.getElementById('detailProjectInfo').innerHTML = `
-            <strong>ผู้รับเหมา:</strong> ${p.contractor} | 
-            <strong>ผู้ควบคุมงาน:</strong> ${p.supervisor || '-'} | 
-            <strong>กรรมการตรวจรับ:</strong> ${p.committee || '-'} | 
-            <strong>ระยะเวลา:</strong> ${p.duration || '-'} | 
-            <strong>สถานะ:</strong> ${p.status}
+            <span class="detail-info-item"><i class="fa-solid fa-building" style="color: #64748b;"></i> <span><strong>ผู้รับเหมา:</strong> ${p.contractor || '-'}</span></span>
+            <span class="detail-info-item"><i class="fa-solid fa-user-tie" style="color: #64748b;"></i> <span><strong>ผู้ควบคุมงาน:</strong> ${p.supervisor || '-'}</span></span>
+            <span class="detail-info-item"><i class="fa-solid fa-users" style="color: #64748b;"></i> <span><strong>กรรมการ:</strong> ${p.committee || '-'}</span></span>
+            <span class="detail-info-item"><i class="fa-regular fa-calendar" style="color: #64748b;"></i> <span><strong>ระยะเวลา:</strong> ${p.duration || '-'}</span></span>
+            <span class="detail-info-item status-chip" style="background:${sColor.bg}; color:${sColor.color}; border-color:${sColor.color}30; font-weight:600;"><i class="fa-solid fa-circle-dot"></i> <span>${p.status}</span></span>
         `;
 
         const tbody = document.getElementById('detailTaskTableBody');
