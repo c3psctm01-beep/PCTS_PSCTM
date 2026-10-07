@@ -620,17 +620,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleEditorItems = document.querySelectorAll('.role-editor');
     const currentUserRoleText = document.getElementById('currentUserRole');
 
-    window.updateRole = function (role) {
+    // เก็บสิทธิ์ที่แท้จริงจากการล็อกอิน (Default คือ viewer)
+    window.authenticatedRole = 'viewer';
+    if (currentUserRoleText) {
+        currentUserRoleText.style.userSelect = 'none';
+    }
+
+    function updateRoleSwitcherUI() {
+        if (!currentUserRoleText) return;
+
+        // อนุญาตให้เฉพาะ Admin เท่านั้นที่สามารถกดสลับสิทธิ์ทดสอบได้ (Viewer และ Editor กดไม่ได้)
+        if (window.authenticatedRole === 'admin') {
+            currentUserRoleText.style.cursor = 'pointer';
+            currentUserRoleText.title = 'คลิกเพื่อสลับสิทธิ์ทดสอบ (Admin / Editor / Viewer)';
+            currentUserRoleText.onclick = function () {
+                const roles = ['admin', 'editor', 'viewer'];
+                const currentIndex = roles.indexOf(window.currentRole || 'admin');
+                const nextRole = roles[(currentIndex + 1) % roles.length];
+                window.updateRole(nextRole);
+            };
+        } else {
+            // Viewer และ Editor ไม่สามารถกดเปลี่ยนสิทธิ์ได้
+            currentUserRoleText.style.cursor = 'default';
+            currentUserRoleText.title = '';
+            currentUserRoleText.onclick = null;
+        }
+    }
+
+    window.updateRole = function (role, allowAuth = false) {
+        // หากไม่ใช่การอัปเดตจากระบบ Auth และผู้ใช้จริงไม่ใช่ Admin จะไม่อนุญาตให้เปลี่ยนสิทธิ์
+        if (!allowAuth && window.authenticatedRole !== 'admin') {
+            console.warn('ไม่อนุญาตให้เปลี่ยนสิทธิ์: เฉพาะ Admin เท่านั้นที่สามารถสลับสิทธิ์ทดสอบได้');
+            return;
+        }
+
         window.currentRole = role;
 
         if (role === 'viewer') {
             roleAdminItems.forEach(el => el.style.display = 'none');
             roleEditorItems.forEach(el => el.style.display = 'none');
-            currentUserRoleText.textContent = 'Viewer (บุคคลทั่วไป)';
+            currentUserRoleText.textContent = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
+                ? 'Viewer (โหมดทดสอบ)'
+                : 'Viewer (บุคคลทั่วไป)';
+
+            // หากเปิดหน้าที่ต้องใช้สิทธิ์ Admin หรือ Editor อยู่ ให้สลับกลับหน้า dashboard
+            const activeSec = document.querySelector('.view-section.active');
+            if (activeSec && (activeSec.id === 'admin-view' || activeSec.id === 'editor-view')) {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('dashboard-view')?.classList.add('active');
+                document.querySelectorAll('.top-nav li').forEach(n => {
+                    n.classList.toggle('active', n.getAttribute('data-target') === 'dashboard-view');
+                });
+            }
         } else if (role === 'editor') {
             roleAdminItems.forEach(el => el.style.display = 'none');
             roleEditorItems.forEach(el => el.style.display = '');
-            currentUserRoleText.textContent = 'Editor (ผู้ควบคุมงาน)';
+            currentUserRoleText.textContent = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
+                ? 'Editor (โหมดทดสอบ)'
+                : 'Editor (ผู้ควบคุมงาน)';
+
+            // หากเปิดหน้า Admin อยู่ ให้สลับกลับหน้า dashboard
+            const activeSec = document.querySelector('.view-section.active');
+            if (activeSec && activeSec.id === 'admin-view') {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('dashboard-view')?.classList.add('active');
+                document.querySelectorAll('.top-nav li').forEach(n => {
+                    n.classList.toggle('active', n.getAttribute('data-target') === 'dashboard-view');
+                });
+            }
         } else if (role === 'admin') {
             roleAdminItems.forEach(el => {
                 if (el.id === 'btnDeleteDisbMonth') {
@@ -648,17 +705,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (document.getElementById('project-detail-view')?.classList.contains('active') && window.currentProjectViewData) {
             window.renderGalleryTab(window.currentProjectViewData, window.currentGalleryFilterTaskId || 'all');
         }
+
+        updateRoleSwitcherUI();
     };
 
-    if (currentUserRoleText) {
-        currentUserRoleText.style.cursor = 'pointer';
-        currentUserRoleText.title = 'คลิกเพื่อสลับสิทธิ์ทดสอบ (Viewer / Editor / Admin)';
-        currentUserRoleText.onclick = function () {
-            const roles = ['viewer', 'editor', 'admin'];
-            const nextRole = roles[(roles.indexOf(window.currentRole || 'viewer') + 1) % roles.length];
-            window.updateRole(nextRole);
-        };
-    }
+    // กำหนดค่าเริ่มต้นเป็น viewer ทันทีที่โหลดหน้าเว็บ
+    window.updateRole('viewer', true);
 
     window.switchAuthTab = function (tab) {
         const loginSec = document.getElementById('loginSection');
@@ -811,6 +863,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     window.logout = async function () {
+        window.authenticatedRole = 'viewer';
+        if (typeof window.updateRole === 'function') {
+            window.updateRole('viewer', true);
+        }
         await db.auth.signOut();
     };
 
@@ -841,7 +897,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                window.updateRole(userRole);
+                window.authenticatedRole = userRole;
+                window.updateRole(userRole, true);
                 if (userRole === 'admin') {
                     console.log('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
                     window.loadPendingUsers(); // Load users for admin
@@ -850,13 +907,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else {
                 console.warn('Role not found or error, falling back to viewer');
-                window.updateRole('viewer'); // fallback
+                window.authenticatedRole = 'viewer';
+                window.updateRole('viewer', true); // fallback
             }
         } else {
             document.getElementById('btnLogin').style.display = 'block';
             document.getElementById('userInfo').style.display = 'none';
+            window.authenticatedRole = 'viewer';
             if (typeof window.updateRole === 'function') {
-                window.updateRole('viewer');
+                window.updateRole('viewer', true);
             }
         }
     });
