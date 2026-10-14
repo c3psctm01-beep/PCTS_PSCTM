@@ -4122,8 +4122,18 @@ window.openManualTab = function (evt, tabId) {
     } else {
         tabs.forEach(t => t.style.display = 'none');
         const target = document.getElementById(tabId);
-        if (target) target.style.display = 'block';
+        if (target) {
+            target.style.display = 'block';
+            target.scrollTop = 0;
+        }
         if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    }
+
+    // Auto scroll view smoothly to top of manual content
+    const manualView = document.getElementById('manual-view');
+    if (manualView) {
+        const topPos = manualView.getBoundingClientRect().top + window.pageYOffset - 60;
+        window.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
     }
 };
 
