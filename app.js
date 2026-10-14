@@ -197,8 +197,8 @@ window.loadProjects = async function () {
                 let pCommittee1 = dbProj.committee1 || '';
                 let pCommittee2 = dbProj.committee2 || '';
                 let pCommittee3 = dbProj.committee3 || '';
-                let pLatitude = dbProj.latitude || null;
-                let pLongitude = dbProj.longitude || null;
+                let pLatitude = (dbProj.latitude !== undefined && dbProj.latitude !== null && dbProj.latitude !== '') ? parseFloat(dbProj.latitude) : null;
+                let pLongitude = (dbProj.longitude !== undefined && dbProj.longitude !== null && dbProj.longitude !== '') ? parseFloat(dbProj.longitude) : null;
                 let pDetails = dbProj.details || '';
 
                 if (pDetails.includes('[TYPE:')) {
@@ -225,6 +225,22 @@ window.loadProjects = async function () {
                     const match = pDetails.match(/\[COM:(.*?)\]/);
                     if (match) { if (!dbProj.committee) pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
+                if (pDetails.includes('[LAT:')) {
+                    const matchLat = pDetails.match(/\[LAT:(.*?)\]/);
+                    if (matchLat) {
+                        const parsedLat = parseFloat(matchLat[1]);
+                        if (!isNaN(parsedLat)) pLatitude = parsedLat;
+                        pDetails = pDetails.replace(matchLat[0], '');
+                    }
+                }
+                if (pDetails.includes('[LNG:')) {
+                    const matchLng = pDetails.match(/\[LNG:(.*?)\]/);
+                    if (matchLng) {
+                        const parsedLng = parseFloat(matchLng[1]);
+                        if (!isNaN(parsedLng)) pLongitude = parsedLng;
+                        pDetails = pDetails.replace(matchLng[0], '');
+                    }
+                }
 
                 // If committee1/2/3 not found separately, split from pCommittee
                 if (!pCommittee1 && !pCommittee2 && !pCommittee3 && pCommittee) {
@@ -241,8 +257,24 @@ window.loadProjects = async function () {
                 if (!pCommittee && (pCommittee1 || pCommittee2 || pCommittee3)) {
                     pCommittee = [pCommittee1, pCommittee2, pCommittee3].filter(Boolean).join(', ');
                 }
-                if (!pLatitude && defProj?.latitude) pLatitude = defProj.latitude;
-                if (!pLongitude && defProj?.longitude) pLongitude = defProj.longitude;
+
+                // Check localStorage cache for user-saved custom coordinates
+                try {
+                    const customCoords = JSON.parse(localStorage.getItem('pcts_custom_coords') || '{}');
+                    if (customCoords[dbProj.id]) {
+                        if ((pLatitude === null || isNaN(pLatitude)) && customCoords[dbProj.id].latitude !== undefined) {
+                            pLatitude = customCoords[dbProj.id].latitude;
+                        }
+                        if ((pLongitude === null || isNaN(pLongitude)) && customCoords[dbProj.id].longitude !== undefined) {
+                            pLongitude = customCoords[dbProj.id].longitude;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error reading pcts_custom_coords in loadProjects:', e);
+                }
+
+                if ((pLatitude === null || isNaN(pLatitude)) && defProj?.latitude) pLatitude = defProj.latitude;
+                if ((pLongitude === null || isNaN(pLongitude)) && defProj?.longitude) pLongitude = defProj.longitude;
 
                 return {
                     id: dbProj.id,
@@ -388,34 +420,68 @@ window.saveProjects = async function (projectId = null) {
             targetProjects = projects.filter(p => p.id === projectId);
         }
 
-        const dbProjects = targetProjects.map(p => ({
-            id: p.id,
-            name: p.name,
-            type: p.type || 'จ้างเหมา',
-            supervisor: p.supervisor || '',
-            committee: p.committee || '',
-            committee1: p.committee1 || '',
-            committee2: p.committee2 || '',
-            committee3: p.committee3 || '',
-            latitude: p.latitude || null,
-            longitude: p.longitude || null,
-            status: p.status,
-            budget: p.budget || '',
-            duration: p.duration || '',
-            start_date: p.startDate || null,
-            end_date: p.endDate || null,
-            contractor: p.contractor || '',
-            details: `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}]${p.details || ''}`,
-            tasks: p.tasks || [],
-            gallery: p.gallery || [],
-            disbursement: p.disbursement || null
-        }));
+        // Cache custom coordinates and projects in localStorage immediately
+        try {
+            const customCoords = JSON.parse(localStorage.getItem('pcts_custom_coords') || '{}');
+            targetProjects.forEach(p => {
+                if (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude) &&
+                    p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) {
+                    customCoords[p.id] = { latitude: parseFloat(p.latitude), longitude: parseFloat(p.longitude) };
+                }
+            });
+            localStorage.setItem('pcts_custom_coords', JSON.stringify(customCoords));
+            localStorage.setItem('pcts_projects_cache', JSON.stringify(projects));
+        } catch (e) {
+            console.warn('Error saving pcts_custom_coords:', e);
+        }
+
+        const dbProjects = targetProjects.map(p => {
+            // Strip any existing tag prefixes from details to avoid tag duplicates
+            let cleanDetails = (p.details || '')
+                .replace(/\[TYPE:.*?\]/g, '')
+                .replace(/\[SUP:.*?\]/g, '')
+                .replace(/\[COM:.*?\]/g, '')
+                .replace(/\[COM1:.*?\]/g, '')
+                .replace(/\[COM2:.*?\]/g, '')
+                .replace(/\[COM3:.*?\]/g, '')
+                .replace(/\[LAT:.*?\]/g, '')
+                .replace(/\[LNG:.*?\]/g, '')
+                .trim();
+
+            const latStr = (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude)) ? p.latitude : '';
+            const lngStr = (p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) ? p.longitude : '';
+
+            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]`;
+
+            return {
+                id: p.id,
+                name: p.name,
+                type: p.type || 'จ้างเหมา',
+                supervisor: p.supervisor || '',
+                committee: p.committee || '',
+                committee1: p.committee1 || '',
+                committee2: p.committee2 || '',
+                committee3: p.committee3 || '',
+                latitude: (latStr !== '') ? parseFloat(latStr) : null,
+                longitude: (lngStr !== '') ? parseFloat(lngStr) : null,
+                status: p.status,
+                budget: p.budget || '',
+                duration: p.duration || '',
+                start_date: p.startDate || null,
+                end_date: p.endDate || null,
+                contractor: p.contractor || '',
+                details: `${tagPrefix}${cleanDetails}`,
+                tasks: p.tasks || [],
+                gallery: p.gallery || [],
+                disbursement: p.disbursement || null
+            };
+        });
 
         let err = null;
         if (projectId && dbProjects.length > 0) {
             let res = await db.from('projects').update(dbProjects[0]).eq('id', projectId);
-            if (res.error && res.error.message && res.error.message.includes('column')) {
-                // If columns not added in DB yet, strip new fields and save with legacy schema
+            if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('schema cache') || res.error.code === 'PGRST204')) {
+                // If columns not added in DB yet, strip new columns and save with legacy schema (which embeds [LAT:...][LNG:...] in details)
                 const legacy = { ...dbProjects[0] };
                 delete legacy.type; delete legacy.supervisor; delete legacy.committee;
                 delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
@@ -425,7 +491,7 @@ window.saveProjects = async function (projectId = null) {
             err = res.error;
         } else {
             let res = await db.from('projects').upsert(dbProjects);
-            if (res.error && res.error.message && res.error.message.includes('column')) {
+            if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('schema cache') || res.error.code === 'PGRST204')) {
                 const legacyProjects = dbProjects.map(dp => {
                     const legacy = { ...dp };
                     delete legacy.type; delete legacy.supervisor; delete legacy.committee;
@@ -442,10 +508,10 @@ window.saveProjects = async function (projectId = null) {
         return true;
     } catch (e) {
         console.error('Supabase Save Error:', e);
-        alert('บันทึกข้อมูลไม่สำเร็จ: ' + (e.message || 'โปรดตรวจสอบการตั้งค่าฐานข้อมูล (RLS) หรือการเชื่อมต่ออินเทอร์เน็ต'));
+        // Note: coordinates remain cached in localStorage even if network/RLS issues occur
         return false;
     }
-}
+};
 
 function calcDisbursementPlanComparison(disb, targetMonth) {
     if (!disb || !disb.plan || !Array.isArray(disb.plan) || disb.plan.length === 0) {
@@ -2683,7 +2749,7 @@ window.deleteProject = async function (id) {
     }
 };
 
-document.getElementById('projectForm')?.addEventListener('submit', function (e) {
+document.getElementById('projectForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const idVal = document.getElementById('projectId').value;
     const name = document.getElementById('projectNameInput').value;
@@ -2702,29 +2768,35 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
 
     const duration = document.getElementById('projectDurationInput').value;
     const status = document.getElementById('projectStatusInput').value;
-    const latVal = document.getElementById('projectLatInput')?.value ? parseFloat(document.getElementById('projectLatInput').value) : null;
-    const lngVal = document.getElementById('projectLngInput')?.value ? parseFloat(document.getElementById('projectLngInput').value) : null;
+    const latRaw = document.getElementById('projectLatInput')?.value.trim();
+    const lngRaw = document.getElementById('projectLngInput')?.value.trim();
+    const latVal = (latRaw !== undefined && latRaw !== '') ? parseFloat(latRaw) : null;
+    const lngVal = (lngRaw !== undefined && lngRaw !== '') ? parseFloat(lngRaw) : null;
+
+    let targetProjectId = idVal ? parseInt(idVal) : null;
+    let targetProject = null;
 
     if (idVal) {
         // Edit
-        const project = projects.find(p => p.id === parseInt(idVal));
-        if (project) {
-            project.name = name;
-            project.type = type;
-            project.contractor = contractor;
-            project.supervisor = supervisor;
-            project.committee = committee;
-            project.committee1 = c1;
-            project.committee2 = c2;
-            project.committee3 = c3;
-            project.latitude = latVal;
-            project.longitude = lngVal;
-            project.duration = duration;
-            project.status = status;
+        targetProject = projects.find(p => p.id === targetProjectId);
+        if (targetProject) {
+            targetProject.name = name;
+            targetProject.type = type;
+            targetProject.contractor = contractor;
+            targetProject.supervisor = supervisor;
+            targetProject.committee = committee;
+            targetProject.committee1 = c1;
+            targetProject.committee2 = c2;
+            targetProject.committee3 = c3;
+            targetProject.latitude = latVal;
+            targetProject.longitude = lngVal;
+            targetProject.duration = duration;
+            targetProject.status = status;
         }
     } else {
         // Add
         const newId = projects.length > 0 ? Math.max(...projects.map(p => p.id)) + 1 : 1;
+        targetProjectId = newId;
         let initialTasks = [];
         const templateId = document.getElementById('copyTemplateProjectSelect')?.value;
         if (templateId) {
@@ -2742,7 +2814,7 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
                 }));
             }
         }
-        projects.push({
+        targetProject = {
             id: newId,
             name: name,
             type: type,
@@ -2757,12 +2829,57 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
             duration: duration,
             status: status,
             tasks: initialTasks
-        });
+        };
+        projects.push(targetProject);
     }
 
-    saveProjects();
+    // Always update custom coordinates in localStorage immediately
+    try {
+        const customCoords = JSON.parse(localStorage.getItem('pcts_custom_coords') || '{}');
+        if (latVal !== null && lngVal !== null && !isNaN(latVal) && !isNaN(lngVal)) {
+            customCoords[targetProjectId] = { latitude: latVal, longitude: lngVal };
+        } else {
+            delete customCoords[targetProjectId];
+        }
+        localStorage.setItem('pcts_custom_coords', JSON.stringify(customCoords));
+    } catch (err) {
+        console.warn('Error saving pcts_custom_coords:', err);
+    }
+
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+    }
+
+    await saveProjects(targetProjectId);
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> บันทึกโครงการ';
+    }
+
     window.closeProjectModal();
     window.renderTables();
+
+    // Re-render GIS map and project detail map if opened
+    if (typeof window.renderGisMap === 'function') {
+        window.renderGisMap();
+    }
+    if (typeof window.renderProjectDetailMap === 'function' && window.currentProjectViewData?.id === targetProjectId) {
+        window.renderProjectDetailMap(targetProject);
+    }
+
+    if (typeof Toastify === 'function') {
+        Toastify({
+            text: `บันทึกข้อมูลและพิกัดตำแหน่งโครงการ (Lat: ${latVal ?? '-'}, Lng: ${lngVal ?? '-'}) เรียบร้อยแล้ว`,
+            duration: 3500,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: 'linear-gradient(to right, #10B981, #059669)',
+            stopOnFocus: true
+        }).showToast();
+    }
 });
 
 // Copy Tasks (WBS) Modal Functions

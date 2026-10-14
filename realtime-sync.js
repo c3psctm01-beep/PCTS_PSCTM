@@ -70,8 +70,14 @@
                             window.projects[idx].tasks = newRecord.tasks || window.projects[idx].tasks;
                             window.projects[idx].gallery = newRecord.gallery || window.projects[idx].gallery;
                             window.projects[idx].disbursement = newRecord.disbursement || window.projects[idx].disbursement;
-                            if (newRecord.latitude) window.projects[idx].latitude = newRecord.latitude;
-                            if (newRecord.longitude) window.projects[idx].longitude = newRecord.longitude;
+                            if (newRecord.latitude) window.projects[idx].latitude = parseFloat(newRecord.latitude);
+                            if (newRecord.longitude) window.projects[idx].longitude = parseFloat(newRecord.longitude);
+                            if (newRecord.details) {
+                                const latM = newRecord.details.match(/\[LAT:(.*?)\]/);
+                                if (latM && latM[1]) window.projects[idx].latitude = parseFloat(latM[1]);
+                                const lngM = newRecord.details.match(/\[LNG:(.*?)\]/);
+                                if (lngM && lngM[1]) window.projects[idx].longitude = parseFloat(lngM[1]);
+                            }
                         }
 
                         showRealtimeToast(`🔄 โครงการ "${newRecord.name || 'โครงการ'}" มีการอัปเดตข้อมูลสด`, 'info');
