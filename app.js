@@ -647,8 +647,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // --- GIS Map View Navigation Helper ---
+    window.openGisMapView = function () {
+        if (typeof window.toggleSidebar === 'function') {
+            window.toggleSidebar(false);
+        }
+
+        // 1. Highlight sidebar item
+        navItems.forEach(nav => nav.classList.remove('active'));
+        const gisNav = document.getElementById('sidebarNavGis');
+        if (gisNav) gisNav.classList.add('active');
+
+        // 2. Activate dashboard-view where projectGisContainer is located
+        viewSections.forEach(section => section.classList.remove('active'));
+        const dashView = document.getElementById('dashboard-view');
+        if (dashView) {
+            dashView.classList.add('active');
+        }
+
+        // 3. Switch dashboard view mode to 'gis'
+        if (typeof window.switchProjectView === 'function') {
+            window.switchProjectView('gis');
+        }
+
+        // 4. Force map resize and bounds fitting
+        setTimeout(() => {
+            if (typeof window.renderGisMap === 'function') {
+                window.renderGisMap();
+            }
+        }, 80);
+    };
+
     navItems.forEach(item => {
         item.addEventListener('click', () => {
+            const targetId = item.getAttribute('data-target');
+            if (!targetId) {
+                // If item does not have data-target (e.g. handled by custom onclick like openGisMapView), bypass default view toggling
+                return;
+            }
 
             // Remove active from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -658,8 +694,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             viewSections.forEach(section => section.classList.remove('active'));
 
             // Show target section
-            const targetId = item.getAttribute('data-target');
-            document.getElementById(targetId).classList.add('active');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.classList.add('active');
+            }
+
+            // If switching to dashboard-view via "ภาพรวม"
+            if (targetId === 'dashboard-view') {
+                if (window.currentProjectViewMode === 'gis') {
+                    window.switchProjectView('cards');
+                } else if (typeof window.switchProjectView === 'function') {
+                    window.switchProjectView(window.currentProjectViewMode || 'cards');
+                }
+            }
 
             // Resize Chart and Calendar if their views are opened
             if (targetId === 'project-detail-view') {
@@ -1000,6 +1047,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btnTable = document.getElementById('btnViewTable');
         const btnGis = document.getElementById('btnViewGis');
 
+        // Synchronize sidebar nav active state
+        const gisNav = document.getElementById('sidebarNavGis');
+        const dashNav = document.querySelector('.sidebar-nav li[data-target="dashboard-view"]');
+
         if (mode === 'cards') {
             if (cardsSection) cardsSection.style.display = 'block';
             if (tableContainer) tableContainer.style.display = 'none';
@@ -1007,6 +1058,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (btnCards) btnCards.classList.add('active');
             if (btnTable) btnTable.classList.remove('active');
             if (btnGis) btnGis.classList.remove('active');
+
+            if (gisNav && gisNav.classList.contains('active')) {
+                gisNav.classList.remove('active');
+                if (dashNav) dashNav.classList.add('active');
+            }
         } else if (mode === 'table') {
             if (cardsSection) cardsSection.style.display = 'none';
             if (tableContainer) tableContainer.style.display = 'flex';
@@ -1014,6 +1070,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (btnCards) btnCards.classList.remove('active');
             if (btnTable) btnTable.classList.add('active');
             if (btnGis) btnGis.classList.remove('active');
+
+            if (gisNav && gisNav.classList.contains('active')) {
+                gisNav.classList.remove('active');
+                if (dashNav) dashNav.classList.add('active');
+            }
         } else if (mode === 'gis') {
             if (cardsSection) cardsSection.style.display = 'none';
             if (tableContainer) tableContainer.style.display = 'none';
@@ -1021,6 +1082,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (btnCards) btnCards.classList.remove('active');
             if (btnTable) btnTable.classList.remove('active');
             if (btnGis) btnGis.classList.add('active');
+
+            if (gisNav && dashNav && dashNav.classList.contains('active')) {
+                dashNav.classList.remove('active');
+                gisNav.classList.add('active');
+            }
 
             if (typeof window.renderGisMap === 'function') {
                 window.renderGisMap();
@@ -3763,6 +3829,9 @@ window.goHome = function () {
     document.getElementById('dashboard-view').classList.add('active');
     document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
     document.querySelectorAll('[data-target="dashboard-view"]').forEach(el => el.classList.add('active'));
+    if (typeof window.switchProjectView === 'function') {
+        window.switchProjectView('cards');
+    }
 };
 
 // --- Print Report Modal ---

@@ -414,10 +414,20 @@
         });
 
         // จัดมุมมองแผนที่ให้ครอบคลุมทุกสถานี
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 50);
+
         if (bounds.length > 0) {
             setTimeout(() => {
-                map.invalidateSize();
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                if (map) {
+                    map.invalidateSize();
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                }
+            }, 200);
+        } else {
+            setTimeout(() => {
+                if (map) map.invalidateSize();
             }, 200);
         }
     };

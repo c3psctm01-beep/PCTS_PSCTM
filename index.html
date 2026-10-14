@@ -78,7 +78,7 @@
                 <div class="sidebar-section-title" style="margin-top: 20px;">มุมมองและเครื่องมือ</div>
                 <nav class="sidebar-nav">
                     <ul>
-                        <li onclick="switchProjectView('gis'); toggleSidebar(false);">
+                        <li id="sidebarNavGis" onclick="openGisMapView(); toggleSidebar(false);">
                             <i class="fa-solid fa-map-location-dot"></i>
                             <span>แผนที่สถานี GIS</span>
                         </li>
@@ -1805,12 +1805,12 @@
     <!-- PCTS Modular Engines -->
     <script src="watermark.js?v=1"></script>
     <script src="signature-pad.js?v=1"></script>
-    <script src="gis-map.js?v=2"></script>
+    <script src="gis-map.js?v=3"></script>
     <script src="realtime-sync.js?v=1"></script>
     <script src="pwa-setup.js?v=1"></script>
 
     <!-- Main Application Core -->
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
 </body>
 
 </html>
