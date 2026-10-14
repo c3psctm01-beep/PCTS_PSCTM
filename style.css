@@ -522,6 +522,13 @@ html, body {
     transition: transform 0.3s ease;
 }
 
+@media (max-width: 768px) {
+    .fullscreen-btn,
+    #fullscreenToggleBtn {
+        display: none !important;
+    }
+}
+
 @media (max-width: 640px) {
     .header-btn-text {
         display: none !important;
@@ -3080,26 +3087,58 @@ html, body {
 
     /* Project Detail View Mobile */
     .project-header.card {
-        padding: 14px !important;
+        padding: 14px 16px !important;
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 12px !important;
+        margin-top: 4px !important;
     }
     .project-header-info-wrap {
-        gap: 10px !important;
+        gap: 12px !important;
+        align-items: flex-start !important;
+    }
+    .btn-home {
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        font-size: 16px !important;
+        border-radius: 10px !important;
+        background: #f1f5f9 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        color: var(--pea-purple) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+    }
+    .btn-home:active {
+        background: var(--pea-purple) !important;
+        color: #ffffff !important;
+        transform: scale(0.95) !important;
     }
     .project-header-text h1.page-title {
         font-size: 16px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 6px !important;
+    }
+    .detail-project-meta-wrap {
+        gap: 6px !important;
+    }
+    .detail-info-item {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
     }
     .project-header-actions {
         width: 100% !important;
         flex-direction: column !important;
+        gap: 8px !important;
     }
     .project-header-actions .btn {
         width: 100% !important;
         justify-content: center !important;
-        padding: 10px !important;
-        font-size: 12px !important;
+        padding: 10px 14px !important;
+        font-size: 12.5px !important;
     }
 
     /* Tabs Horizontal Touch Scroll */

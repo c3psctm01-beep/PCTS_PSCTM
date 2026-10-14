@@ -803,10 +803,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Resize Chart and Calendar if their views are opened
             if (targetId === 'project-detail-view') {
                 if (window.sChart) window.sChart.resize();
-                if (window.projectCalendar) {
-                    window.projectCalendar.refetchEvents();
-                    window.projectCalendar.render();
-                    window.projectCalendar.updateSize();
+                if (window.projectCalendar && typeof window.projectCalendar.refetchEvents === 'function') {
+                    try {
+                        window.projectCalendar.refetchEvents();
+                        window.projectCalendar.render();
+                        window.projectCalendar.updateSize();
+                    } catch (e) {
+                        console.warn('Calendar sync error:', e);
+                    }
                 }
             }
             if (targetId === 'calendar-view' && calendar) {
@@ -1760,6 +1764,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </button>
                     </div>
                 `;
+                card.style.cursor = 'pointer';
+                card.onclick = function (e) {
+                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    window.viewProjectDetails(p.id);
+                };
                 cardsGrid.appendChild(card);
             }
 
@@ -2580,16 +2589,37 @@ window.viewProjectDetails = function (projectId) {
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
     });
-    document.getElementById('project-detail-view').classList.add('active');
+    const detailView = document.getElementById('project-detail-view');
+    if (detailView) {
+        detailView.classList.add('active');
+    }
     document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
 
-    // The calendar is initialized globally in DOMContentLoaded.
-    // We just refetch and update size. The nav listener already does this, but doing it here again is safe.
-    if (window.projectCalendar) {
-        window.projectCalendar.refetchEvents();
-        setTimeout(() => {
-            window.projectCalendar.updateSize();
-        }, 150);
+    // Critical for mobile UX: always scroll to top so user sees the header, back button, and tabs!
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.scrollTop = 0;
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) contentArea.scrollTop = 0;
+
+    // Reset default tab to WBS if openProjectTab is available
+    if (typeof window.openProjectTab === 'function') {
+        const firstTabBtn = document.querySelector('.project-tabs .tablinks');
+        window.openProjectTab({ currentTarget: firstTabBtn }, 'tabWBS');
+    }
+
+    // Safely update calendar if function exists
+    try {
+        if (window.projectCalendar && typeof window.projectCalendar.refetchEvents === 'function') {
+            window.projectCalendar.refetchEvents();
+            setTimeout(() => {
+                if (typeof window.projectCalendar?.updateSize === 'function') {
+                    window.projectCalendar.updateSize();
+                }
+            }, 150);
+        }
+    } catch (calErr) {
+        console.warn('Calendar sync deferred:', calErr);
     }
 }
 
@@ -4396,6 +4426,9 @@ window.goHome = function () {
     if (typeof window.switchProjectView === 'function') {
         window.switchProjectView('cards');
     }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.scrollTop = 0;
 };
 
 // --- Print Report Modal ---
