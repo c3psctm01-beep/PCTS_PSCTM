@@ -630,8 +630,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Navigation Logic ---
-    const navItems = document.querySelectorAll('.top-nav li');
+    const navItems = document.querySelectorAll('.sidebar-nav li, .top-nav li');
     const viewSections = document.querySelectorAll('.view-section');
+
+    window.toggleSidebar = function (open) {
+        const sidebar = document.getElementById('appSidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (!sidebar) return;
+        const shouldOpen = (open !== undefined) ? open : !sidebar.classList.contains('open');
+        if (shouldOpen) {
+            sidebar.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+        } else {
+            sidebar.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+        }
+    };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -717,7 +731,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeSec && (activeSec.id === 'admin-view' || activeSec.id === 'editor-view')) {
                 document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
                 document.getElementById('dashboard-view')?.classList.add('active');
-                document.querySelectorAll('.top-nav li').forEach(n => {
+                document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
                     n.classList.toggle('active', n.getAttribute('data-target') === 'dashboard-view');
                 });
             }
@@ -734,7 +748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeSec && activeSec.id === 'admin-view') {
                 document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
                 document.getElementById('dashboard-view')?.classList.add('active');
-                document.querySelectorAll('.top-nav li').forEach(n => {
+                document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
                     n.classList.toggle('active', n.getAttribute('data-target') === 'dashboard-view');
                 });
             }
@@ -2083,7 +2097,7 @@ window.viewProjectDetails = function (projectId) {
         section.classList.remove('active');
     });
     document.getElementById('project-detail-view').classList.add('active');
-    document.querySelectorAll('.top-nav li').forEach(nav => nav.classList.remove('active'));
+    document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
 
     // The calendar is initialized globally in DOMContentLoaded.
     // We just refetch and update size. The nav listener already does this, but doing it here again is safe.
@@ -3735,8 +3749,8 @@ window.goHome = function () {
         section.classList.remove('active');
     });
     document.getElementById('dashboard-view').classList.add('active');
-    document.querySelectorAll('.top-nav li').forEach(nav => nav.classList.remove('active'));
-    document.querySelector('[data-target="dashboard-view"]').classList.add('active');
+    document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
+    document.querySelectorAll('[data-target="dashboard-view"]').forEach(el => el.classList.add('active'));
 };
 
 // --- Print Report Modal ---
