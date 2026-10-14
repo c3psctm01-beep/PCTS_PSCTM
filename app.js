@@ -177,6 +177,7 @@ const defaultProjects = [
 const SUPABASE_URL = 'https://maefwoecoortrvgbpmyp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hZWZ3b2Vjb29ydHJ2Z2JwbXlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MjAwMTUsImV4cCI6MjEwMjE5NjAxNX0.oPDRRSfAo93CE4vHBErcxbBItJuN2OzWQrT3Yj6zmJo';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.db = db;
 
 // --- GEMINI API KEY ---
 // ไม่ควรนำ API Key มาใส่ใน Source Code เนื่องจากไม่ปลอดภัย ให้ผู้ใช้กรอกผ่านหน้าตั้งค่าแทน
@@ -311,7 +312,9 @@ window.loadProjects = async function () {
                 console.log('ไม่พบข้อมูลโครงการในฐานข้อมูล และยังไม่ได้เข้าสู่ระบบ ระบบจะใช้ข้อมูลจำลองแสดงผลชั่วคราว');
             }
         }
+        window.projects = projects;
     } catch (e) {
+        window.projects = projects || defaultProjects;
         console.error('Supabase Load Error:', e);
         alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ' + (e.message || ''));
         renderAdminProjects();
@@ -3533,6 +3536,14 @@ window.openProjectTab = function (evt, tabName) {
             changeGanttMode('Month');
             window.currentGantt.render();
         }, 50);
+    }
+
+    if (tabName === 'tabMap') {
+        setTimeout(() => {
+            if (typeof window.renderProjectDetailMap === 'function') {
+                window.renderProjectDetailMap(window.currentProjectViewData);
+            }
+        }, 60);
     }
 };
 

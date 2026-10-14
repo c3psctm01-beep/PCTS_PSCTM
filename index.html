@@ -230,7 +230,9 @@
                                 <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #8e44ad; display: inline-block;"></span> ออกแบบ/จัดจ้าง</span>
                             </div>
                         </div>
-                        <div id="gisMapContainer" style="width: 100%; height: 560px; z-index: 1;"></div>
+                        <!-- Quick Substation Chips Bar -->
+                        <div id="gisStationChips" class="gis-station-chips-bar"></div>
+                        <div id="gisMapContainer" style="width: 100%; height: 540px; z-index: 1;"></div>
                     </div>
                 </section>
 
@@ -262,6 +264,7 @@
                         <button class="tablinks" onclick="openProjectTab(event, 'tabGallery')"><i class="fa-solid fa-images"></i> รูปภาพความก้าวหน้า</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabCalendar')"><i class="fa-regular fa-calendar-days"></i> ปฏิทินปฏิบัติงาน</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabDisbursement')"><i class="fa-solid fa-money-bill-transfer"></i> เบิกจ่ายงบประมาณ</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabMap')"><i class="fa-solid fa-map-location-dot"></i> ตำแหน่งสถานี</button>
                     </div>
 
                     <!-- Tab: WBS -->
@@ -524,6 +527,32 @@
                         </div>
                     </div>
                     </div> <!-- End Tab Disbursement -->
+
+                    <!-- Tab: Substation GIS Location Map -->
+                    <div id="tabMap" class="tabcontent" style="display: none;">
+                        <div class="card mt-4">
+                            <div class="detail-map-header-card">
+                                <div>
+                                    <h2 id="detailMapStationTitle" style="margin: 0 0 6px 0; font-size: 16px; color: #1e293b; font-family: 'Prompt', sans-serif;">
+                                        ตำแหน่งสถานีไฟฟ้า
+                                    </h2>
+                                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #64748b;">
+                                        <span><i class="fa-solid fa-location-dot" style="color: var(--pea-purple);"></i> พิกัด: <strong id="detailMapStationCoords" style="color: #1e293b;">-</strong></span>
+                                        <span id="detailMapStationStatus" style="display: flex; align-items: center;">-</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button id="detailMapCopyBtn" type="button" class="btn btn-secondary" style="font-size: 12px; padding: 7px 14px;">
+                                        <i class="fa-solid fa-copy"></i> คัดลอกพิกัด
+                                    </button>
+                                    <a id="detailMapNavBtn" href="#" target="_blank" class="btn" style="background: #10B981; color: white; font-size: 12px; padding: 7px 14px; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+                                        <i class="fa-solid fa-diamond-turn-right"></i> เปิดนำทางใน Google Maps
+                                    </a>
+                                </div>
+                            </div>
+                            <div id="projectDetailMapContainer"></div>
+                        </div>
+                    </div> <!-- End Tab Map -->
                 </section>
 
                 <!-- Admin View -->
@@ -1418,7 +1447,7 @@
     <!-- PCTS Modular Engines -->
     <script src="watermark.js?v=1"></script>
     <script src="signature-pad.js?v=1"></script>
-    <script src="gis-map.js?v=1"></script>
+    <script src="gis-map.js?v=2"></script>
     <script src="realtime-sync.js?v=1"></script>
     <script src="pwa-setup.js?v=1"></script>
 
