@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcts-pea-v3.4-cache';
+const CACHE_NAME = 'pcts-pea-v3.5-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,13 @@ const STATIC_ASSETS = [
   './realtime-sync.js',
   './pwa-setup.js',
   './mascot.jpg',
-  './manifest.json'
+  './manifest.json',
+  './assets/manual/ch1_dashboard.png',
+  './assets/manual/ch2_gis_map.png',
+  './assets/manual/ch3_scurve.png',
+  './assets/manual/ch4_signatures.png',
+  './assets/manual/ch5_admin.png',
+  './assets/manual/ch6_pwa.png'
 ];
 
 self.addEventListener('install', (event) => {
