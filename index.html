@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PEA Construction Tracking System</title>
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('pcts_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 
     <!-- Google Fonts: Prompt & Sarabun -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -29,7 +37,7 @@
     <meta name="theme-color" content="#742C81">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 
 <body>
@@ -148,6 +156,18 @@
                 </div>
 
                 <div class="header-right">
+                    <!-- Day / Night Mode Toggle Button -->
+                    <button id="themeToggleBtn" class="header-action-btn theme-toggle-btn" onclick="toggleTheme()" title="สลับโหมด กลางวัน / กลางคืน (Day / Night Mode)">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
+                        <span class="header-btn-text" id="themeText">กลางคืน</span>
+                    </button>
+
+                    <!-- Full Screen Toggle Button -->
+                    <button id="fullscreenToggleBtn" class="header-action-btn fullscreen-btn" onclick="toggleFullScreen()" title="ดูข้อมูลเต็มจอ (Full Screen)">
+                        <i class="fa-solid fa-expand" id="fullscreenIcon"></i>
+                        <span class="header-btn-text" id="fullscreenText">เต็มจอ</span>
+                    </button>
+
                     <!-- Notification Bell -->
                     <div class="notification-wrapper" style="display: none; position: relative; cursor: pointer;" onclick="toggleNotifications()">
                         <i class="fa-solid fa-bell"></i>
@@ -1985,7 +2005,7 @@
     <script src="pwa-setup.js?v=1"></script>
 
     <!-- Main Application Core -->
-    <script src="app.js?v=19"></script>
+    <script src="app.js?v=20"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
             window.addEventListener('load', () => {

@@ -472,7 +472,63 @@ html, body {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+}
+
+/* ---------------- Header Action Buttons (Fullscreen & Theme Toggle) ---------------- */
+.header-action-btn {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-heading);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.header-action-btn:hover {
+    background: rgba(116, 44, 129, 0.06);
+    border-color: var(--pea-purple);
+    color: var(--pea-purple);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(116, 44, 129, 0.12);
+}
+
+.header-action-btn:active, .header-action-btn.active {
+    background: rgba(116, 44, 129, 0.12);
+    border-color: var(--pea-purple);
+    color: var(--pea-purple);
+    transform: translateY(0);
+}
+
+.theme-toggle-btn i {
+    font-size: 13px;
+    color: var(--pea-purple);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.fullscreen-btn i {
+    font-size: 13px;
+    color: #0284c7;
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 640px) {
+    .header-btn-text {
+        display: none !important;
+    }
+    .header-action-btn {
+        padding: 7px 10px;
+    }
 }
 
 @media (max-width: 900px) {
@@ -3968,5 +4024,531 @@ body:has(#manual-view.active) .mascot-widget {
         font-weight: 600 !important;
     }
 }
+
+/* ==========================================================================
+   PCTS PEA DARK THEME (โหมดกลางคืน) - HIGH FIDELITY DESIGN SYSTEM
+   ========================================================================== */
+[data-theme="dark"] {
+    --bg-main: #0b0f19;
+    --bg-sidebar: #111827;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-light: #f8fafc;
+    --border-color: #334155;
+    --pea-purple: #c084fc;
+    --pea-purple-light: #d8b4fe;
+    --pea-purple-dark: #a855f7;
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 6px 14px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] body {
+    background-color: #0b0f19;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .app-container {
+    background-color: #0b0f19;
+}
+
+/* Top Header & Header Action Buttons */
+[data-theme="dark"] .top-header {
+    background: rgba(17, 24, 39, 0.94);
+    border-bottom: 1px solid #334155;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .top-header-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .top-header-badge {
+    background: rgba(192, 132, 252, 0.15);
+    color: #d8b4fe;
+    border: 1px solid rgba(192, 132, 252, 0.25);
+}
+
+[data-theme="dark"] .header-action-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .header-action-btn:hover {
+    background: #334155;
+    border-color: #c084fc;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .theme-toggle-btn i {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .fullscreen-btn i {
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .sidebar-toggle-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+/* Sidebar */
+[data-theme="dark"] .app-sidebar {
+    background: #111827;
+    border-right-color: #334155;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: #1f293d;
+}
+
+[data-theme="dark"] .sidebar-section-title {
+    color: #64748b;
+}
+
+[data-theme="dark"] .sidebar-nav li {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar-nav li i {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar-nav li:hover {
+    background: rgba(192, 132, 252, 0.12);
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .sidebar-nav li:hover i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav li.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(192, 132, 252, 0.12) 100%);
+    color: #f3e8ff;
+    border-left-color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav li.active i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-user-section {
+    border-top-color: #1f293d;
+}
+
+[data-theme="dark"] .sidebar-user-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .sidebar-role-label {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar-version-tag {
+    color: #64748b;
+}
+
+[data-theme="dark"] .btn-logout-sidebar {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .btn-pwa-sidebar {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+/* Page Title & Headings */
+[data-theme="dark"] .page-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .title-year-badge {
+    background: rgba(192, 132, 252, 0.15);
+    color: #d8b4fe;
+    border-color: rgba(192, 132, 252, 0.3);
+}
+
+/* Cards & Stats */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .stat-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .stat-card:hover {
+    border-color: #c084fc;
+    box-shadow: 0 4px 16px rgba(192, 132, 252, 0.15);
+}
+
+[data-theme="dark"] .stat-info h3 {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .stat-info p {
+    color: #f8fafc;
+}
+
+/* Dashboard Controls Toolbar */
+[data-theme="dark"] .dashboard-controls-bar {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .dashboard-year-filter {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .dashboard-year-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .dashboard-year-select {
+    background: #1e293b;
+    border-color: #475569;
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .dashboard-year-select option {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .project-type-tabs {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .filter-tab-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .filter-tab-btn:hover {
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .filter-tab-btn.active {
+    background: #1e293b;
+    color: #c084fc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .search-box-wrapper input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .search-box-wrapper input:focus {
+    border-color: #c084fc;
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
+}
+
+[data-theme="dark"] .search-icon {
+    color: #64748b;
+}
+
+[data-theme="dark"] .view-mode-switcher {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .view-mode-btn {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .view-mode-btn.active {
+    background: #1e293b;
+    color: #c084fc;
+}
+
+/* Project Cards */
+[data-theme="dark"] .project-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .project-card:hover {
+    border-color: #c084fc;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .project-card-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .project-meta-grid {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .meta-item-label {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .meta-item-value {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .progress-title {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .card-dual-progress {
+    background: #334155;
+}
+
+[data-theme="dark"] .card-progress-labels {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .card-disb-wrapper {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-disb-stat {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .card-disb-budget {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .card-disb-track {
+    background: #334155;
+}
+
+[data-theme="dark"] .project-card-footer {
+    border-top-color: #334155;
+    background: #1e293b;
+}
+
+[data-theme="dark"] .footer-meta-chips span {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-card-details {
+    background: rgba(192, 132, 252, 0.12);
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .btn-card-details:hover {
+    background: #c084fc;
+    color: #0f172a;
+}
+
+/* Badges */
+[data-theme="dark"] .badge-multi-year {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .badge-multi-year-ongoing {
+    background: rgba(14, 165, 233, 0.15);
+    color: #38bdf8;
+    border-color: rgba(14, 165, 233, 0.35);
+}
+
+/* Tables */
+[data-theme="dark"] .pea-table {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .pea-table th {
+    background: #0f172a;
+    color: #cbd5e1;
+    border-bottom: 2px solid #334155;
+}
+
+[data-theme="dark"] .pea-table td {
+    border-bottom: 1px solid #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .pea-table tr:hover td {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .progress-bar-container {
+    background-color: #334155;
+}
+
+/* Modals */
+[data-theme="dark"] .modal-content {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] .close-modal {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .close-modal:hover {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .pea-form label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .pea-form input,
+[data-theme="dark"] .pea-form select,
+[data-theme="dark"] .pea-form textarea {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .pea-form input:focus,
+[data-theme="dark"] .pea-form select:focus,
+[data-theme="dark"] .pea-form textarea:focus {
+    border-color: #c084fc;
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.2);
+}
+
+/* Project Detail View */
+[data-theme="dark"] .project-header-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .project-header-title h1 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .project-meta-pill {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .project-tabs {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .project-tabs .tablinks {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .project-tabs .tablinks.active {
+    background: #1e293b;
+    color: #c084fc;
+}
+
+[data-theme="dark"] .scurve-kpi-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .scurve-kpi-label {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .scurve-kpi-val {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .chart-container {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* GIS Map Container */
+[data-theme="dark"] .gis-map-toolbar {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .gis-station-chip {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .gis-station-chip:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .gis-station-chip.active {
+    background: #c084fc;
+    color: #0f172a;
+    border-color: #c084fc;
+}
+
+[data-theme="dark"] .gis-station-badge {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .leaflet-container {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .leaflet-layer {
+    filter: brightness(0.85) contrast(1.05);
+}
+
+/* Manual View in Dark Mode */
+[data-theme="dark"] .manual-a4-page {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #334155;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .manual-section-box {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .manual-step-item {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .manual-step-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .manual-tip-box {
+    background: rgba(192, 132, 252, 0.1);
+    border-color: rgba(192, 132, 252, 0.25);
+    color: #e9d5ff;
+}
+
+[data-theme="dark"] .manual-header-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
 
 

@@ -1151,6 +1151,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // --- Fullscreen Toggle Logic ---
+    window.toggleFullScreen = function () {
+        const doc = document;
+        const docEl = doc.documentElement;
+        const isFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+        if (!isFull) {
+            if (docEl.requestFullscreen) docEl.requestFullscreen().catch(e => console.warn(e));
+            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+            else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+        } else {
+            if (doc.exitFullscreen) doc.exitFullscreen().catch(e => console.warn(e));
+            else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+            else if (doc.msExitFullscreen) doc.msExitFullscreen();
+        }
+    };
+
+    window.updateFullscreenUI = function () {
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        const btn = document.getElementById('fullscreenToggleBtn');
+        const icon = document.getElementById('fullscreenIcon');
+        const text = document.getElementById('fullscreenText');
+        if (icon) icon.className = isFull ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+        if (text) text.innerText = isFull ? 'ย่อจอ' : 'เต็มจอ';
+        if (btn) {
+            btn.setAttribute('title', isFull ? 'ออกจากโหมดเต็มจอ (Exit Full Screen)' : 'ดูข้อมูลแบบเต็มจอ (Full Screen)');
+            if (isFull) btn.classList.add('active'); else btn.classList.remove('active');
+        }
+    };
+    document.addEventListener('fullscreenchange', window.updateFullscreenUI);
+    document.addEventListener('webkitfullscreenchange', window.updateFullscreenUI);
+    document.addEventListener('mozfullscreenchange', window.updateFullscreenUI);
+    document.addEventListener('MSFullscreenChange', window.updateFullscreenUI);
+
+    // --- Day / Night Theme Logic ---
+    window.toggleTheme = function () {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+        window.applyTheme(nextTheme);
+    };
+
+    window.applyTheme = function (theme) {
+        const isDark = (theme === 'dark');
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('pcts_theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggleBtn');
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+        if (icon) icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        if (text) text.innerText = isDark ? 'กลางวัน' : 'กลางคืน';
+        if (btn) {
+            btn.setAttribute('title', isDark ? 'เปลี่ยนเป็นธีมกลางวัน (Light Mode)' : 'เปลี่ยนเป็นธีมกลางคืน (Dark Mode)');
+            if (isDark) btn.classList.add('active'); else btn.classList.remove('active');
+        }
+        if (typeof window.updateChartsTheme === 'function') {
+            window.updateChartsTheme(theme);
+        }
+    };
+
+    window.updateChartsTheme = function (theme) {
+        const isDark = (theme === 'dark');
+        const textColor = isDark ? '#cbd5e1' : '#64748b';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        if (window.sChart && window.sChart.options && window.sChart.options.scales) {
+            if (window.sChart.options.scales.x) {
+                window.sChart.options.scales.x.ticks = window.sChart.options.scales.x.ticks || {};
+                window.sChart.options.scales.x.ticks.color = textColor;
+                window.sChart.options.scales.x.grid = window.sChart.options.scales.x.grid || {};
+                window.sChart.options.scales.x.grid.color = gridColor;
+            }
+            if (window.sChart.options.scales.y) {
+                window.sChart.options.scales.y.ticks = window.sChart.options.scales.y.ticks || {};
+                window.sChart.options.scales.y.ticks.color = textColor;
+                window.sChart.options.scales.y.grid = window.sChart.options.scales.y.grid || {};
+                window.sChart.options.scales.y.grid.color = gridColor;
+            }
+            window.sChart.update();
+        }
+    };
+
+    // Auto apply saved theme on startup
+    (function () {
+        const savedTheme = localStorage.getItem('pcts_theme') || 'light';
+        window.applyTheme(savedTheme);
+    })();
+
     // --- Project View Mode & Search State ---
     window.CURRENT_THAI_YEAR = new Date().getFullYear() + 543;
     window.currentYearFilter = localStorage.getItem('pcts_year_filter') || window.CURRENT_THAI_YEAR.toString();
@@ -1894,7 +1979,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-
+    if (typeof window.updateChartsTheme === 'function') {
+        const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        window.updateChartsTheme(curTheme);
+    }
 
     // --- FullCalendar Initialization ---
     const calendarEl = document.getElementById('calendar');
