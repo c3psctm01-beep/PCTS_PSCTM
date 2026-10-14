@@ -82,6 +82,10 @@
                             <i class="fa-solid fa-map-location-dot"></i>
                             <span>แผนที่สถานี GIS</span>
                         </li>
+                        <li data-target="manual-view" onclick="toggleSidebar(false);">
+                            <i class="fa-solid fa-book-open"></i>
+                            <span>คู่มือการใช้งาน</span>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -830,6 +834,299 @@
                             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>
                                 ส่งรายงาน</button>
                         </form>
+                    </div>
+                </section>
+
+                <!-- User Manual View (คู่มือการใช้งานระบบ) -->
+                <section id="manual-view" class="view-section">
+                    <!-- Manual Hero Header -->
+                    <div class="manual-hero card">
+                        <div class="manual-hero-content">
+                            <div class="manual-hero-badge">
+                                <i class="fa-solid fa-bolt"></i> การไฟฟ้าส่วนภูมิภาค &bull; PCTS Ver 3.1
+                            </div>
+                            <h1 class="manual-hero-title">
+                                <i class="fa-solid fa-book-open" style="color: var(--pea-gold);"></i> คู่มือการใช้งานระบบติดตามงานก่อสร้างสถานีไฟฟ้า
+                            </h1>
+                            <p class="manual-hero-subtitle">
+                                PEA Construction Tracking System (PCTS) &mdash; แนะนำฟังก์ชันการทำงาน ขั้นตอนการปฏิบัติงาน และแนวทางการบันทึกข้อมูลครบวงจร
+                            </p>
+                        </div>
+                        <div class="manual-hero-actions">
+                            <button type="button" class="btn btn-manual-print" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> พิมพ์คู่มือ (PDF)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category Tab Navigation -->
+                    <div class="manual-nav-bar card mt-3">
+                        <button class="manual-nav-btn active" onclick="openManualTab(event, 'mTab1')">
+                            <i class="fa-solid fa-shield-halved"></i> <span>1. ภาพรวมและสิทธิ์</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab2')">
+                            <i class="fa-solid fa-map-location-dot"></i> <span>2. แดชบอร์ด & แผนที่ GIS</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab3')">
+                            <i class="fa-solid fa-chart-line"></i> <span>3. การติดตามผลงาน (WBS/S-Curve)</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab4')">
+                            <i class="fa-solid fa-camera"></i> <span>4. รายงาน & ลายเซ็นดิจิทัล</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab5')">
+                            <i class="fa-solid fa-pen-to-square"></i> <span>5. การจัดการระบบ (Admin)</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab6')">
+                            <i class="fa-solid fa-mobile-screen"></i> <span>6. ติดตั้งแอปมือถือ (PWA)</span>
+                        </button>
+                    </div>
+
+                    <!-- Chapter 1: Overview & Roles -->
+                    <div id="mTab1" class="manual-tabcontent card mt-3" style="display: block;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-shield-halved" style="color: var(--pea-purple);"></i> บทที่ 1: ภาพรวมระบบและระดับสิทธิ์การเข้าใช้งาน</h2>
+                            <p>แนะนำสถาปัตยกรรมระบบ PCTS Ver 3.1 และการแบ่งระดับสิทธิ์ความปลอดภัย</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-solid fa-circle-info" style="color: #2980b9;"></i> วัตถุประสงค์ของระบบ</h3>
+                            <p>
+                                ระบบ <strong>PCTS (PEA Construction Tracking System)</strong> พัฒนาขึ้นเพื่อเป็นเครื่องมือกลางสำหรับวิศวกร, ผู้ควบคุมงาน, คณะกรรมการตรวจรับ และผู้บริหาร ในการติดตามความก้าวหน้าโครงการก่อสร้างสถานีไฟฟ้าแบบเรียลไทม์ พร้อมระบบตรวจสอบภาพถ่ายพิกัด GPS และการลงนามตรวจรับอิเล็กทรอนิกส์
+                            </p>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-users" style="color: var(--pea-purple);"></i> ตารางเปรียบเทียบสิทธิ์การใช้งาน (User Roles)</h3>
+                            <div class="table-responsive">
+                                <table class="pea-table manual-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ระดับสิทธิ์ (Role)</th>
+                                            <th>กลุ่มผู้ใช้งาน</th>
+                                            <th>ความสามารถในระบบ</th>
+                                            <th>การเข้าถึง</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="user-role-badge role-badge-viewer"><i class="fa-solid fa-user"></i> Viewer</span></td>
+                                            <td>บุคคลทั่วไป, ผู้บริหาร, ช่างสำรวจ</td>
+                                            <td>ดูภาพรวมโครงการ, ดูกราฟ S-Curve, Gantt Chart, แผนที่สถานี GIS, ดาวน์โหลดรายงาน PDF</td>
+                                            <td>ไม่ต้องเข้าสู่ระบบ (เป็นสิทธิ์เริ่มต้น)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="user-role-badge role-badge-editor"><i class="fa-solid fa-user-gear"></i> Editor</span></td>
+                                            <td>ผู้ควบคุมงาน กฟภ., ผู้ช่วยผู้ควบคุมงาน</td>
+                                            <td>ทำได้เหมือน Viewer + บันทึกผลงานประจำวัน, อัปโหลดภาพหน้างานพร้อมลายน้ำ GPS, ลงนามดิจิทัล 3 ฝ่าย</td>
+                                            <td>เข้าสู่ระบบด้วยอีเมลที่ได้รับการอนุมัติ</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="user-role-badge role-badge-admin"><i class="fa-solid fa-shield-halved"></i> Admin</span></td>
+                                            <td>ผู้ดูแลระบบ, หัวหน้าแผนกก่อสร้าง</td>
+                                            <td>ทำได้ทุกอย่าง + เพิ่ม/แก้ไข/ลบโครงการ, แก้ไขน้ำหนัก WBS, นำเข้าข้อมูล Excel (เบิกจ่าย 092), อนุมัติสิทธิ์ผู้ใช้</td>
+                                            <td>เข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="manual-tip-box mt-3">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <div>
+                                <strong>ขั้นตอนเมื่อลงทะเบียนใหม่:</strong>
+                                เมื่อผู้ใช้งานลงทะเบียนบัญชีใหม่ผ่านฟอร์ม "ลงทะเบียน" สถานะเริ่มต้นจะเป็น <code>Pending (รออนุมัติ)</code> ผู้ใช้งานจะต้องแจ้ง Admin ให้กดอนุมัติสิทธิ์เป็น Editor หรือ Admin ผ่านหน้า "จัดการสิทธิ์" ก่อนจึงจะสามารถแก้ไขข้อมูลได้
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 2: Dashboard & GIS Map -->
+                    <div id="mTab2" class="manual-tabcontent card mt-3" style="display: none;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-map-location-dot" style="color: var(--pea-purple);"></i> บทที่ 2: หน้าภาพรวมและแผนที่พิกัดสถานี GIS</h2>
+                            <p>การติดตามสถานะโครงการ การสลับมุมมอง และการใช้แผนที่ระบุพิกัดสถานีไฟฟ้า</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-solid fa-grip" style="color: var(--pea-purple);"></i> การสลับมุมมองแดชบอร์ด (View Mode Switcher)</h3>
+                            <p>ในแถบเครื่องมือด้านบน สามารถเลือกรูปแบบการแสดงผลได้ 3 มุมมอง:</p>
+                            <div class="manual-steps-grid">
+                                <div class="manual-step-item">
+                                    <div class="manual-step-num"><i class="fa-solid fa-grip"></i></div>
+                                    <h4>มุมมองการ์ด (Card View)</h4>
+                                    <p>แสดงการ์ดโครงการพร้อมหลอดความก้าวหน้า เปรียบเทียบแผน vs จริง และยอดเบิกจ่ายสะสม</p>
+                                </div>
+                                <div class="manual-step-item">
+                                    <div class="manual-step-num"><i class="fa-solid fa-list"></i></div>
+                                    <h4>มุมมองตาราง (Table View)</h4>
+                                    <p>แสดงรายการในรูปแบบตาราง เปรียบเทียบผู้รับเหมา ผู้ควบคุมงาน และสถานะอย่างกระชับ</p>
+                                </div>
+                                <div class="manual-step-item">
+                                    <div class="manual-step-num"><i class="fa-solid fa-map-location-dot"></i></div>
+                                    <h4>แผนที่ GIS (GIS Map View)</h4>
+                                    <p>แสดงพิกัดที่ตั้งของสถานีไฟฟ้าทั้งหมดบนแผนที่ประเทศไทย พร้อมป้ายชื่อและสถานะ</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-location-dot" style="color: #e74c3c;"></i> การใช้งานแผนที่สถานี GIS</h3>
+                            <ul class="manual-bullet-list">
+                                <li><strong>ป้ายชื่อและเปอร์เซ็นต์ถาวร (Permanent Labels):</strong> หมุดทุกสถานีจะแสดงชื่อสถานีไฟฟ้า (เช่น <code>⚡ สฟ.สมุทรสาคร 18</code>) พร้อมตัวเลข % ผลงานจริงและแถบสีสถานะบนแผนที่ทันทีโดยไม่ต้องคลิก</li>
+                                <li><strong>แถบเลือกสถานีด่วน (Substation Chips):</strong> ด้านบนแผนที่คลิกชื่อสถานีเพื่อบิน (Fly-to) พุ่งเข้าหาพิกัดสถานีนั้นพร้อมซูมเข้าและเปิดหน้าต่างสรุปข้อมูล</li>
+                                <li><strong>ปุ่มนำทาง GPS:</strong> ในหน้าต่างป๊อปอัปของสถานี มีปุ่ม <code>นำทาง GPS</code> สีเขียวสำหรับเปิดแอปพลิเคชัน Google Maps เพื่อนำทางไปยังสถานีไฟฟ้าได้ทันที</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 3: Project Tracking & Details -->
+                    <div id="mTab3" class="manual-tabcontent card mt-3" style="display: none;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-chart-line" style="color: var(--pea-purple);"></i> บทที่ 3: การติดตามผลงานโครงการ (WBS, S-Curve, Gantt)</h2>
+                            <p>การวิเคราะห์ความก้าวหน้าโครงการก่อสร้างสถานีไฟฟ้าอย่างละเอียด</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-solid fa-folder-open" style="color: var(--pea-purple);"></i> แท็บข้อมูลในหน้ารายละเอียดโครงการ</h3>
+                            <p>เมื่อคลิกปุ่ม <strong>"ดูรายละเอียด"</strong> บนการ์ดหรือตารางโครงการ จะเข้าสู่หน้าจอติดตามที่มีแท็บสำคัญ 7 ด้าน:</p>
+                            
+                            <div class="manual-steps-list">
+                                <div class="manual-list-item">
+                                    <strong>1. แผนงาน/ผลงานก่อสร้าง (WBS):</strong> ตารางแจกแจงกิจกรรมย่อย วันที่เริ่ม-สิ้นสุด น้ำหนักงาน (%) และผลงานจริงที่ทำได้
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>2. Gantt Chart:</strong> แผนภูมิแท่งแสดงไทม์ไลน์ของแต่ละกิจกรรม สามารถสลับมุมมอง วัน / สัปดาห์ / เดือน ได้
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>3. S-Curve:</strong> กราฟเส้นเปรียบเทียบผลงานสะสมจริงกับเส้นแผนงาน พร้อมคำนวณค่าผลต่าง (Variance) และริบบิ้นประเมินสถานะ (ปกติ / ช้ากว่าแผน / ล่าช้าวิกฤต)
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>4. รูปภาพความก้าวหน้า (Gallery):</strong> คลังภาพถ่ายหน้างานจัดหมวดหมู่ตามกิจกรรม WBS สามารถคลิกเพื่อดูภาพขยาย
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>5. ปฏิทินปฏิบัติงาน (Calendar):</strong> ตารางปฏิทินแสดงรอบระยะเวลาของกิจกรรมในแต่ละวัน
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>6. เบิกจ่ายงบประมาณ:</strong> ข้อมูลเบิกจ่ายสะสม เปรียบเทียบแผนเบิกจ่ายกับผลเบิกจ่ายจริงตามรหัส 092
+                                </div>
+                                <div class="manual-list-item">
+                                    <strong>7. ตำแหน่งสถานี:</strong> แผนที่พิกัดเฉพาะสถานี แสดงรัศมีสถานี 300 เมตร พร้อมปุ่มคัดลอกพิกัด GPS และปุ่มเปิดนำทางใน Google Maps
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 4: Daily Progress & Signatures -->
+                    <div id="mTab4" class="manual-tabcontent card mt-3" style="display: none;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-camera" style="color: var(--pea-purple);"></i> บทที่ 4: การรายงานผลงาน ภาพถ่าย และลายเซ็นดิจิทัล 3 ฝ่าย</h2>
+                            <p>ขั้นตอนการบันทึกผลงานประจำวัน การประทับลายน้ำ GPS และการลงนามรับรอง</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-solid fa-pen-nib" style="color: var(--pea-purple);"></i> 1. การบันทึกผลงานประจำวัน (สำหรับ Editor)</h3>
+                            <ol class="manual-ordered-list">
+                                <li>คลิกเมนู <strong>"รายงานความก้าวหน้า"</strong> บนแถบเมนูด้านซ้าย</li>
+                                <li>เลือก <strong>โครงการ</strong> และเลือก <strong>แผนงานย่อย (Task)</strong> ที่ต้องการอัปเดต</li>
+                                <li>ใส่วันที่รายงาน และระบุ <strong>ผลงานจริงสะสมเฉพาะงานนี้ (%)</strong> (เช่น 65.00%)</li>
+                                <li>กรอกรายละเอียดงานที่ดำเนินการ และปัญหาอุปสรรค (ถ้ามี)</li>
+                                <li>แนบรูปภาพหน้างาน (รองรับการถ่ายสดจากกล้องมือถือ)</li>
+                                <li>คลิกปุ่ม <strong>"ส่งรายงาน"</strong> ข้อมูลจะถูกบันทึกและคำนวณ S-Curve ใหม่อัตโนมัติทันที</li>
+                            </ol>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-stamp" style="color: #27ae60;"></i> 2. ระบบประทับลายน้ำ GPS บนภาพถ่าย (Anti-Tamper Watermark)</h3>
+                            <p>
+                                ระบบจะดึงพิกัด GPS ละติจูด-ลองจิจูดจากอุปกรณ์ วันที่ เวลา และสังกัด กฟภ. มาประทับลงบนมุมล่างของภาพถ่ายโดยอัตโนมัติ เพื่อยืนยันว่าเป็นภาพถ่ายจริงที่บันทึกจากสถานที่ก่อสร้างสถานีไฟฟ้า
+                            </p>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-file-signature" style="color: #e67e22;"></i> 3. การออกรายงาน PDF และลงนามดิจิทัล 3 ฝ่าย</h3>
+                            <p>
+                                ในหน้าบันทึกรายงานผล หรือในหน้ารายละเอียดโครงการ คลิกปุ่ม <strong>"รายงานผลการปฏิบัติงาน (PDF)"</strong>:
+                            </p>
+                            <ul class="manual-bullet-list">
+                                <li>สามารถเลือกช่วงวันที่ต้องการออกรายงาน และเลือกภาพถ่ายที่ต้องการแนบ</li>
+                                <li><strong>กล่องลายเซ็นดิจิทัล 3 ฝ่าย:</strong> สามารถใช้นิ้วมือหรือปากกา Stylus เซ็นชื่อสดบนหน้าจอได้ทันที ได้แก่:
+                                    <ol>
+                                        <li>ผู้ควบคุมงาน กฟภ.</li>
+                                        <li>ผู้รับจ้าง / หัวหน้าชุดงาน</li>
+                                        <li>ประธานกรรมการตรวจรับพัสดุ</li>
+                                    </ol>
+                                </li>
+                                <li>คลิก <strong>"พิมพ์รายงาน / ดาวน์โหลด PDF"</strong> เพื่อส่งออกเอกสารรายงานตามมาตรฐานราชการทันที</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 5: Admin Management -->
+                    <div id="mTab5" class="manual-tabcontent card mt-3" style="display: none;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-pen-to-square" style="color: var(--pea-purple);"></i> บทที่ 5: การบริหารจัดการโครงการสำหรับ Admin</h2>
+                            <p>คู่มือสำหรับผู้ดูแลระบบในการตั้งค่าโครงการ แผนงาน WBS และการจัดการสิทธิ์</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-solid fa-plus-circle" style="color: var(--pea-purple);"></i> การสร้างและแก้ไขโครงการ</h3>
+                            <p>ในเมนู <strong>"ตั้งค่าแผนงาน" (Admin)</strong> &rarr; แท็บ <strong>"จัดการโครงการ"</strong>:</p>
+                            <ul class="manual-bullet-list">
+                                <li>คลิก <strong>"เพิ่มโครงการใหม่"</strong> เพื่อกรอกชื่อสถานีไฟฟ้า, วงเงินงบประมาณ, ระยะเวลาสัญญา</li>
+                                <li><strong>ผู้ควบคุมงาน และ กรรมการตรวจรับ 3 ท่าน:</strong> สามารถระบุชื่อกรรมการตรวจรับพัสดุครบทั้ง 3 ท่าน เพื่อนำไปใช้ลงนามในรายงาน PDF</li>
+                                <li><strong>พิกัดละติจูด-ลองจิจูด:</strong> สามารถกรอกพิกัด GPS ของสถานีไฟฟ้า หรือกดปุ่ม <code>ดึงพิกัดปัจจุบัน</code> จากอุปกรณ์</li>
+                            </ul>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-scale-balanced" style="color: #8e44ad;"></i> การกำหนดกิจกรรมย่อย (WBS) และน้ำหนักงาน</h3>
+                            <p>
+                                ในแท็บ <strong>"เพิ่ม/แก้ไขแผนงานย่อย"</strong> สามารถเพิ่มรายการงาน กำหนดวันเริ่ม-สิ้นสุด และกำหนด <strong>น้ำหนักงาน (Weight %)</strong> โดยผลรวมของน้ำหนักทุกกิจกรรมในโครงการจะต้องเท่ากับ <strong>100%</strong> พอดี เพื่อให้การคำนวณกราฟ S-Curve ถูกต้องแม่นยำ
+                            </p>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-solid fa-user-check" style="color: #27ae60;"></i> การอนุมัติสิทธิ์ผู้ใช้งาน (Approve Roles)</h3>
+                            <p>
+                                ในแท็บ <strong>"จัดการสิทธิ์"</strong> จะแสดงรายการผู้ใช้ที่เพิ่งลงทะเบียนและมีสถานะ <code>Pending</code> Admin สามารถกดปุ่ม <strong>"อนุมัติ Editor"</strong> หรือ <strong>"อนุมัติ Admin"</strong> เพื่อเปิดสิทธิ์การบันทึกข้อมูลให้กับผู้ร่วมงานได้ทันที
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 6: PWA Mobile App -->
+                    <div id="mTab6" class="manual-tabcontent card mt-3" style="display: none;">
+                        <div class="manual-chapter-header">
+                            <h2><i class="fa-solid fa-mobile-screen" style="color: var(--pea-purple);"></i> บทที่ 6: การติดตั้งและใช้งานเป็นแอปมือถือ (PWA)</h2>
+                            <p>ขั้นตอนการติดตั้งระบบลงบนสมาร์ตโฟน แท็บเล็ต หรือคอมพิวเตอร์โดยไม่ต้องโหลดผ่าน App Store</p>
+                        </div>
+
+                        <div class="manual-section-box">
+                            <h3><i class="fa-brands fa-android" style="color: #27ae60;"></i> 1. การติดตั้งบน Android (Google Chrome)</h3>
+                            <ol class="manual-ordered-list">
+                                <li>เปิดเว็บไซต์ระบบ PCTS ด้วยเบราว์เซอร์ Google Chrome</li>
+                                <li>ที่แถบเมนูด้านซ้าย ให้คลิกปุ่ม <strong>"ติดตั้งแอปมือถือ"</strong> หรือกดปุ่มเมนู 3 จุดของ Chrome</li>
+                                <li>เลือก <strong>"ติดตั้งแอป" (Install App)</strong> หรือ <strong>"เพิ่มไปยังหน้าจอหลัก"</strong></li>
+                                <li>ไอคอน PCTS จะปรากฏบนหน้าจอโฮมของมือถือ สามารถแตะเปิดใช้งานแบบเต็มหน้าจอ (Standalone) ได้ทันที</li>
+                            </ol>
+                        </div>
+
+                        <div class="manual-section-box mt-3">
+                            <h3><i class="fa-brands fa-apple" style="color: #334155;"></i> 2. การติดตั้งบน iPhone / iPad (Safari)</h3>
+                            <ol class="manual-ordered-list">
+                                <li>เปิดเว็บไซต์ระบบ PCTS ด้วยเบราว์เซอร์ Safari</li>
+                                <li>แตะปุ่ม <strong>แชร์ (Share)</strong> ที่แถบด้านล่างของจอ (ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น)</li>
+                                <li>เลื่อนลงมาแล้วแตะ <strong>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen)</strong></li>
+                                <li>แตะ "เพิ่ม" (Add) ที่มุมขวาบน ไอคอน PCTS จะปรากฏบนหน้าจอใช้งานเหมือนแอปจริง</li>
+                            </ol>
+                        </div>
+
+                        <div class="manual-tip-box mt-3">
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                            <div>
+                                <strong>ระบบซิงค์ข้อมูลเรียลไทม์ (Supabase Realtime Sync):</strong>
+                                เมื่อมีการอัปเดตผลงาน ถ่ายภาพ หรือแก้ไขแผนงานจากอุปกรณ์ใดๆ ทุกเครื่องที่เปิดใช้งานอยู่จะได้รับข้อความแจ้งเตือน (Toast Notification) และรีเฟรชข้อมูลให้ตรงกันโดยอัตโนมัติแบบเรียลไทม์
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>

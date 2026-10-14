@@ -3242,4 +3242,281 @@ html, body {
     }
 }
 
+/* ==============================================================================
+   USER MANUAL VIEW (คู่มือการใช้งานระบบ PCTS)
+   ============================================================================== */
+.manual-hero {
+    background: linear-gradient(135deg, #742C81 0%, #4a154b 100%) !important;
+    color: white !important;
+    border-radius: 14px !important;
+    padding: 24px 28px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 4px 16px rgba(116, 44, 129, 0.25) !important;
+    border: none !important;
+}
+
+.manual-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    color: #fef08a;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
+
+.manual-hero-title {
+    font-family: 'Prompt', sans-serif !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: white !important;
+    margin: 4px 0 6px 0 !important;
+    line-height: 1.25 !important;
+}
+
+.manual-hero-subtitle {
+    font-size: 13px !important;
+    color: rgba(255, 255, 255, 0.88) !important;
+    margin: 0 !important;
+    max-width: 740px;
+    line-height: 1.5 !important;
+}
+
+.btn-manual-print {
+    background: white !important;
+    color: var(--pea-purple) !important;
+    font-weight: 700 !important;
+    font-size: 12.5px !important;
+    padding: 10px 18px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.btn-manual-print:hover {
+    background: #f8fafc !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Category Navigation Bar */
+.manual-nav-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+}
+
+.manual-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.manual-nav-btn:hover {
+    border-color: var(--pea-purple);
+    background: #faf5ff;
+    color: var(--pea-purple);
+}
+
+.manual-nav-btn.active {
+    background: var(--pea-purple) !important;
+    color: white !important;
+    border-color: var(--pea-purple) !important;
+    box-shadow: 0 2px 8px rgba(116, 44, 129, 0.3) !important;
+}
+
+/* Chapter & Content Boxes */
+.manual-tabcontent {
+    padding: 24px 28px !important;
+    border-radius: 14px !important;
+}
+
+.manual-chapter-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+}
+
+.manual-chapter-header h2 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 0 4px 0 !important;
+    font-family: 'Prompt', sans-serif !important;
+}
+
+.manual-chapter-header p {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0;
+}
+
+.manual-section-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+}
+
+.manual-section-box h3 {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 0 10px 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Prompt', sans-serif !important;
+}
+
+.manual-section-box p {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.manual-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.manual-step-item {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.manual-step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(116, 44, 129, 0.1);
+    color: var(--pea-purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.manual-step-item h4 {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 0 6px 0 !important;
+}
+
+.manual-step-item p {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.manual-ordered-list, .manual-bullet-list {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.8;
+}
+
+.manual-steps-list .manual-list-item {
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.manual-tip-box {
+    background: rgba(116, 44, 129, 0.05);
+    border-left: 4px solid var(--pea-purple);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    font-size: 12.5px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+.manual-tip-box i {
+    color: var(--pea-purple);
+    font-size: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.manual-table th {
+    background: #f1f5f9 !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+}
+
+.manual-table td {
+    font-size: 12.5px !important;
+    line-height: 1.5 !important;
+}
+
+/* Print Styles for User Manual */
+@media print {
+    .app-sidebar, .sidebar-backdrop, .top-header, .manual-hero-actions, .manual-nav-bar {
+        display: none !important;
+    }
+    .manual-tabcontent {
+        display: block !important;
+        page-break-after: always;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .manual-hero {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    .manual-hero-title {
+        color: #742C81 !important;
+    }
+    .manual-hero-subtitle {
+        color: #333 !important;
+    }
+}
+
 

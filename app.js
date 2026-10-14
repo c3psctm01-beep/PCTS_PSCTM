@@ -3561,6 +3561,18 @@ window.openProjectTab = function (evt, tabName) {
     }
 };
 
+// --- User Manual Tabs ---
+window.openManualTab = function (evt, tabId) {
+    const tabs = document.querySelectorAll('.manual-tabcontent');
+    tabs.forEach(t => t.style.display = 'none');
+    const btns = document.querySelectorAll('.manual-nav-btn');
+    btns.forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(tabId);
+    if (target) target.style.display = 'block';
+    if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+};
+
 // --- Admin Tabs ---
 window.openAdminTab = function (evt, tabName) {
     let i, tabcontent, tablinks;
