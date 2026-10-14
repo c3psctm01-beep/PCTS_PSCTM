@@ -1,0 +1,24 @@
+{
+  "name": "PEA Construction Tracking System",
+  "short_name": "PCTS PEA",
+  "description": "ระบบติดตามและบริหารโครงการก่อสร้างสถานีไฟฟ้า การไฟฟ้าส่วนภูมิภาค",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F4F6F9",
+  "theme_color": "#742C81",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "mascot.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "mascot.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

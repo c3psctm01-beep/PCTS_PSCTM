@@ -21,8 +21,15 @@
     <!-- Toastify CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
+    <!-- Leaflet GIS CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- PWA Manifest & Theme -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#742C81">
+
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
@@ -76,6 +83,9 @@
                     </div>
 
                     <div class="user-profile">
+                        <button id="btnPwaInstall" class="btn" style="display: none; padding: 6px 12px; font-size: 11.5px; align-items: center; gap: 6px; background: rgba(116, 44, 129, 0.1); color: var(--pea-purple); border: 1px solid rgba(116, 44, 129, 0.3); border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="installPwaApp()">
+                            <i class="fa-solid fa-mobile-screen"></i> ติดตั้งแอป
+                        </button>
                         <span id="currentUserRole" class="user-role-badge">Viewer (บุคคลทั่วไป)</span>
                         <div id="authSection" class="auth-btn-group">
                             <button class="btn btn-primary btn-auth-nav" id="btnLogin" onclick="document.getElementById('loginModal').style.display='flex'">
@@ -157,13 +167,16 @@
                             </div>
                         </div>
 
-                        <!-- View Switcher (Cards vs Table) -->
+                        <!-- View Switcher (Cards vs Table vs GIS Map) -->
                         <div class="view-mode-switcher">
                             <button id="btnViewCards" class="view-mode-btn active" onclick="switchProjectView('cards')" title="มุมมองการ์ด (Card View)">
                                 <i class="fa-solid fa-grip"></i> การ์ด
                             </button>
                             <button id="btnViewTable" class="view-mode-btn" onclick="switchProjectView('table')" title="มุมมองตาราง (Table View)">
                                 <i class="fa-solid fa-list"></i> ตาราง
+                            </button>
+                            <button id="btnViewGis" class="view-mode-btn" onclick="switchProjectView('gis')" title="มุมมองแผนที่ (GIS Map View)">
+                                <i class="fa-solid fa-map-location-dot"></i> แผนที่ GIS
                             </button>
                         </div>
                     </div>
@@ -201,6 +214,23 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- Project GIS Map View (Alternative) -->
+                    <div id="projectGisContainer" style="display: none; flex-direction: column; flex: 1; min-height: 540px; background: white; border-radius: var(--border-radius); border: 1px solid var(--border-color); overflow: hidden; margin-top: 12px; box-shadow: var(--shadow-sm);">
+                        <div style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-location-dot" style="color: var(--pea-purple); font-size: 16px;"></i>
+                                <strong style="color: #1e293b; font-size: 13.5px;">แผนที่พิกัดสถานีไฟฟ้าและสถานะโครงการ (GIS Substation Map)</strong>
+                            </div>
+                            <div style="display: flex; gap: 14px; font-size: 11.5px; align-items: center; flex-wrap: wrap;">
+                                <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #27ae60; display: inline-block;"></span> แล้วเสร็จ/ตามแผน</span>
+                                <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #f39c12; display: inline-block;"></span> ช้ากว่าแผน</span>
+                                <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; display: inline-block;"></span> ล่าช้าวิกฤต (>10%)</span>
+                                <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #8e44ad; display: inline-block;"></span> ออกแบบ/จัดจ้าง</span>
+                            </div>
+                        </div>
+                        <div id="gisMapContainer" style="width: 100%; height: 560px; z-index: 1;"></div>
                     </div>
                 </section>
 
@@ -700,6 +730,12 @@
                                     <input type="file" multiple accept="image/*" class="file-input">
                                 </div>
                                 <div class="image-preview" id="imagePreviewArea"></div>
+                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; background: rgba(116, 44, 129, 0.05); padding: 8px 12px; border-radius: 6px; border: 1px dashed rgba(116, 44, 129, 0.2);">
+                                    <input type="checkbox" id="enableGpsWatermark" checked style="accent-color: var(--pea-purple); width: 16px; height: 16px; cursor: pointer;">
+                                    <label for="enableGpsWatermark" style="cursor: pointer; font-size: 12px; color: #334155; margin-bottom: 0; font-weight: 500;">
+                                        <i class="fa-solid fa-stamp" style="color: var(--pea-purple);"></i> ประทับลายน้ำ กฟภ. วันที่ เวลา และพิกัด GPS บนภาพถ่ายอัตโนมัติ
+                                    </label>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>
                                 ส่งรายงาน</button>
@@ -765,6 +801,21 @@
                 <div class="form-group">
                     <label>ระยะเวลาตามสัญญาจ้าง</label>
                     <input type="text" id="projectDurationInput" placeholder="เช่น 300 วัน หรือ 1 ม.ค. - 31 ธ.ค. 69" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-location-dot" style="color: #e74c3c;"></i> พิกัดละติจูด (Latitude)</label>
+                        <input type="number" step="0.000001" id="projectLatInput" placeholder="เช่น 13.547530">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-location-dot" style="color: #e74c3c;"></i> พิกัดลองจิจูด (Longitude)</label>
+                        <input type="number" step="0.000001" id="projectLngInput" placeholder="เช่น 100.274410">
+                    </div>
+                </div>
+                <div style="margin-top: -6px; margin-bottom: 12px; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn-subtle" onclick="getCurrentLocationForProject()" style="font-size: 11.5px; padding: 4px 10px; color: var(--pea-purple); background: rgba(116, 44, 129, 0.08); border-radius: 6px;">
+                        <i class="fa-solid fa-crosshairs"></i> ดึงพิกัดปัจจุบันจาก GPS หน้างาน
+                    </button>
                 </div>
                 <div class="form-group">
                     <label>สถานะ</label>
@@ -1169,8 +1220,64 @@
             </div>
 
             <!-- Preview List Container -->
-            <div id="workReportPreviewList" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #ffffff; margin-bottom: 20px;">
+            <div id="workReportPreviewList" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; background: #ffffff; margin-bottom: 16px;">
                 <!-- Items rendered via JS -->
+            </div>
+
+            <!-- Digital Signatures Section (Optional Interactive Pads) -->
+            <div id="workReportDigitalSignaturesSection" style="margin-bottom: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h4 style="margin: 0; font-size: 13px; color: var(--pea-purple); font-weight: 600;">
+                            <i class="fa-solid fa-file-signature"></i> ลงนามอิเล็กทรอนิกส์ 3 ฝ่าย (Digital Signatures - ไม่บังคับ)
+                        </h4>
+                        <span style="font-size: 11px; color: #64748b;">ใช้นิ้วมือหรือปากกาเซ็นสดบนหน้าจอ</span>
+                    </div>
+                    <button type="button" class="btn-subtle" onclick="clearAllPctsSignatures()" style="font-size: 11px; padding: 2px 8px; color: #e74c3c; cursor: pointer;">
+                        <i class="fa-solid fa-rotate-left"></i> ล้างลายเซ็นทั้งหมด
+                    </button>
+                </div>
+
+                <div class="signature-pads-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+                    <!-- 1. ผู้ควบคุมงาน -->
+                    <div class="signature-pad-box" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; text-align: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 11.5px; font-weight: 600; color: #1e293b;">1. ผู้ควบคุมงาน กฟภ.</span>
+                            <span id="sigCanvasSupervisor-status" style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: #64748b;"><i class="fa-solid fa-pen"></i> ยังไม่ได้ลงนาม</span>
+                        </div>
+                        <canvas id="sigCanvasSupervisor" class="signature-canvas" style="width: 100%; height: 85px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; touch-action: none; cursor: crosshair;"></canvas>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <small id="sigSupervisorNameText" style="color: #64748b; font-size: 10.5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 160px;">-</small>
+                            <button type="button" class="btn-subtle" onclick="clearPctsSignature('supervisor')" style="font-size: 10px; padding: 2px 6px; cursor: pointer;">ล้าง</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. ผู้รับจ้าง -->
+                    <div class="signature-pad-box" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; text-align: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 11.5px; font-weight: 600; color: #1e293b;">2. ผู้รับจ้าง / หัวหน้าชุดงาน</span>
+                            <span id="sigCanvasContractor-status" style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: #64748b;"><i class="fa-solid fa-pen"></i> ยังไม่ได้ลงนาม</span>
+                        </div>
+                        <canvas id="sigCanvasContractor" class="signature-canvas" style="width: 100%; height: 85px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; touch-action: none; cursor: crosshair;"></canvas>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <small id="sigContractorNameText" style="color: #64748b; font-size: 10.5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 160px;">-</small>
+                            <button type="button" class="btn-subtle" onclick="clearPctsSignature('contractor')" style="font-size: 10px; padding: 2px 6px; cursor: pointer;">ล้าง</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. ประธานกรรมการตรวจรับ -->
+                    <div class="signature-pad-box" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; text-align: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 11.5px; font-weight: 600; color: #1e293b;">3. ประธานกรรมการตรวจรับ</span>
+                            <span id="sigCanvasCommittee-status" style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: #64748b;"><i class="fa-solid fa-pen"></i> ยังไม่ได้ลงนาม</span>
+                        </div>
+                        <canvas id="sigCanvasCommittee" class="signature-canvas" style="width: 100%; height: 85px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafafa; touch-action: none; cursor: crosshair;"></canvas>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <small id="sigCommitteeNameText" style="color: #64748b; font-size: 10.5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 160px;">-</small>
+                            <button type="button" class="btn-subtle" onclick="clearPctsSignature('committee')" style="font-size: 10px; padding: 2px 6px; cursor: pointer;">ล้าง</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Modal Actions Footer -->
@@ -1302,9 +1409,21 @@
     <!-- html2pdf for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Toastify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- Leaflet GIS JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=13"></script>
+
+    <!-- PCTS Modular Engines -->
+    <script src="watermark.js?v=1"></script>
+    <script src="signature-pad.js?v=1"></script>
+    <script src="gis-map.js?v=1"></script>
+    <script src="realtime-sync.js?v=1"></script>
+    <script src="pwa-setup.js?v=1"></script>
+
+    <!-- Main Application Core -->
+    <script src="app.js?v=14"></script>
 </body>
 
 </html>

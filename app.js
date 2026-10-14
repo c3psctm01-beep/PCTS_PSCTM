@@ -10,6 +10,8 @@ const defaultProjects = [
         committee1: "นายประสิทธิ์ วงศ์สุวรรณ",
         committee2: "นายวิชาญ มั่งคั่ง",
         committee3: "นางสาวศิริพร บุญรักษา",
+        latitude: 13.547530,
+        longitude: 100.274410,
         duration: "7 เดือน",
         status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
@@ -146,6 +148,8 @@ const defaultProjects = [
         committee1: "นายสมศักดิ์ ภักดี",
         committee2: "นายกิตติศักดิ์ เจริญพร",
         committee3: "นายนิกร สว่างวงศ์",
+        latitude: 14.022780,
+        longitude: 99.532810,
         duration: "7 เดือน",
         status: "อยู่ระหว่างก่อสร้าง",
         tasks: [
@@ -186,37 +190,39 @@ window.loadProjects = async function () {
 
         if (data && data.length > 0) {
             projects = data.map(dbProj => {
-                let pType = 'จ้างเหมา';
-                let pSupervisor = '';
-                let pCommittee = '';
-                let pCommittee1 = '';
-                let pCommittee2 = '';
-                let pCommittee3 = '';
+                let pType = dbProj.type || 'จ้างเหมา';
+                let pSupervisor = dbProj.supervisor || '';
+                let pCommittee = dbProj.committee || '';
+                let pCommittee1 = dbProj.committee1 || '';
+                let pCommittee2 = dbProj.committee2 || '';
+                let pCommittee3 = dbProj.committee3 || '';
+                let pLatitude = dbProj.latitude || null;
+                let pLongitude = dbProj.longitude || null;
                 let pDetails = dbProj.details || '';
 
                 if (pDetails.includes('[TYPE:')) {
                     const match = pDetails.match(/\[TYPE:(.*?)\]/);
-                    if (match) { pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { if (!dbProj.type) pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
                 if (pDetails.includes('[SUP:')) {
                     const match = pDetails.match(/\[SUP:(.*?)\]/);
-                    if (match) { pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { if (!dbProj.supervisor) pSupervisor = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
                 if (pDetails.includes('[COM1:')) {
                     const match1 = pDetails.match(/\[COM1:(.*?)\]/);
-                    if (match1) { pCommittee1 = match1[1]; pDetails = pDetails.replace(match1[0], ''); }
+                    if (match1) { if (!dbProj.committee1) pCommittee1 = match1[1]; pDetails = pDetails.replace(match1[0], ''); }
                 }
                 if (pDetails.includes('[COM2:')) {
                     const match2 = pDetails.match(/\[COM2:(.*?)\]/);
-                    if (match2) { pCommittee2 = match2[1]; pDetails = pDetails.replace(match2[0], ''); }
+                    if (match2) { if (!dbProj.committee2) pCommittee2 = match2[1]; pDetails = pDetails.replace(match2[0], ''); }
                 }
                 if (pDetails.includes('[COM3:')) {
                     const match3 = pDetails.match(/\[COM3:(.*?)\]/);
-                    if (match3) { pCommittee3 = match3[1]; pDetails = pDetails.replace(match3[0], ''); }
+                    if (match3) { if (!dbProj.committee3) pCommittee3 = match3[1]; pDetails = pDetails.replace(match3[0], ''); }
                 }
                 if (pDetails.includes('[COM:')) {
                     const match = pDetails.match(/\[COM:(.*?)\]/);
-                    if (match) { pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
+                    if (match) { if (!dbProj.committee) pCommittee = match[1]; pDetails = pDetails.replace(match[0], ''); }
                 }
 
                 // If committee1/2/3 not found separately, split from pCommittee
@@ -234,6 +240,8 @@ window.loadProjects = async function () {
                 if (!pCommittee && (pCommittee1 || pCommittee2 || pCommittee3)) {
                     pCommittee = [pCommittee1, pCommittee2, pCommittee3].filter(Boolean).join(', ');
                 }
+                if (!pLatitude && defProj?.latitude) pLatitude = defProj.latitude;
+                if (!pLongitude && defProj?.longitude) pLongitude = defProj.longitude;
 
                 return {
                     id: dbProj.id,
@@ -249,6 +257,8 @@ window.loadProjects = async function () {
                     committee1: pCommittee1,
                     committee2: pCommittee2,
                     committee3: pCommittee3,
+                    latitude: pLatitude,
+                    longitude: pLongitude,
                     details: pDetails,
                     type: pType,
                     tasks: dbProj.tasks || [],
@@ -341,10 +351,14 @@ window.loadPendingUsers = async function () {
 };
 
 window.approveUser = async function (userId) {
-    if (!confirm('ยืนยันการอนุมัติสิทธิ์เป็น Editor ให้ผู้ใชেন্ডนี้?')) return;
+    if (!confirm('ยืนยันการอนุมัติสิทธิ์เป็น Editor ให้ผู้ใช้นี้?')) return;
     try {
-        const { error } = await db.from('user_roles').update({ role: 'editor' }).eq('id', userId);
-        if (error) throw error;
+        let { error } = await db.rpc('approve_user_role', { target_user_id: userId, new_role: 'editor' });
+        if (error) {
+            // Fallback to direct table update if RPC function is not created yet
+            const direct = await db.from('user_roles').update({ role: 'editor' }).eq('id', userId);
+            if (direct.error) throw direct.error;
+        }
         alert('อนุมัติสิทธิ์เรียบร้อยแล้ว');
         window.loadPendingUsers();
     } catch (err) {
@@ -374,6 +388,14 @@ window.saveProjects = async function (projectId = null) {
         const dbProjects = targetProjects.map(p => ({
             id: p.id,
             name: p.name,
+            type: p.type || 'จ้างเหมา',
+            supervisor: p.supervisor || '',
+            committee: p.committee || '',
+            committee1: p.committee1 || '',
+            committee2: p.committee2 || '',
+            committee3: p.committee3 || '',
+            latitude: p.latitude || null,
+            longitude: p.longitude || null,
             status: p.status,
             budget: p.budget || '',
             duration: p.duration || '',
@@ -388,11 +410,29 @@ window.saveProjects = async function (projectId = null) {
 
         let err = null;
         if (projectId && dbProjects.length > 0) {
-            const { error } = await db.from('projects').update(dbProjects[0]).eq('id', projectId);
-            err = error;
+            let res = await db.from('projects').update(dbProjects[0]).eq('id', projectId);
+            if (res.error && res.error.message && res.error.message.includes('column')) {
+                // If columns not added in DB yet, strip new fields and save with legacy schema
+                const legacy = { ...dbProjects[0] };
+                delete legacy.type; delete legacy.supervisor; delete legacy.committee;
+                delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
+                delete legacy.latitude; delete legacy.longitude;
+                res = await db.from('projects').update(legacy).eq('id', projectId);
+            }
+            err = res.error;
         } else {
-            const { error } = await db.from('projects').upsert(dbProjects);
-            err = error;
+            let res = await db.from('projects').upsert(dbProjects);
+            if (res.error && res.error.message && res.error.message.includes('column')) {
+                const legacyProjects = dbProjects.map(dp => {
+                    const legacy = { ...dp };
+                    delete legacy.type; delete legacy.supervisor; delete legacy.committee;
+                    delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
+                    delete legacy.latitude; delete legacy.longitude;
+                    return legacy;
+                });
+                res = await db.from('projects').upsert(legacyProjects);
+            }
+            err = res.error;
         }
 
         if (err) throw err;
@@ -571,6 +611,11 @@ const sCurveData = {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    // Start Supabase Realtime synchronization
+    if (typeof window.initPctsRealtimeSync === 'function') {
+        window.initPctsRealtimeSync();
+    }
 
     // --- Mobile Menu Logic ---
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -933,19 +978,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const cardsSection = document.getElementById('projectCardsContainer');
         const tableContainer = document.getElementById('projectTableContainer');
+        const gisContainer = document.getElementById('projectGisContainer');
         const btnCards = document.getElementById('btnViewCards');
         const btnTable = document.getElementById('btnViewTable');
+        const btnGis = document.getElementById('btnViewGis');
 
         if (mode === 'cards') {
             if (cardsSection) cardsSection.style.display = 'block';
             if (tableContainer) tableContainer.style.display = 'none';
+            if (gisContainer) gisContainer.style.display = 'none';
             if (btnCards) btnCards.classList.add('active');
             if (btnTable) btnTable.classList.remove('active');
-        } else {
+            if (btnGis) btnGis.classList.remove('active');
+        } else if (mode === 'table') {
             if (cardsSection) cardsSection.style.display = 'none';
             if (tableContainer) tableContainer.style.display = 'flex';
+            if (gisContainer) gisContainer.style.display = 'none';
             if (btnCards) btnCards.classList.remove('active');
             if (btnTable) btnTable.classList.add('active');
+            if (btnGis) btnGis.classList.remove('active');
+        } else if (mode === 'gis') {
+            if (cardsSection) cardsSection.style.display = 'none';
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (gisContainer) gisContainer.style.display = 'flex';
+            if (btnCards) btnCards.classList.remove('active');
+            if (btnTable) btnTable.classList.remove('active');
+            if (btnGis) btnGis.classList.add('active');
+
+            if (typeof window.renderGisMap === 'function') {
+                window.renderGisMap();
+            }
         }
     };
 
@@ -2463,6 +2525,8 @@ window.openProjectModal = function (id = null) {
 
             document.getElementById('projectDurationInput').value = project.duration || '';
             document.getElementById('projectStatusInput').value = project.status;
+            if (document.getElementById('projectLatInput')) document.getElementById('projectLatInput').value = project.latitude || '';
+            if (document.getElementById('projectLngInput')) document.getElementById('projectLngInput').value = project.longitude || '';
         }
     } else {
         title.innerText = 'เพิ่มโครงการใหม่';
@@ -2471,6 +2535,8 @@ window.openProjectModal = function (id = null) {
         if (document.getElementById('projectCommittee2Input')) document.getElementById('projectCommittee2Input').value = '';
         if (document.getElementById('projectCommittee3Input')) document.getElementById('projectCommittee3Input').value = '';
         if (document.getElementById('projectCommitteeInput')) document.getElementById('projectCommitteeInput').value = '';
+        if (document.getElementById('projectLatInput')) document.getElementById('projectLatInput').value = '';
+        if (document.getElementById('projectLngInput')) document.getElementById('projectLngInput').value = '';
     }
 
     modal.style.display = 'flex';
@@ -2514,6 +2580,8 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
 
     const duration = document.getElementById('projectDurationInput').value;
     const status = document.getElementById('projectStatusInput').value;
+    const latVal = document.getElementById('projectLatInput')?.value ? parseFloat(document.getElementById('projectLatInput').value) : null;
+    const lngVal = document.getElementById('projectLngInput')?.value ? parseFloat(document.getElementById('projectLngInput').value) : null;
 
     if (idVal) {
         // Edit
@@ -2527,6 +2595,8 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
             project.committee1 = c1;
             project.committee2 = c2;
             project.committee3 = c3;
+            project.latitude = latVal;
+            project.longitude = lngVal;
             project.duration = duration;
             project.status = status;
         }
@@ -2560,6 +2630,8 @@ document.getElementById('projectForm')?.addEventListener('submit', function (e) 
             committee1: c1,
             committee2: c2,
             committee3: c3,
+            latitude: latVal,
+            longitude: lngVal,
             duration: duration,
             status: status,
             tasks: initialTasks
@@ -3089,8 +3161,16 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                 const files = fileInput.files;
                 if (files && files.length > 0) {
                     let filesProcessed = 0;
+                    const getCanvasBlob = (canvas) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.65));
 
-                    const getCanvasBlob = (canvas) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.6));
+                    // ตรวจสอบการเปิดใช้งานลายน้ำ GPS
+                    const isWatermarkEnabled = document.getElementById('enableGpsWatermark') ? document.getElementById('enableGpsWatermark').checked : true;
+                    let gpsCoords = null;
+                    if (isWatermarkEnabled && typeof window.getCurrentGpsCoordinates === 'function') {
+                        try {
+                            gpsCoords = await window.getCurrentGpsCoordinates(4000);
+                        } catch (_) { }
+                    }
 
                     Array.from(files).forEach(file => {
                         const reader = new FileReader();
@@ -3098,8 +3178,8 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                             const img = new Image();
                             img.onload = async () => {
                                 const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 800;
-                                const MAX_HEIGHT = 800;
+                                const MAX_WIDTH = 900;
+                                const MAX_HEIGHT = 900;
                                 let width = img.width;
                                 let height = img.height;
                                 if (width > height) {
@@ -3111,6 +3191,21 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                 canvas.height = height;
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0, width, height);
+
+                                // ประทับลายน้ำ กฟภ. วันที่ เวลา และพิกัด GPS
+                                if (isWatermarkEnabled && typeof window.applyGpsWatermark === 'function') {
+                                    try {
+                                        await window.applyGpsWatermark(canvas, {
+                                            projectName: p.name,
+                                            taskName: t.name,
+                                            reportDate: reportDate,
+                                            empId: window.currentUserEmpId,
+                                            coords: gpsCoords
+                                        });
+                                    } catch (wmErr) {
+                                        console.warn('[Watermark] เกิดข้อผิดพลาดในการประทับลายน้ำ:', wmErr);
+                                    }
+                                }
 
                                 const blob = await getCanvasBlob(canvas);
 
@@ -6687,6 +6782,21 @@ window.openWorkReportModal = function (targetProjectId = null) {
 
     // Show modal
     modal.style.display = 'flex';
+
+    // Initialize Digital Signature pads
+    setTimeout(() => {
+        if (typeof window.initPctsSignaturePads === 'function') {
+            window.initPctsSignaturePads();
+        }
+        if (p) {
+            const supEl = document.getElementById('sigSupervisorNameText');
+            const conEl = document.getElementById('sigContractorNameText');
+            const comEl = document.getElementById('sigCommitteeNameText');
+            if (supEl) supEl.textContent = p.supervisor ? `(${p.supervisor})` : '-';
+            if (conEl) conEl.textContent = p.contractor ? `(${p.contractor})` : '-';
+            if (comEl) comEl.textContent = (p.committee1 || p.committee) ? `(${p.committee1 || p.committee})` : '-';
+        }
+    }, 120);
 };
 
 window.closeWorkReportModal = function () {
@@ -6710,6 +6820,16 @@ window.onWorkReportProjectChange = function (refreshPreview = true) {
             opt.textContent = `${t.name} (ความก้าวหน้า: ${t.actual || 0}%)`;
             taskSelect.appendChild(opt);
         });
+    }
+
+    // Update signer names below signature pads
+    if (p) {
+        const supEl = document.getElementById('sigSupervisorNameText');
+        const conEl = document.getElementById('sigContractorNameText');
+        const comEl = document.getElementById('sigCommitteeNameText');
+        if (supEl) supEl.textContent = p.supervisor ? `(${p.supervisor})` : '-';
+        if (conEl) conEl.textContent = p.contractor ? `(${p.contractor})` : '-';
+        if (comEl) comEl.textContent = (p.committee1 || p.committee) ? `(${p.committee1 || p.committee})` : '-';
     }
 
     if (refreshPreview) {
@@ -6995,6 +7115,22 @@ window.buildWorkReportPayload = function () {
     // 3-Party Signatures HTML
     let signaturesHtml = '';
     if (includeSignatures) {
+        const digitalSigs = (typeof window.getPctsSignatures === 'function')
+            ? window.getPctsSignatures()
+            : { supervisor: null, contractor: null, committee: null };
+
+        const sigImgSupervisor = digitalSigs.supervisor
+            ? `<div style="height: 52px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;"><img src="${digitalSigs.supervisor}" alt="Supervisor Signature" style="max-height: 48px; max-width: 140px; object-fit: contain;"></div>`
+            : `<div class="sig-space"></div>`;
+
+        const sigImgContractor = digitalSigs.contractor
+            ? `<div style="height: 52px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;"><img src="${digitalSigs.contractor}" alt="Contractor Signature" style="max-height: 48px; max-width: 140px; object-fit: contain;"></div>`
+            : `<div class="sig-space"></div>`;
+
+        const sigImgCommittee = digitalSigs.committee
+            ? `<div style="height: 52px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;"><img src="${digitalSigs.committee}" alt="Committee Signature" style="max-height: 48px; max-width: 140px; object-fit: contain;"></div>`
+            : `<div class="sig-space"></div>`;
+
         signaturesHtml = `
             <div class="signatures-section pdf-page-break-before" style="page-break-inside: avoid; break-inside: avoid; margin-top: 25px;">
                 <div class="print-section-header">
@@ -7007,27 +7143,27 @@ window.buildWorkReportPayload = function () {
                 <div class="signatures-grid">
                     <div class="signature-card">
                         <div class="sig-title">ผู้ควบคุมงาน</div>
-                        <div class="sig-space"></div>
+                        ${sigImgSupervisor}
                         <div class="sig-dots">..................................................................</div>
                         <div class="sig-name">( ${p.supervisor || '......................................................'} )</div>
                         <div class="sig-position">ผู้ควบคุมงาน การไฟฟ้าส่วนภูมิภาค</div>
-                        <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                        <div class="sig-date">${digitalSigs.supervisor ? `วันที่ ${todayThai}` : 'วันที่ ......... / ......... / .................'}</div>
                     </div>
                     <div class="signature-card">
                         <div class="sig-title">${p.type === 'ดำเนินการเอง' ? 'หัวหน้าชุดงาน / ผู้ปฏิบัติงาน' : 'ผู้รับจ้าง / ผู้แทนผู้รับจ้าง'}</div>
-                        <div class="sig-space"></div>
+                        ${sigImgContractor}
                         <div class="sig-dots">..................................................................</div>
                         <div class="sig-name">( ${p.contractor || '......................................................'} )</div>
                         <div class="sig-position">${p.type === 'ดำเนินการเอง' ? 'การไฟฟ้าส่วนภูมิภาค' : 'ผู้รับจ้างตามสัญญา'}</div>
-                        <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                        <div class="sig-date">${digitalSigs.contractor ? `วันที่ ${todayThai}` : 'วันที่ ......... / ......... / .................'}</div>
                     </div>
                     <div class="signature-card">
                         <div class="sig-title">ประธานกรรมการตรวจรับพัสดุ</div>
-                        <div class="sig-space"></div>
+                        ${sigImgCommittee}
                         <div class="sig-dots">..................................................................</div>
                         <div class="sig-name">( ${p.committee1 || p.committee || '......................................................'} )</div>
                         <div class="sig-position">ประธานกรรมการตรวจรับพัสดุ</div>
-                        <div class="sig-date">วันที่ ......... / ......... / .................</div>
+                        <div class="sig-date">${digitalSigs.committee ? `วันที่ ${todayThai}` : 'วันที่ ......... / ......... / .................'}</div>
                     </div>
                 </div>
             </div>
