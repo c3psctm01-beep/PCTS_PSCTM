@@ -1041,6 +1041,110 @@ html, body {
     min-width: 0;
 }
 
+.dashboard-year-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.dashboard-year-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-family: var(--font-heading);
+    cursor: pointer;
+}
+
+.dashboard-year-label i {
+    color: var(--pea-purple);
+    font-size: 13px;
+}
+
+.dashboard-year-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.dashboard-year-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 5px 26px 5px 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pea-purple);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-year-select:hover {
+    border-color: var(--pea-purple);
+}
+
+.dashboard-year-select:focus {
+    border-color: var(--pea-purple);
+    box-shadow: 0 0 0 3px rgba(116, 44, 129, 0.12);
+}
+
+.year-select-icon {
+    position: absolute;
+    right: 9px;
+    font-size: 10px;
+    color: var(--pea-purple);
+    pointer-events: none;
+}
+
+.title-year-badge {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 14px;
+    background: rgba(116, 44, 129, 0.1);
+    color: var(--pea-purple);
+    border: 1px solid rgba(116, 44, 129, 0.25);
+    vertical-align: middle;
+}
+
+.badge-multi-year {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2.5px 8px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    color: #b45309;
+    border: 1px solid #fde68a;
+    box-shadow: 0 1px 2px rgba(180, 83, 9, 0.08);
+    white-space: nowrap;
+    letter-spacing: 0.1px;
+}
+
+.badge-multi-year-ongoing {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #0369a1;
+    border-color: #bae6fd;
+    box-shadow: 0 1px 2px rgba(3, 105, 161, 0.08);
+}
+
 .project-type-tabs {
     display: inline-flex;
     background: #f1f5f9;
@@ -2778,6 +2882,16 @@ html, body {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 10px !important;
+    }
+    .dashboard-year-filter {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    .dashboard-year-select-wrap {
+        flex: 1 !important;
+    }
+    .dashboard-year-select {
+        width: 100% !important;
     }
     .project-type-tabs {
         width: 100% !important;

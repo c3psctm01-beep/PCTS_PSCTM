@@ -241,6 +241,14 @@ window.loadProjects = async function () {
                         pDetails = pDetails.replace(matchLng[0], '');
                     }
                 }
+                let pProjectYear = '';
+                if (pDetails.includes('[YEAR:')) {
+                    const matchYr = pDetails.match(/\[YEAR:(.*?)\]/);
+                    if (matchYr) {
+                        pProjectYear = matchYr[1].trim();
+                        pDetails = pDetails.replace(matchYr[0], '');
+                    }
+                }
 
                 // If committee1/2/3 not found separately, split from pCommittee
                 if (!pCommittee1 && !pCommittee2 && !pCommittee3 && pCommittee) {
@@ -293,6 +301,7 @@ window.loadProjects = async function () {
                     latitude: pLatitude,
                     longitude: pLongitude,
                     details: pDetails,
+                    projectYear: pProjectYear,
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
@@ -345,6 +354,9 @@ window.loadProjects = async function () {
             }
         }
         window.projects = projects;
+        if (typeof window.renderDashboardYearOptions === 'function') {
+            window.renderDashboardYearOptions();
+        }
     } catch (e) {
         window.projects = projects || defaultProjects;
         console.error('Supabase Load Error:', e);
@@ -446,12 +458,14 @@ window.saveProjects = async function (projectId = null) {
                 .replace(/\[COM3:.*?\]/g, '')
                 .replace(/\[LAT:.*?\]/g, '')
                 .replace(/\[LNG:.*?\]/g, '')
+                .replace(/\[YEAR:.*?\]/g, '')
                 .trim();
 
             const latStr = (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude)) ? p.latitude : '';
             const lngStr = (p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) ? p.longitude : '';
+            const yearStr = p.projectYear ? `[YEAR:${p.projectYear}]` : '';
 
-            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]`;
+            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}`;
 
             return {
                 id: p.id,
@@ -1138,8 +1152,175 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Project View Mode & Search State ---
+    window.CURRENT_THAI_YEAR = new Date().getFullYear() + 543;
+    window.currentYearFilter = localStorage.getItem('pcts_year_filter') || window.CURRENT_THAI_YEAR.toString();
     window.currentProjectViewMode = localStorage.getItem('pcts_project_view_mode') || 'cards';
     window.dashboardSearchQuery = '';
+
+    /**
+     * วิเคราะห์และคำนวณปี พ.ศ. ที่โครงการมีความเคลื่อนไหว/ดำเนินงาน
+     * - รองรับโครงการข้ามปี (Multi-year)
+     * - รองรับเงื่อนไขโครงการที่ยังไม่แล้วเสร็จ ให้แสดงผลต่อเนื่องจนถึงปีปัจจุบัน ("หรือจนกว่างานจะแล้วเสร็จ")
+     */
+    window.getProjectActiveYears = function (p) {
+        if (!p) return [window.CURRENT_THAI_YEAR];
+        const currentYear = window.CURRENT_THAI_YEAR;
+        const years = new Set();
+
+        const addYear = (val) => {
+            if (!val) return;
+            let y = parseInt(val, 10);
+            if (isNaN(y)) return;
+            if (y >= 1900 && y <= 2400) y += 543; // แปลงปี ค.ศ. เป็น พ.ศ.
+            if (y >= 2500 && y <= 2650) years.add(y);
+        };
+
+        const parseDate = (dStr) => {
+            if (!dStr || typeof dStr !== 'string') return;
+            const iso = dStr.match(/^(\d{4})[-/]/);
+            if (iso) {
+                addYear(iso[1]);
+                return;
+            }
+            const thai = dStr.match(/(?:25|26)\d{2}/);
+            if (thai) {
+                addYear(thai[0]);
+                return;
+            }
+            const d = new Date(dStr);
+            if (!isNaN(d.getTime())) addYear(d.getFullYear());
+        };
+
+        // 1. จากวันเริ่มต้น/สิ้นสุดโครงการ
+        if (p.startDate || p.start_date) parseDate(p.startDate || p.start_date);
+        if (p.endDate || p.end_date) parseDate(p.endDate || p.end_date);
+
+        // 2. จากแผนงานย่อย (tasks)
+        if (p.tasks && Array.isArray(p.tasks) && p.tasks.length > 0) {
+            p.tasks.forEach(t => {
+                if (t.startDate) parseDate(t.startDate);
+                if (t.endDate) parseDate(t.endDate);
+            });
+        }
+
+        // 3. จากระบุปีเจาะจง (projectYear หรือ Tag [YEAR:...])
+        if (p.projectYear) {
+            const m = String(p.projectYear).match(/(?:25|26)\d{2}/g);
+            if (m) m.forEach(y => addYear(y));
+        }
+        if (p.details && typeof p.details === 'string') {
+            const tagM = p.details.match(/\[YEAR:(.*?)\]/);
+            if (tagM) {
+                const ym = tagM[1].match(/(?:25|26)\d{2}/g);
+                if (ym) ym.forEach(y => addYear(y));
+            }
+        }
+
+        // 4. จากข้อความระยะเวลา duration (เช่น "2568-2569" หรือ "ปี 69")
+        if (p.duration && typeof p.duration === 'string') {
+            const dm = p.duration.match(/(?:25|26)\d{2}/g);
+            if (dm) dm.forEach(y => addYear(y));
+            const shortM = p.duration.match(/(?:พ\.ศ\.|ปี|\b)[ ]*(?:25)?([6-7][0-9])\b/g);
+            if (shortM && years.size === 0) {
+                shortM.forEach(sm => {
+                    const nm = sm.match(/([6-7][0-9])/);
+                    if (nm) addYear(2500 + parseInt(nm[1], 10));
+                });
+            }
+        }
+
+        // 5. Fallback หากไม่มีระบุเลย ให้ใช้ปีปัจจุบัน
+        if (years.size === 0) {
+            years.add(currentYear);
+        }
+
+        const sorted = Array.from(years).sort((a, b) => a - b);
+        const minYear = sorted[0];
+        let maxYear = sorted[sorted.length - 1];
+
+        // เงื่อนไขสำคัญ: "หรือ จนกว่างานโครงการจะแล้วเสร็จ"
+        // ถ้าสถานะยังไม่ใช่ 'แล้วเสร็จ' และปีปัจจุบันล่วงเลยเกินปีแผนงานเดิม (currentYear > maxYear)
+        // ให้ขยายช่วงปีจนถึงปีปัจจุบัน เพื่อให้แสดงผลในปัจจุบันอย่างต่อเนื่อง
+        const isCompleted = (p.status === 'แล้วเสร็จ');
+        if (!isCompleted && currentYear > maxYear) {
+            maxYear = currentYear;
+        }
+
+        // สร้างรายการปีแบบต่อเนื่องทุกปี
+        const activeYears = [];
+        for (let y = minYear; y <= maxYear; y++) {
+            activeYears.push(y);
+        }
+        return activeYears;
+    };
+
+    window.isProjectInYear = function (p, targetYear) {
+        if (!targetYear || targetYear === 'all') return true;
+        const target = parseInt(targetYear, 10);
+        const pYears = window.getProjectActiveYears(p);
+        return pYears.includes(target);
+    };
+
+    /**
+     * ดึงปี พ.ศ. ทั้งหมดที่มีในระบบมาแสดงในตัวเลือก (Dropdown)
+     */
+    window.renderDashboardYearOptions = function () {
+        const select = document.getElementById('dashboardYearSelect');
+        if (!select) return;
+
+        const currentYear = window.CURRENT_THAI_YEAR;
+        const allYearsSet = new Set([currentYear]);
+
+        const list = (window.projects && window.projects.length > 0) ? window.projects : (window.defaultProjects || []);
+        list.forEach(p => {
+            const pYears = window.getProjectActiveYears(p);
+            pYears.forEach(y => allYearsSet.add(y));
+        });
+
+        // จัดเรียง: ปีปัจจุบันขึ้นก่อนเสมอ ตามด้วยปีอื่นๆ เรียงจากมากไปน้อย และตัวเลือกทั้งหมด
+        const otherYears = Array.from(allYearsSet).filter(y => y !== currentYear).sort((a, b) => b - a);
+        const orderedYears = [currentYear, ...otherYears];
+
+        let html = '';
+        orderedYears.forEach(yr => {
+            const isCurrent = (yr === currentYear);
+            const label = isCurrent ? `ปี ${yr} (ปีปัจจุบัน)` : `ปี ${yr}`;
+            html += `<option value="${yr}">${label}</option>`;
+        });
+        html += `<option value="all">ทุกปีโครงการ (ทั้งหมด)</option>`;
+
+        select.innerHTML = html;
+
+        // ตรวจสอบค่าที่เลือกไว้
+        if (window.currentYearFilter && (allYearsSet.has(parseInt(window.currentYearFilter)) || window.currentYearFilter === 'all')) {
+            select.value = window.currentYearFilter;
+        } else {
+            select.value = currentYear.toString();
+            window.currentYearFilter = currentYear.toString();
+        }
+
+        // ปรับ Badge หัวข้อหน้า
+        const badge = document.getElementById('titleYearBadge');
+        if (badge) {
+            badge.innerText = window.currentYearFilter === 'all' ? 'ทุกปีโครงการ' : `ปี ${window.currentYearFilter}`;
+        }
+    };
+
+    window.changeDashboardYearFilter = function (yearVal) {
+        window.currentYearFilter = yearVal;
+        localStorage.setItem('pcts_year_filter', yearVal);
+
+        const badge = document.getElementById('titleYearBadge');
+        if (badge) {
+            badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ' : `ปี ${yearVal}`;
+        }
+
+        renderTables();
+
+        if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
+            window.renderGisMap();
+        }
+    };
 
     window.switchProjectView = function (mode) {
         window.currentProjectViewMode = mode;
@@ -1254,13 +1435,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Render Tables & Cards ---
     window.renderTables = function () {
-        // Update Stats
-        let total = projects.length;
-        let completed = projects.filter(p => p.status === 'แล้วเสร็จ').length;
-        let active = projects.filter(p => p.status === 'อยู่ระหว่างก่อสร้าง').length;
-        let design = projects.filter(p => p.status === 'อยู่ระหว่างออกแบบประมาณการ').length;
-        let budget = projects.filter(p => p.status === 'รองบประมาณ').length;
-        let procurement = projects.filter(p => p.status === 'อยู่ระหว่างจัดจ้าง').length;
+        const currentThaiYear = window.CURRENT_THAI_YEAR || (new Date().getFullYear() + 543);
+        const activeYear = window.currentYearFilter || currentThaiYear.toString();
+
+        // 1. กรองโครงการตามปี พ.ศ. (โครงการข้ามปีจะแสดงทั้ง 2 ปี และโครงการที่ยังไม่แล้วเสร็จจะแสดงต่อเนื่องจนกว่าจะเสร็จ)
+        let yearFilteredProjects = projects;
+        if (activeYear !== 'all') {
+            const yr = parseInt(activeYear, 10);
+            yearFilteredProjects = projects.filter(p => window.getProjectActiveYears(p).includes(yr));
+        }
+
+        // Update Stats based on Year-Filtered Projects
+        let total = yearFilteredProjects.length;
+        let completed = yearFilteredProjects.filter(p => p.status === 'แล้วเสร็จ').length;
+        let active = yearFilteredProjects.filter(p => p.status === 'อยู่ระหว่างก่อสร้าง').length;
+        let design = yearFilteredProjects.filter(p => p.status === 'อยู่ระหว่างออกแบบประมาณการ').length;
+        let budget = yearFilteredProjects.filter(p => p.status === 'รองบประมาณ').length;
+        let procurement = yearFilteredProjects.filter(p => p.status === 'อยู่ระหว่างจัดจ้าง').length;
 
         const elTotal = document.getElementById('statTotalProjects');
         const elActive = document.getElementById('statActiveProjects');
@@ -1277,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elCompleted) elCompleted.innerText = `${completed} โครงการ`;
 
         // Filter projects by type
-        let filteredProjects = projects;
+        let filteredProjects = yearFilteredProjects;
         if (window.currentDashboardFilter && window.currentDashboardFilter !== 'all') {
             filteredProjects = filteredProjects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
         }
@@ -1391,15 +1582,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             const photoCount = p.gallery ? p.gallery.length : 0;
             const durationText = p.duration || (p.startDate && p.endDate ? `${p.startDate} ถึง ${p.endDate}` : '-');
 
+            // Multi-Year Badge Calculation
+            const pYears = window.getProjectActiveYears(p);
+            const isMultiYear = pYears.length > 1;
+            let multiYearBadgeHtml = '';
+            if (isMultiYear) {
+                const minYr = pYears[0];
+                const maxYr = pYears[pYears.length - 1];
+                const isOngoing = (p.status !== 'แล้วเสร็จ');
+                const badgeClass = isOngoing ? 'badge-multi-year badge-multi-year-ongoing' : 'badge-multi-year';
+                const badgeTitle = isOngoing 
+                    ? `โครงการก่อสร้างผูกพันข้ามปี (${minYr} - ${maxYr}) กำลังดำเนินการต่อเนื่องจนกว่าจะแล้วเสร็จ`
+                    : `โครงการก่อสร้างผูกพันข้ามปี (${minYr} - ${maxYr})`;
+                multiYearBadgeHtml = `
+                    <span class="${badgeClass}" title="${badgeTitle}">
+                        <i class="fa-solid fa-arrows-split-up-and-left"></i> งานข้ามปี พ.ศ. ${minYr} - ${maxYr}
+                    </span>
+                `;
+            }
+
             // 1. Build & Append Card
             if (cardsGrid) {
                 const card = document.createElement('div');
                 card.className = 'project-card';
                 card.innerHTML = `
                     <div class="project-card-header">
-                        <span class="project-type-badge ${typeClass}">
-                            <i class="${typeIcon}"></i> ${projectType}
-                        </span>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span class="project-type-badge ${typeClass}">
+                                <i class="${typeIcon}"></i> ${projectType}
+                            </span>
+                            ${multiYearBadgeHtml}
+                        </div>
                         <span class="project-status-pill status-badge ${statusClass}">
                             <span class="status-dot" style="background: currentColor;"></span>
                             ${p.status}
@@ -1470,7 +1683,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const tr = document.createElement('tr');
                 const tableTypeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
                 tr.innerHTML = `
-                    <td><strong>${p.name}</strong></td>
+                    <td>
+                        <strong>${p.name}</strong>
+                        ${multiYearBadgeHtml ? `<div style="margin-top: 4px;">${multiYearBadgeHtml}</div>` : ''}
+                    </td>
                     <td><span style="${tableTypeClass}">${projectType}</span></td>
                     <td>${p.contractor}</td>
                     <td>${p.supervisor || '-'}</td>
@@ -1510,8 +1726,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const statusClass = window.getStatusBadgeClass(p.status);
                 const projectType = p.type || 'จ้างเหมา';
                 const typeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
+                const pYears = window.getProjectActiveYears(p);
+                const yearLabel = pYears.length > 1 ? `งานข้ามปี ${pYears[0]}-${pYears[pYears.length - 1]}` : `ปี ${pYears[0]}`;
+                const yearChip = `<span class="badge-multi-year ${pYears.length > 1 ? 'badge-multi-year-ongoing' : ''}" style="margin-top: 3px;"><i class="fa-solid fa-calendar-days"></i> ${yearLabel}</span>`;
                 tr.innerHTML = `
-                    <td><strong>${p.name}</strong></td>
+                    <td>
+                        <strong>${p.name}</strong>
+                        <div>${yearChip}</div>
+                    </td>
                     <td><span style="${typeClass}">${projectType}</span></td>
                     <td>${p.contractor}</td>
                     <td>${p.supervisor || '-'}</td>
@@ -1547,6 +1769,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load projects from Supabase before rendering
     await window.loadProjects();
+    if (typeof window.renderDashboardYearOptions === 'function') {
+        window.renderDashboardYearOptions();
+    }
     renderTables();
 
     // --- S-Curve Chart.js Initialization (Modern Gradient & Enhanced Tooltips) ---
@@ -2715,6 +2940,11 @@ window.openProjectModal = function (id = null) {
             document.getElementById('projectStatusInput').value = project.status;
             if (document.getElementById('projectLatInput')) document.getElementById('projectLatInput').value = project.latitude || '';
             if (document.getElementById('projectLngInput')) document.getElementById('projectLngInput').value = project.longitude || '';
+            if (document.getElementById('projectYearInput')) {
+                const pYears = window.getProjectActiveYears(project);
+                const yrStr = project.projectYear || (pYears.length > 1 ? `${pYears[0]}-${pYears[pYears.length - 1]}` : `${pYears[0]}`);
+                document.getElementById('projectYearInput').value = yrStr;
+            }
         }
     } else {
         title.innerText = 'เพิ่มโครงการใหม่';
@@ -2725,6 +2955,9 @@ window.openProjectModal = function (id = null) {
         if (document.getElementById('projectCommitteeInput')) document.getElementById('projectCommitteeInput').value = '';
         if (document.getElementById('projectLatInput')) document.getElementById('projectLatInput').value = '';
         if (document.getElementById('projectLngInput')) document.getElementById('projectLngInput').value = '';
+        if (document.getElementById('projectYearInput')) {
+            document.getElementById('projectYearInput').value = (window.CURRENT_THAI_YEAR || (new Date().getFullYear() + 543)).toString();
+        }
     }
 
     modal.style.display = 'flex';
@@ -2767,6 +3000,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
     }
 
     const duration = document.getElementById('projectDurationInput').value;
+    const projectYear = document.getElementById('projectYearInput')?.value.trim() || '';
     const status = document.getElementById('projectStatusInput').value;
     const latRaw = document.getElementById('projectLatInput')?.value.trim();
     const lngRaw = document.getElementById('projectLngInput')?.value.trim();
@@ -2791,6 +3025,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
             targetProject.latitude = latVal;
             targetProject.longitude = lngVal;
             targetProject.duration = duration;
+            targetProject.projectYear = projectYear;
             targetProject.status = status;
         }
     } else {
@@ -2827,6 +3062,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
             latitude: latVal,
             longitude: lngVal,
             duration: duration,
+            projectYear: projectYear,
             status: status,
             tasks: initialTasks
         };
@@ -2861,6 +3097,9 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
 
     window.closeProjectModal();
     window.renderTables();
+    if (typeof window.renderDashboardYearOptions === 'function') {
+        window.renderDashboardYearOptions();
+    }
 
     // Re-render GIS map and project detail map if opened
     if (typeof window.renderGisMap === 'function') {
