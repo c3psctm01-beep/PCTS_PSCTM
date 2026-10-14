@@ -4150,7 +4150,14 @@ window.printManualA4 = function () {
     const mascot = document.querySelector('.mascot-widget');
     if (mascot) mascot.style.display = 'none';
 
-    // 3. Inject A4 print style specifically for manual
+    // 3. Ensure manual view is active
+    const manualView = document.getElementById('manual-view');
+    if (manualView) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        manualView.classList.add('active');
+    }
+
+    // 4. Inject A4 print style specifically for manual
     let printStyle = document.getElementById('manualPrintA4Style');
     if (!printStyle) {
         printStyle = document.createElement('style');
@@ -4158,20 +4165,20 @@ window.printManualA4 = function () {
         printStyle.innerHTML = `
             @page {
                 size: A4 portrait !important;
-                margin: 12mm 15mm 15mm 15mm !important;
+                margin: 10mm 12mm 10mm 12mm !important;
             }
         `;
         document.head.appendChild(printStyle);
     }
 
-    // 4. Mark body
+    // 5. Mark body
     document.body.classList.add('manual-printing-a4');
 
-    // 5. Trigger native crisp vector print
-    window.print();
-
-    // 6. Cleanup after print dialog
+    // 6. Cleanup handler (only on afterprint or 2-minute safety timeout)
+    let cleaned = false;
     const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
         document.body.classList.remove('manual-printing-a4');
         if (printStyle && printStyle.parentNode) {
             printStyle.parentNode.removeChild(printStyle);
@@ -4179,13 +4186,21 @@ window.printManualA4 = function () {
         tabs.forEach((t, i) => {
             t.style.display = prevDisplays[i] || (i === 0 ? 'block' : 'none');
         });
-        if (!document.getElementById('manual-view').classList.contains('active')) {
-            if (mascot) mascot.style.display = 'flex';
+        if (mascot && (!manualView || !manualView.classList.contains('active'))) {
+            mascot.style.display = 'flex';
         }
         window.removeEventListener('afterprint', cleanup);
     };
+
     window.addEventListener('afterprint', cleanup);
-    setTimeout(cleanup, 2500);
+    setTimeout(cleanup, 120000); // 2-minute fallback, avoids premature close during PDF generation
+
+    // 7. Allow browser layout engine to paint Base64 images before opening print dialog
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    });
 };
 
 // --- Admin Tabs ---
