@@ -653,6 +653,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.toggleSidebar(false);
         }
 
+        // Restore mascot widget if leaving manual view
+        const mascot = document.querySelector('.mascot-widget');
+        if (mascot) mascot.style.display = 'flex';
+
         // 1. Highlight sidebar item
         navItems.forEach(nav => nav.classList.remove('active'));
         const gisNav = document.getElementById('sidebarNavGis');
@@ -697,6 +701,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const targetEl = document.getElementById(targetId);
             if (targetEl) {
                 targetEl.classList.add('active');
+            }
+
+            // Mascot widget visibility: hide completely in manual-view so it never blocks A4 document or print
+            const mascot = document.querySelector('.mascot-widget');
+            if (targetId === 'manual-view') {
+                if (mascot) mascot.style.display = 'none';
+            } else {
+                if (mascot) mascot.style.display = 'flex';
             }
 
             // If switching to dashboard-view via "ภาพรวม"
@@ -3627,16 +3639,72 @@ window.openProjectTab = function (evt, tabName) {
     }
 };
 
-// --- User Manual Tabs ---
+// --- User Manual Tabs & A4 Document Engine ---
 window.openManualTab = function (evt, tabId) {
     const tabs = document.querySelectorAll('.manual-tabcontent');
-    tabs.forEach(t => t.style.display = 'none');
     const btns = document.querySelectorAll('.manual-nav-btn');
     btns.forEach(b => b.classList.remove('active'));
 
-    const target = document.getElementById(tabId);
-    if (target) target.style.display = 'block';
-    if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    if (tabId === 'all') {
+        tabs.forEach(t => t.style.display = 'block');
+        if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    } else {
+        tabs.forEach(t => t.style.display = 'none');
+        const target = document.getElementById(tabId);
+        if (target) target.style.display = 'block';
+        if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    }
+};
+
+window.printManualA4 = function () {
+    // 1. Temporarily display all chapters so the full manual is printed
+    const tabs = document.querySelectorAll('.manual-tabcontent');
+    const prevDisplays = [];
+    tabs.forEach((t, i) => {
+        prevDisplays[i] = t.style.display;
+        t.style.display = 'block';
+    });
+
+    // 2. Hide mascot widget
+    const mascot = document.querySelector('.mascot-widget');
+    if (mascot) mascot.style.display = 'none';
+
+    // 3. Inject A4 print style specifically for manual
+    let printStyle = document.getElementById('manualPrintA4Style');
+    if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'manualPrintA4Style';
+        printStyle.innerHTML = `
+            @page {
+                size: A4 portrait !important;
+                margin: 12mm 15mm 15mm 15mm !important;
+            }
+        `;
+        document.head.appendChild(printStyle);
+    }
+
+    // 4. Mark body
+    document.body.classList.add('manual-printing-a4');
+
+    // 5. Trigger native crisp vector print
+    window.print();
+
+    // 6. Cleanup after print dialog
+    const cleanup = () => {
+        document.body.classList.remove('manual-printing-a4');
+        if (printStyle && printStyle.parentNode) {
+            printStyle.parentNode.removeChild(printStyle);
+        }
+        tabs.forEach((t, i) => {
+            t.style.display = prevDisplays[i] || (i === 0 ? 'block' : 'none');
+        });
+        if (!document.getElementById('manual-view').classList.contains('active')) {
+            if (mascot) mascot.style.display = 'flex';
+        }
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(cleanup, 2500);
 };
 
 // --- Admin Tabs ---
