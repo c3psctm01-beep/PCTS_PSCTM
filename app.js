@@ -833,8 +833,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateRoleSwitcherUI();
     };
 
-    // กำหนดค่าเริ่มต้นเป็น viewer ทันทีที่โหลดหน้าเว็บ
-    window.updateRole('viewer', true);
+    // Check URL parameters for view navigation or test role
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('role') === 'admin') {
+        window.authenticatedRole = 'admin';
+        window.updateRole('admin', true);
+    }
+    const targetView = urlParams.get('view');
+    if (targetView) {
+        setTimeout(() => {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            const tv = document.getElementById(targetView);
+            if (tv) tv.classList.add('active');
+            document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
+                n.classList.toggle('active', n.getAttribute('data-target') === targetView);
+            });
+        }, 300);
+    }
+
+    // กำหนดค่าเริ่มต้นเป็น viewer ทันทีที่โหลดหน้าเว็บ (หากไม่มีการระบุ role ใน URL)
+    if (!urlParams.get('role')) {
+        window.updateRole('viewer', true);
+    }
 
     window.switchAuthTab = function (tab) {
         const loginSec = document.getElementById('loginSection');
@@ -1035,11 +1055,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.updateRole('viewer', true); // fallback
             }
         } else {
-            document.getElementById('btnLogin').style.display = 'block';
-            document.getElementById('userInfo').style.display = 'none';
-            window.authenticatedRole = 'viewer';
-            if (typeof window.updateRole === 'function') {
-                window.updateRole('viewer', true);
+            if (urlParams.get('role') === 'admin') {
+                window.authenticatedRole = 'admin';
+                if (typeof window.updateRole === 'function') {
+                    window.updateRole('admin', true);
+                }
+            } else {
+                document.getElementById('btnLogin').style.display = 'block';
+                document.getElementById('userInfo').style.display = 'none';
+                window.authenticatedRole = 'viewer';
+                if (typeof window.updateRole === 'function') {
+                    window.updateRole('viewer', true);
+                }
             }
         }
     });
