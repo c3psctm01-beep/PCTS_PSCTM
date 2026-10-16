@@ -543,10 +543,64 @@
 
                     <!-- Tab: Calendar -->
                     <div id="tabCalendar" class="tabcontent" style="display: none;">
-                    <div class="calendar-container card mt-4 p-4">
-                        <h2>ปฏิทินปฏิบัติงานโครงการ</h2>
-                        <div id="projectCalendar" style="min-height: 500px;"></div>
-                    </div>
+                        <div class="calendar-container card mt-4 p-4">
+                            <div class="calendar-top-header">
+                                <div class="calendar-title-wrap">
+                                    <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                                        <i class="fa-regular fa-calendar-days" style="color: var(--pea-purple);"></i>
+                                        <span>ปฏิทินปฏิบัติงานและไทม์ไลน์โครงการ</span>
+                                    </h2>
+                                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 13px;">
+                                        แสดงแผนงานก่อสร้าง (WBS), ภาพอัปเดตหน้างานประจำวัน, วันสิ้นสุดสัญญา/EOT และกำหนดส่งมอบ Punch List
+                                    </p>
+                                </div>
+                                <div class="calendar-jump-actions">
+                                    <button type="button" class="cal-jump-btn" onclick="jumpCalendarTo('start')" title="ไปยังวันเริ่มต้นโครงการ">
+                                        <i class="fa-solid fa-play" style="color: #2563eb;"></i> <span>เริ่มสัญญา</span>
+                                    </button>
+                                    <button type="button" class="cal-jump-btn" onclick="jumpCalendarTo('today')" title="ไปยังเดือนปัจจุบัน">
+                                        <i class="fa-regular fa-calendar-check" style="color: #10b981;"></i> <span>วันนี้</span>
+                                    </button>
+                                    <button type="button" class="cal-jump-btn" onclick="jumpCalendarTo('end')" title="ไปยังวันสิ้นสุดสัญญา / EOT">
+                                        <i class="fa-solid fa-flag-checkered" style="color: #ef4444;"></i> <span>สิ้นสุดสัญญา</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Calendar Filter Bar & Legend -->
+                            <div class="calendar-filter-bar">
+                                <div class="cal-filter-label">
+                                    <i class="fa-solid fa-filter"></i> ตัวกรองข้อมูล:
+                                </div>
+                                <div class="cal-filter-chips">
+                                    <button type="button" id="calFilterTask" class="cal-filter-chip active" onclick="toggleCalendarFilter('task')">
+                                        <span class="cal-badge-dot cal-dot-task"></span>
+                                        <span>🏗️ แผนงาน WBS</span>
+                                        <span class="cal-filter-count" id="calCountTask">0</span>
+                                    </button>
+                                    <button type="button" id="calFilterGallery" class="cal-filter-chip active" onclick="toggleCalendarFilter('gallery')">
+                                        <span class="cal-badge-dot cal-dot-gallery"></span>
+                                        <span>📸 ภาพหน้างาน</span>
+                                        <span class="cal-filter-count" id="calCountGallery">0</span>
+                                    </button>
+                                    <button type="button" id="calFilterContract" class="cal-filter-chip active" onclick="toggleCalendarFilter('contract')">
+                                        <span class="cal-badge-dot cal-dot-contract"></span>
+                                        <span>🏁 สัญญา & EOT</span>
+                                        <span class="cal-filter-count" id="calCountContract">0</span>
+                                    </button>
+                                    <button type="button" id="calFilterPunch" class="cal-filter-chip active" onclick="toggleCalendarFilter('punch')">
+                                        <span class="cal-badge-dot cal-dot-punch"></span>
+                                        <span>📋 Punch List</span>
+                                        <span class="cal-filter-count" id="calCountPunch">0</span>
+                                    </button>
+                                </div>
+                                <div class="cal-view-hint text-muted">
+                                    <i class="fa-solid fa-circle-info"></i> คลิกที่รายการเพื่อดูรายละเอียด
+                                </div>
+                            </div>
+
+                            <div id="projectCalendar" style="min-height: 600px;"></div>
+                        </div>
                     </div> <!-- End Tab Calendar -->
 
                     <!-- Tab: Disbursement -->
@@ -1607,9 +1661,13 @@
 
     <!-- Modal for Calendar Details -->
     <div id="calendarModal" class="modal">
-        <div class="modal-content card">
-            <span class="close-modal">&times;</span>
-            <h2 id="modalDate">รายละเอียดวันที่</h2>
+        <div class="modal-content card" style="max-width: 580px; width: 92%; padding: 24px; border-radius: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 id="modalDate" style="margin: 0; color: var(--pea-purple); font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-regular fa-calendar-days"></i> รายละเอียดกิจกรรม
+                </h3>
+                <span class="close-modal" onclick="closeCalendarModal()" style="font-size: 26px; cursor: pointer; color: var(--text-secondary);">&times;</span>
+            </div>
             <div id="modalContent">
                 <!-- Content injected via JS -->
             </div>
@@ -2321,9 +2379,10 @@
     <script src="punch-list.js?v=1"></script>
     <script src="before-after.js?v=1"></script>
     <script src="weather-widget.js?v=1"></script>
+    <script src="calendar-manager.js?v=2"></script>
 
     <!-- Main Application Core -->
-    <script src="app.js?v=24"></script>
+    <script src="app.js?v=25"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
             window.addEventListener('load', () => {

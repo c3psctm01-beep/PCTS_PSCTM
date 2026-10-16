@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcts-pea-v3.9-cache';
+const CACHE_NAME = 'pcts-pea-v3.10-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   './punch-list.js',
   './before-after.js',
   './weather-widget.js',
+  './calendar-manager.js',
   './mascot.jpg',
   './manifest.json',
   './assets/manual/ch1_dashboard.png',
