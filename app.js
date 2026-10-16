@@ -13,7 +13,55 @@ const defaultProjects = [
         latitude: 13.547530,
         longitude: 100.274410,
         duration: "7 เดือน",
+        startDate: "2026-06-01",
+        endDate: "2026-12-31",
         status: "อยู่ระหว่างก่อสร้าง",
+        eot: [
+            { id: 1, days: 30, reason: "ขอขยายระยะเวลาสัญญาตามมติ กฟภ. เนื่องจากส่งมอบพื้นที่ล่าช้า", docNo: "กฟภ.(กสน.) 104/2569", approvedDate: "2026-08-15" }
+        ],
+        punchList: [
+            {
+                id: 1,
+                title: "ตู้ควบคุม Marshalling Kiosk หม้อแปลง T1 สีถลอกบริเวณขอบประตู",
+                location: "ลานหม้อแปลง T1 (115/22 kV)",
+                category: "electrical",
+                priority: "normal",
+                description: "พบรอยขูดขีดและสีถลอกที่ขอบประตูด้านล่าง อาจเกิดสนิมได้ ให้ขัดสนิมและพ่นสีเก็บงานตามสเปก กฟภ.",
+                contractor: "กฟภ. / ช่างสี",
+                dueDate: "2026-10-30",
+                status: "pending",
+                createdDate: "2026-10-10",
+                beforePhoto: "assets/manual/ch4_signatures.png",
+                afterPhoto: "",
+                resolvedDate: null
+            },
+            {
+                id: 2,
+                title: "ตรวจสอบการขันกวดทอร์กน็อตระบบกราวด์กริด (Grounding Grid)",
+                location: "ลานไก 115 kV",
+                category: "civil",
+                priority: "high",
+                description: "ขันแน่นตามมาตรฐานและแต้มสีมาร์กตำแหน่งทุกจุดทดสอบเรียบร้อย",
+                contractor: "กฟภ.",
+                dueDate: "2026-10-15",
+                status: "closed",
+                createdDate: "2026-10-01",
+                beforePhoto: "assets/manual/ch3_scurve.png",
+                afterPhoto: "assets/manual/ch2_gis_map.png",
+                resolvedDate: "2026-10-12"
+            }
+        ],
+        beforeAfter: [
+            {
+                id: 1,
+                title: "ลานหม้อแปลงไฟฟ้ากำลัง 115/22 kV (Transformer Yard)",
+                desc: "เปรียบเทียบจากพื้นที่ดินปรับระดับเดิม สู่ฐานรากคอนกรีตและการติดตั้งหม้อแปลงไฟฟ้ากำลังครบถ้วน",
+                beforeUrl: "assets/manual/ch1_dashboard.png",
+                beforeDate: "มิ.ย. 2568",
+                afterUrl: "assets/manual/ch2_gis_map.png",
+                afterDate: "ปัจจุบัน"
+            }
+        ],
         tasks: [
             { id: 101, name: "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)", startDate: "2026-06-01", endDate: "2026-06-15", weight: 10, actual: 100 },
             { id: 102, name: "ปรับปรุงที่ดิน", startDate: "2026-06-16", endDate: "2026-06-30", weight: 5, actual: 100 },
@@ -284,14 +332,50 @@ window.loadProjects = async function () {
                 if ((pLatitude === null || isNaN(pLatitude)) && defProj?.latitude) pLatitude = defProj.latitude;
                 if ((pLongitude === null || isNaN(pLongitude)) && defProj?.longitude) pLongitude = defProj.longitude;
 
+                let pEot = Array.isArray(dbProj.eot) ? dbProj.eot : [];
+                if (pEot.length === 0 && pDetails.includes('[EOT:')) {
+                    try {
+                        const mEot = pDetails.match(/\[EOT:(.*?)\]/);
+                        if (mEot && mEot[1]) {
+                            pEot = JSON.parse(decodeURIComponent(mEot[1]));
+                            pDetails = pDetails.replace(mEot[0], '');
+                        }
+                    } catch (_) {}
+                }
+                if (pEot.length === 0 && defProj?.eot) pEot = JSON.parse(JSON.stringify(defProj.eot));
+
+                let pPunchList = Array.isArray(dbProj.punch_list) ? dbProj.punch_list : [];
+                if (pPunchList.length === 0 && pDetails.includes('[PUNCH:')) {
+                    try {
+                        const mPunch = pDetails.match(/\[PUNCH:(.*?)\]/);
+                        if (mPunch && mPunch[1]) {
+                            pPunchList = JSON.parse(decodeURIComponent(mPunch[1]));
+                            pDetails = pDetails.replace(mPunch[0], '');
+                        }
+                    } catch (_) {}
+                }
+                if (pPunchList.length === 0 && defProj?.punchList) pPunchList = JSON.parse(JSON.stringify(defProj.punchList));
+
+                let pBeforeAfter = Array.isArray(dbProj.before_after) ? dbProj.before_after : [];
+                if (pBeforeAfter.length === 0 && pDetails.includes('[BA:')) {
+                    try {
+                        const mBA = pDetails.match(/\[BA:(.*?)\]/);
+                        if (mBA && mBA[1]) {
+                            pBeforeAfter = JSON.parse(decodeURIComponent(mBA[1]));
+                            pDetails = pDetails.replace(mBA[0], '');
+                        }
+                    } catch (_) {}
+                }
+                if (pBeforeAfter.length === 0 && defProj?.beforeAfter) pBeforeAfter = JSON.parse(JSON.stringify(defProj.beforeAfter));
+
                 return {
                     id: dbProj.id,
                     name: dbProj.name,
                     status: dbProj.status,
                     budget: dbProj.budget,
                     duration: dbProj.duration,
-                    startDate: dbProj.start_date,
-                    endDate: dbProj.end_date,
+                    startDate: dbProj.start_date || defProj?.startDate,
+                    endDate: dbProj.end_date || defProj?.endDate,
                     contractor: dbProj.contractor,
                     supervisor: pSupervisor,
                     committee: pCommittee,
@@ -305,6 +389,9 @@ window.loadProjects = async function () {
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
+                    eot: pEot,
+                    punchList: pPunchList,
+                    beforeAfter: pBeforeAfter,
                     disbursement: (() => {
                         let disb = dbProj.disbursement || (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || null);
                         if (disb) {
@@ -459,13 +546,29 @@ window.saveProjects = async function (projectId = null) {
                 .replace(/\[LAT:.*?\]/g, '')
                 .replace(/\[LNG:.*?\]/g, '')
                 .replace(/\[YEAR:.*?\]/g, '')
+                .replace(/\[EOT:.*?\]/g, '')
+                .replace(/\[PUNCH:.*?\]/g, '')
+                .replace(/\[BA:.*?\]/g, '')
                 .trim();
 
             const latStr = (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude)) ? p.latitude : '';
             const lngStr = (p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) ? p.longitude : '';
             const yearStr = p.projectYear ? `[YEAR:${p.projectYear}]` : '';
 
-            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}`;
+            let eotTag = '';
+            if (p.eot && p.eot.length > 0) {
+                try { eotTag = `[EOT:${encodeURIComponent(JSON.stringify(p.eot))}]`; } catch (_) {}
+            }
+            let punchTag = '';
+            if (p.punchList && p.punchList.length > 0) {
+                try { punchTag = `[PUNCH:${encodeURIComponent(JSON.stringify(p.punchList))}]`; } catch (_) {}
+            }
+            let baTag = '';
+            if (p.beforeAfter && p.beforeAfter.length > 0) {
+                try { baTag = `[BA:${encodeURIComponent(JSON.stringify(p.beforeAfter))}]`; } catch (_) {}
+            }
+
+            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}${eotTag}${punchTag}${baTag}`;
 
             return {
                 id: p.id,
@@ -487,6 +590,9 @@ window.saveProjects = async function (projectId = null) {
                 details: `${tagPrefix}${cleanDetails}`,
                 tasks: p.tasks || [],
                 gallery: p.gallery || [],
+                eot: p.eot || [],
+                punch_list: p.punchList || [],
+                before_after: p.beforeAfter || [],
                 disbursement: p.disbursement || null
             };
         });
@@ -495,11 +601,12 @@ window.saveProjects = async function (projectId = null) {
         if (projectId && dbProjects.length > 0) {
             let res = await db.from('projects').update(dbProjects[0]).eq('id', projectId);
             if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('schema cache') || res.error.code === 'PGRST204')) {
-                // If columns not added in DB yet, strip new columns and save with legacy schema (which embeds [LAT:...][LNG:...] in details)
+                // If columns not added in DB yet, strip new columns and save with legacy schema (which embeds tags in details)
                 const legacy = { ...dbProjects[0] };
                 delete legacy.type; delete legacy.supervisor; delete legacy.committee;
                 delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                 delete legacy.latitude; delete legacy.longitude;
+                delete legacy.eot; delete legacy.punch_list; delete legacy.before_after;
                 res = await db.from('projects').update(legacy).eq('id', projectId);
             }
             err = res.error;
@@ -511,6 +618,7 @@ window.saveProjects = async function (projectId = null) {
                     delete legacy.type; delete legacy.supervisor; delete legacy.committee;
                     delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                     delete legacy.latitude; delete legacy.longitude;
+                    delete legacy.eot; delete legacy.punch_list; delete legacy.before_after;
                     return legacy;
                 });
                 res = await db.from('projects').upsert(legacyProjects);
@@ -2443,12 +2551,21 @@ window.viewProjectDetails = function (projectId) {
         };
         const sColor = statusColors[p.status] || { bg: '#f1f5f9', color: '#64748b' };
 
+        let contractBadgeHtml = '';
+        if (typeof window.calculateProjectContractInfo === 'function') {
+            const cInfo = window.calculateProjectContractInfo(p);
+            if (cInfo && cInfo.badgeHtml) {
+                contractBadgeHtml = cInfo.badgeHtml;
+            }
+        }
+
         document.getElementById('detailProjectInfo').innerHTML = `
             <span class="detail-info-item"><i class="fa-solid fa-building" style="color: #64748b;"></i> <span><strong>ผู้รับเหมา:</strong> ${p.contractor || '-'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-user-tie" style="color: #64748b;"></i> <span><strong>ผู้ควบคุมงาน:</strong> ${p.supervisor || '-'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-users" style="color: #64748b;"></i> <span><strong>กรรมการ:</strong> ${p.committee || '-'}</span></span>
             <span class="detail-info-item"><i class="fa-regular fa-calendar" style="color: #64748b;"></i> <span><strong>ระยะเวลา:</strong> ${p.duration || '-'}</span></span>
             <span class="detail-info-item status-chip" style="background:${sColor.bg}; color:${sColor.color}; border-color:${sColor.color}30; font-weight:600;"><i class="fa-solid fa-circle-dot"></i> <span>${p.status}</span></span>
+            ${contractBadgeHtml}
         `;
 
         const tbody = document.getElementById('detailTaskTableBody');
@@ -2582,6 +2699,17 @@ window.viewProjectDetails = function (projectId) {
         }
         if (typeof window.renderDisbursementTab === 'function') {
             window.renderDisbursementTab(p);
+        }
+
+        // Render Phase 2: Punch List, Before/After, and Substation Weather Station
+        if (typeof window.renderPunchListTab === 'function') {
+            window.renderPunchListTab(p);
+        }
+        if (typeof window.renderBeforeAfterTab === 'function') {
+            window.renderBeforeAfterTab(p);
+        }
+        if (typeof window.renderSubstationWeatherWidget === 'function') {
+            window.renderSubstationWeatherWidget(p);
         }
     }
 
@@ -3809,22 +3937,31 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                                 const folderDate = new Date().toISOString().split('T')[0];
                                 const filePath = `${folderDate}/${fileName}`;
 
-                                const { data: uploadData, error: uploadError } = await db
-                                    .storage
-                                    .from('project-images')
-                                    .upload(filePath, blob, { contentType: 'image/jpeg' });
-
-                                if (uploadError) {
-                                    console.error('Upload Error:', uploadError);
-                                    alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ' + uploadError.message);
-                                } else {
-                                    const { data: { publicUrl } } = db
+                                let finalPhotoUrl = '';
+                                try {
+                                    const { data: uploadData, error: uploadError } = await db
                                         .storage
                                         .from('project-images')
-                                        .getPublicUrl(filePath);
+                                        .upload(filePath, blob, { contentType: 'image/jpeg' });
 
+                                    if (uploadError) {
+                                        console.warn('[Storage] Upload failed, falling back to compressed dataURL:', uploadError.message);
+                                        finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.65);
+                                    } else {
+                                        const { data: { publicUrl } } = db
+                                            .storage
+                                            .from('project-images')
+                                            .getPublicUrl(filePath);
+                                        finalPhotoUrl = publicUrl || canvas.toDataURL('image/jpeg', 0.65);
+                                    }
+                                } catch (storageEx) {
+                                    console.warn('[Storage] Upload exception, falling back to compressed dataURL:', storageEx);
+                                    finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.65);
+                                }
+
+                                if (finalPhotoUrl) {
                                     p.gallery.push({
-                                        url: publicUrl,
+                                        url: finalPhotoUrl,
                                         date: reportDate,
                                         desc: (desc || `อัปเดตงาน: ${t.name}`) + (window.currentUserEmpId ? ` (รหัสพนักงาน: ${window.currentUserEmpId})` : ''),
                                         taskId: t.id,
@@ -4136,7 +4273,26 @@ window.openProjectTab = function (evt, tabName) {
             if (typeof window.renderProjectDetailMap === 'function') {
                 window.renderProjectDetailMap(window.currentProjectViewData);
             }
+            if (typeof window.renderSubstationWeatherWidget === 'function') {
+                window.renderSubstationWeatherWidget(window.currentProjectViewData);
+            }
         }, 60);
+    }
+
+    if (tabName === 'tabPunchList') {
+        setTimeout(() => {
+            if (typeof window.renderPunchListTab === 'function') {
+                window.renderPunchListTab(window.currentProjectViewData);
+            }
+        }, 30);
+    }
+
+    if (tabName === 'tabBeforeAfter') {
+        setTimeout(() => {
+            if (typeof window.renderBeforeAfterTab === 'function') {
+                window.renderBeforeAfterTab(window.currentProjectViewData);
+            }
+        }, 30);
     }
 };
 

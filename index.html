@@ -368,6 +368,8 @@
                         <button class="tablinks" onclick="openProjectTab(event, 'tabCalendar')"><i class="fa-regular fa-calendar-days"></i> ปฏิทินปฏิบัติงาน</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabDisbursement')"><i class="fa-solid fa-money-bill-transfer"></i> เบิกจ่ายงบประมาณ</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabMap')"><i class="fa-solid fa-map-location-dot"></i> ตำแหน่งสถานี</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabPunchList')"><i class="fa-solid fa-clipboard-check"></i> รายการตรวจรับ (Punch List)</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabBeforeAfter')"><i class="fa-solid fa-code-compare"></i> ภาพ ก่อน-หลัง</button>
                     </div>
 
                     <!-- Tab: WBS -->
@@ -488,9 +490,15 @@
                                     <i class="fa-solid fa-chart-line" style="color: var(--pea-purple);"></i>
                                     S-Curve ความก้าวหน้าสะสมโครงการ
                                 </h2>
-                                <div style="display: flex; gap: 10px; align-items: center;">
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                     <span class="scurve-legend-chip plan-chip"><span class="chip-dash"></span> แผนงาน (Plan)</span>
                                     <span class="scurve-legend-chip actual-chip"><span class="chip-dot"></span> ผลงานจริง (Actual)</span>
+                                    <button type="button" class="btn btn-secondary" onclick="exportSCurveHD('download')" style="font-size: 11.5px; padding: 4px 10px;" title="ดาวน์โหลดรูปกราฟ S-Curve ความละเอียดสูง">
+                                        <i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลดกราฟ (HD)
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="exportSCurveHD('copy')" style="font-size: 11.5px; padding: 4px 10px;" title="คัดลอกรูปกราฟลงคลิปบอร์ดสำหรับวางใน PowerPoint">
+                                        <i class="fa-solid fa-clipboard"></i> คัดลอกกราฟ
+                                    </button>
                                 </div>
                             </div>
                             <div style="position: relative; height: calc(100% - 45px); width: 100%;">
@@ -653,9 +661,90 @@
                                     </a>
                                 </div>
                             </div>
+                            <!-- Live Weather Forecast & Engineering Advisory Widget -->
+                            <div id="substationWeatherWidgetContainer" style="margin-top: 15px;"></div>
+
                             <div id="projectDetailMapContainer"></div>
                         </div>
                     </div> <!-- End Tab Map -->
+
+                    <!-- Tab: Punch List / Defect Tracking -->
+                    <div id="tabPunchList" class="tabcontent" style="display: none;">
+                        <!-- Punch List KPI Ribbon -->
+                        <div class="punch-kpi-ribbon">
+                            <div class="punch-kpi-card">
+                                <div class="punch-kpi-icon" style="background: rgba(116, 44, 129, 0.15); color: var(--pea-purple);">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </div>
+                                <div>
+                                    <div class="punch-kpi-val" id="punchTotalKpi">0</div>
+                                    <div class="punch-kpi-label">รายการทั้งหมด</div>
+                                </div>
+                            </div>
+                            <div class="punch-kpi-card">
+                                <div class="punch-kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <div>
+                                    <div class="punch-kpi-val" id="punchPendingKpi" style="color: #d97706;">0</div>
+                                    <div class="punch-kpi-label">รอดำเนินการแก้ไข</div>
+                                </div>
+                            </div>
+                            <div class="punch-kpi-card">
+                                <div class="punch-kpi-icon" style="background: rgba(59, 130, 246, 0.15); color: #2563eb;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </div>
+                                <div>
+                                    <div class="punch-kpi-val" id="punchResolvedKpi" style="color: #2563eb;">0</div>
+                                    <div class="punch-kpi-label">แก้ไขแล้ว (รอตรวจซ้ำ)</div>
+                                </div>
+                            </div>
+                            <div class="punch-kpi-card">
+                                <div class="punch-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #059669;">
+                                    <i class="fa-solid fa-square-check"></i>
+                                </div>
+                                <div>
+                                    <div class="punch-kpi-val" id="punchClosedKpi" style="color: #059669;">0</div>
+                                    <div class="punch-kpi-label">ตรวจรับเรียบร้อย</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Punch Toolbar -->
+                        <div class="punch-toolbar">
+                            <div class="punch-filters-wrap">
+                                <label style="font-weight: 600; font-size: 12px; color: #475569;"><i class="fa-solid fa-filter"></i> สถานะ:</label>
+                                <button type="button" class="btn-punch-filter active" data-status="all" onclick="setPunchFilterStatus('all')">ทั้งหมด</button>
+                                <button type="button" class="btn-punch-filter" data-status="pending" onclick="setPunchFilterStatus('pending')">รอดำเนินการ</button>
+                                <button type="button" class="btn-punch-filter" data-status="resolved" onclick="setPunchFilterStatus('resolved')">แก้ไขแล้ว</button>
+                                <button type="button" class="btn-punch-filter" data-status="closed" onclick="setPunchFilterStatus('closed')">ตรวจรับแล้ว</button>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <select onchange="setPunchFilterCategory(this.value)" class="pea-select-sm" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 12px; outline: none; background: #f8fafc; font-family: inherit;">
+                                    <option value="all">ทุกหมวดหมู่งาน</option>
+                                    <option value="civil">งานโยธา/โครงสร้าง</option>
+                                    <option value="electrical">งานไฟฟ้า 115 kV</option>
+                                    <option value="control">งานควบคุม/CSCS</option>
+                                    <option value="safety">ความปลอดภัย/SHE</option>
+                                </select>
+                                <button type="button" class="btn btn-primary role-editor" onclick="openAddPunchModal()">
+                                    <i class="fa-solid fa-plus"></i> เพิ่มรายการข้อบกพร่อง
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Punch Items Grid -->
+                        <div id="punchListItemsContainer" class="punch-items-grid">
+                            <!-- Injected by punch-list.js -->
+                        </div>
+                    </div> <!-- End Tab Punch List -->
+
+                    <!-- Tab: Before & After Comparison -->
+                    <div id="tabBeforeAfter" class="tabcontent" style="display: none;">
+                        <div id="beforeAfterTabContainer">
+                            <!-- Injected by before-after.js -->
+                        </div>
+                    </div> <!-- End Tab Before & After -->
                 </section>
 
                 <!-- Admin View -->
@@ -1991,6 +2080,221 @@
         </div>
     </div>
 
+    <!-- EOT (Extension of Time) Modal -->
+    <div id="eotModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content card" style="max-width: 680px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> ประวัติและจัดการการขยายระยะเวลาสัญญา (EOT)
+                    </h2>
+                    <p id="eotProjectTitle" style="margin: 3px 0 0 0; font-size: 12px; color: #64748b;">-</p>
+                </div>
+                <span class="close-modal" onclick="closeEotModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+            </div>
+
+            <!-- EOT Summary Box -->
+            <div id="eotSummaryBox"></div>
+
+            <!-- Table of EOT -->
+            <h3 style="font-size: 13.5px; margin-bottom: 8px; color: #1e293b;"><i class="fa-solid fa-list-ol"></i> รายการขยายเวลาสัญญาที่ได้รับการอนุมัติ</h3>
+            <div class="table-responsive" style="margin-bottom: 20px;">
+                <table class="pea-table" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px; text-align: center;">ครั้งที่</th>
+                            <th style="width: 100px; text-align: center;">ขยายเวลา</th>
+                            <th>เหตุผลการขอขยายสัญญา</th>
+                            <th>เอกสารอ้างอิง/มติ</th>
+                            <th style="width: 110px;">วันที่อนุมัติ</th>
+                            <th style="width: 50px; text-align: center;">ลบ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eotTableBody">
+                        <!-- Injected by contract-eot.js -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Form: Add EOT (for Admin/Editor) -->
+            <div class="role-editor" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 15px;">
+                <h4 style="font-size: 13px; margin: 0 0 10px 0; color: var(--pea-purple);"><i class="fa-solid fa-plus-circle"></i> บันทึกขอขยายระยะเวลาสัญญาใหม่</h4>
+                <form id="eotAddForm" onsubmit="saveNewEotRecord(event)">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-size: 11.5px;">จำนวนวันที่ขอขยาย (วัน) *</label>
+                            <input type="number" min="1" id="eotDaysInput" placeholder="เช่น 30" required style="font-size: 12px;">
+                        </div>
+                        <div class="form-group" style="flex: 1.5;">
+                            <label style="font-size: 11.5px;">วันที่อนุมัติ *</label>
+                            <input type="date" id="eotApproveDateInput" required style="font-size: 12px;">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1.5;">
+                            <label style="font-size: 11.5px;">เหตุผลการขอขยายสัญญา *</label>
+                            <input type="text" id="eotReasonInput" placeholder="เช่น มติ กฟภ., ส่งมอบพื้นที่ล่าช้า, อุทกภัย" required style="font-size: 12px;">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-size: 11.5px;">เลขที่หนังสือ/มติอ้างอิง</label>
+                            <input type="text" id="eotDocNoInput" placeholder="เช่น กฟภ.(กสน.) 123/2569" style="font-size: 12px;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 8px; font-size: 12.5px;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการขยายเวลาสัญญา
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Punch List: Add Item Modal -->
+    <div id="punchAddModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content card" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> บันทึกรายการตรวจรับข้อบกพร่อง (Punch List)
+                </h2>
+                <span class="close-modal" onclick="closeAddPunchModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+            </div>
+            <form id="punchAddForm" onsubmit="saveNewPunchItem(event)">
+                <div class="form-group">
+                    <label>หัวข้อข้อบกพร่อง / จุดที่ต้องแก้ไข *</label>
+                    <input type="text" id="punchTitleInput" placeholder="เช่น สีตู้สวิตช์บอร์ดถลอก, ทอร์กน็อตสายดินไม่แน่น" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ตำแหน่งในสถานีไฟฟ้า</label>
+                        <input type="text" id="punchLocationInput" placeholder="เช่น ลานหม้อแปลง T1, Bay 115 kV">
+                    </div>
+                    <div class="form-group">
+                        <label>หมวดหมู่งาน</label>
+                        <select id="punchCategorySelect">
+                            <option value="civil">งานโยธาและโครงสร้าง</option>
+                            <option value="electrical">งานติดตั้งอุปกรณ์ไฟฟ้า 115 kV</option>
+                            <option value="control">งานควบคุม ป้องกัน และสื่อสาร (CSCS)</option>
+                            <option value="safety">งานความปลอดภัยและสิ่งแวดล้อม (SHE)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ระดับความเร่งด่วน</label>
+                        <select id="punchPrioritySelect">
+                            <option value="normal">ปานกลาง (Normal)</option>
+                            <option value="high">เร่งด่วนมาก (Critical)</option>
+                            <option value="minor">ทั่วไป (Minor)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>กำหนดแล้วเสร็จ</label>
+                        <input type="date" id="punchDueDateInput" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ผู้รับผิดชอบดำเนินการแก้ไข (ผู้รับเหมา/ช่าง)</label>
+                    <input type="text" id="punchContractorInput" placeholder="ระบุชื่อผู้รับจ้าง หรือหัวหน้าชุดช่าง">
+                </div>
+                <div class="form-group">
+                    <label>รายละเอียดและแนวทางแก้ไข</label>
+                    <textarea id="punchDescInput" rows="3" placeholder="ระบุอาการข้อบกพร่อง และวิธีแก้ไขที่กำหนด..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>แนบภาพถ่ายหน้างานก่อนแก้ไข (Before Photo พร้อมประทับลายน้ำ GPS)</label>
+                    <input type="file" id="punchBeforePhotoInput" accept="image/*" class="file-input" style="padding: 6px;">
+                    <div id="punchBeforePhotoPreview" style="margin-top: 8px;"></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกรายการ
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddPunchModal()" style="padding: 10px;">
+                        ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Punch List: Resolve Item Modal -->
+    <div id="punchResolveModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content card" style="max-width: 520px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 16px; color: #10b981; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-check"></i> บันทึกงานแก้ไขเสร็จ (ส่งมอบงานหลังแก้ไข)
+                </h2>
+                <span class="close-modal" onclick="closeResolvePunchModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+            </div>
+            <form id="punchResolveForm" onsubmit="saveResolvePunchItem(event)">
+                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                    <strong id="punchResolveTitle" style="color: #1e293b; font-size: 14px; display: block; margin-bottom: 4px;">-</strong>
+                    <span style="font-size: 12px; color: #64748b;"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: <span id="punchResolveLocation">-</span></span>
+                </div>
+                <div class="form-group">
+                    <label>แนบภาพถ่ายหลังแก้ไขเรียบร้อยแล้ว (After Photo พร้อมประทับลายน้ำ GPS) *</label>
+                    <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input" required style="padding: 6px;">
+                    <div id="punchAfterPhotoPreview" style="margin-top: 8px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>บันทึกการดำเนินการแก้ไข / หมายเหตุเพิ่มเติม</label>
+                    <textarea id="punchResolveNoteInput" rows="3" placeholder="ระบุวิธีการที่ได้แก้ไข เช่น ได้ทำการขัดสนิมและพ่นสีตู้ใหม่เรียบร้อยแล้ว"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn" style="flex: 1; padding: 10px; background: #10b981; color: white;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> ส่งมอบงานแก้ไข
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeResolvePunchModal()" style="padding: 10px;">
+                        ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Before & After Modal -->
+    <div id="beforeAfterModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+        <div class="modal-content card" style="max-width: 580px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-code-compare"></i> เพิ่มจุดเปรียบเทียบภาพ ก่อน-หลัง (Before & After)
+                </h2>
+                <span class="close-modal" onclick="closeAddBeforeAfterModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+            </div>
+            <form id="baAddForm" onsubmit="saveNewBeforeAfterPair(event)">
+                <div class="form-group">
+                    <label>ชื่อจุดเปรียบเทียบ / ตำแหน่งสถานี *</label>
+                    <input type="text" id="baTitleInput" placeholder="เช่น ลานหม้อแปลง T1, อาคารควบคุมสถานี" required>
+                </div>
+                <div class="form-group">
+                    <label>คำอธิบายความเปลี่ยนแปลง</label>
+                    <input type="text" id="baDescInput" placeholder="เช่น ภาพเปรียบเทียบจากพื้นที่ดินถมเดิม สู่ลานไก 115 kV ติดตั้งอุปกรณ์ครบถ้วน">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ภาพก่อนเริ่มงาน (Before) *</label>
+                        <input type="file" id="baBeforeFileInput" accept="image/*" required style="padding: 6px;">
+                        <input type="text" id="baBeforeDateInput" placeholder="ระบุวันที่/ช่วงเวลา เช่น มิ.ย. 2568" style="margin-top: 6px; font-size: 11.5px;">
+                        <div id="baBeforePreview" style="margin-top: 6px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>ภาพปัจจุบัน/แล้วเสร็จ (After) *</label>
+                        <input type="file" id="baAfterFileInput" accept="image/*" required style="padding: 6px;">
+                        <input type="text" id="baAfterDateInput" placeholder="ระบุวันที่/ช่วงเวลา เช่น ปัจจุบัน" style="margin-top: 6px; font-size: 11.5px;">
+                        <div id="baAfterPreview" style="margin-top: 6px;"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกจุดเปรียบเทียบ
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddBeforeAfterModal()" style="padding: 10px;">
+                        ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -2012,6 +2316,11 @@
     <script src="gis-map.js?v=4"></script>
     <script src="realtime-sync.js?v=2"></script>
     <script src="pwa-setup.js?v=1"></script>
+    <script src="contract-eot.js?v=1"></script>
+    <script src="scurve-export.js?v=1"></script>
+    <script src="punch-list.js?v=1"></script>
+    <script src="before-after.js?v=1"></script>
+    <script src="weather-widget.js?v=1"></script>
 
     <!-- Main Application Core -->
     <script src="app.js?v=24"></script>

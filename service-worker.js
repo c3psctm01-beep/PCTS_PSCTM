@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcts-pea-v3.8-cache';
+const CACHE_NAME = 'pcts-pea-v3.9-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,11 @@ const STATIC_ASSETS = [
   './gis-map.js',
   './realtime-sync.js',
   './pwa-setup.js',
+  './contract-eot.js',
+  './scurve-export.js',
+  './punch-list.js',
+  './before-after.js',
+  './weather-widget.js',
   './mascot.jpg',
   './manifest.json',
   './assets/manual/ch1_dashboard.png',

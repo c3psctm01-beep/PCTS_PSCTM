@@ -70,6 +70,9 @@
                             window.projects[idx].tasks = newRecord.tasks || window.projects[idx].tasks;
                             window.projects[idx].gallery = newRecord.gallery || window.projects[idx].gallery;
                             window.projects[idx].disbursement = newRecord.disbursement || window.projects[idx].disbursement;
+                            if (newRecord.eot) window.projects[idx].eot = newRecord.eot;
+                            if (newRecord.punch_list) window.projects[idx].punchList = newRecord.punch_list;
+                            if (newRecord.before_after) window.projects[idx].beforeAfter = newRecord.before_after;
                             if (newRecord.latitude) window.projects[idx].latitude = parseFloat(newRecord.latitude);
                             if (newRecord.longitude) window.projects[idx].longitude = parseFloat(newRecord.longitude);
                             if (newRecord.details) {
@@ -96,6 +99,10 @@
                     if (typeof window.renderAdminProjects === 'function') window.renderAdminProjects();
                     if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
                         window.renderGisMap();
+                    }
+                    if (window.currentProjectViewData && (newRecord && window.currentProjectViewData.id === newRecord.id)) {
+                        if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(window.projects[idx]);
+                        if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(window.projects[idx]);
                     }
                 }
             )

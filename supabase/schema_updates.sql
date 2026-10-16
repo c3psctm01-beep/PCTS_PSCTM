@@ -13,6 +13,9 @@ ADD COLUMN IF NOT EXISTS committee2 TEXT,
 ADD COLUMN IF NOT EXISTS committee3 TEXT,
 ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
 ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS eot JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS punch_list JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS before_after JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- 2. สร้าง Trigger อัปเดต updated_at อัตโนมัติ
@@ -153,3 +156,35 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.projects;
   END IF;
 END $$;
+
+-- 8. ตั้งค่า Supabase Storage Bucket สำหรับรูปภาพโครงการและ Punch List (Phase 1 & 2)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('project-images', 'project-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- นโยบายอ่านรูปภาพ (ทุกคนสามารถเปิดดูภาพได้แบบ Public)
+DROP POLICY IF EXISTS "Public Read Access for Project Images" ON storage.objects;
+CREATE POLICY "Public Read Access for Project Images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'project-images');
+
+-- นโยบายอัปโหลดรูปภาพ (ผู้ใช้ที่ล็อกอินสามารถอัปโหลดได้)
+DROP POLICY IF EXISTS "Authenticated users can upload project images" ON storage.objects;
+CREATE POLICY "Authenticated users can upload project images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'project-images');
+
+-- นโยบายอัปเดต/ลบรูปภาพ (เฉพาะ Admin และ Editor)
+DROP POLICY IF EXISTS "Editors and Admins can update project images" ON storage.objects;
+CREATE POLICY "Editors and Admins can update project images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'project-images' AND public.get_current_user_role() IN ('editor', 'admin'));
+
+DROP POLICY IF EXISTS "Admins can delete project images" ON storage.objects;
+CREATE POLICY "Admins can delete project images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'project-images' AND public.get_current_user_role() = 'admin');
+
