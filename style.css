@@ -182,6 +182,217 @@ html, body {
     border-radius: 0 4px 4px 0;
 }
 
+/* ==========================================================================
+   Sidebar Submenu Tree (DashBoard ภาพรวมสถานะงานก่อสร้าง)
+   ========================================================================== */
+.sidebar-nav li.sidebar-nav-group,
+.sidebar-nav li.sidebar-nav-group.active,
+.sidebar-nav li.sidebar-nav-group:hover {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    border: none !important;
+}
+
+.sidebar-nav li.sidebar-nav-group::before,
+.sidebar-nav li.sidebar-nav-group.active::before,
+.sidebar-nav li.sidebar-nav-group:hover::before {
+    display: none !important;
+    content: none !important;
+}
+
+.sidebar-nav-parent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    position: relative;
+}
+
+.sidebar-nav-parent .parent-title {
+    flex: 1;
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.sidebar-nav-parent .submenu-arrow {
+    font-size: 11px;
+    width: auto;
+    color: #94a3b8;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+    margin-left: auto;
+}
+
+.sidebar-nav-parent:hover {
+    background: rgba(116, 44, 129, 0.06);
+    color: var(--pea-purple);
+    transform: translateX(3px);
+}
+
+.sidebar-nav-parent:hover i {
+    color: var(--pea-purple);
+    transform: scale(1.12);
+}
+
+.sidebar-nav-parent:hover .submenu-arrow {
+    transform: scale(1.1);
+}
+
+.sidebar-nav-group.open .sidebar-nav-parent .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar-nav-group.open .sidebar-nav-parent:hover .submenu-arrow {
+    transform: rotate(180deg) scale(1.1);
+}
+
+.sidebar-nav-group.active > .sidebar-nav-parent {
+    background: linear-gradient(135deg, rgba(116, 44, 129, 0.12) 0%, rgba(116, 44, 129, 0.05) 100%);
+    color: var(--pea-purple);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(116, 44, 129, 0.08);
+}
+
+.sidebar-nav-group.active > .sidebar-nav-parent i {
+    color: var(--pea-purple);
+}
+
+.sidebar-nav-group.active > .sidebar-nav-parent::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 4px;
+    background: var(--pea-purple);
+    border-radius: 0 4px 4px 0;
+}
+
+/* Submenu container */
+.sidebar-submenu {
+    list-style: none !important;
+    margin: 4px 0 6px 14px !important;
+    padding: 4px 0 4px 12px !important;
+    border-left: 2px solid rgba(116, 44, 129, 0.2) !important;
+    display: none !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    animation: sidebarSubmenuSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes sidebarSubmenuSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sidebar-nav-group.open .sidebar-submenu {
+    display: flex !important;
+}
+
+/* Submenu Item */
+.sidebar-nav li.sidebar-subitem {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    user-select: none !important;
+    position: relative !important;
+    background: transparent !important;
+    line-height: 1.35 !important;
+}
+
+.sidebar-nav li.sidebar-subitem::before {
+    display: none !important;
+}
+
+.sidebar-nav li.sidebar-subitem i {
+    font-size: 13px;
+    width: 18px;
+    text-align: center;
+    color: #8e9aaf;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-nav li.sidebar-subitem:hover {
+    background: rgba(116, 44, 129, 0.08) !important;
+    color: var(--pea-purple) !important;
+    transform: translateX(3px) !important;
+}
+
+.sidebar-nav li.sidebar-subitem:hover i {
+    color: var(--pea-purple);
+    transform: scale(1.15);
+}
+
+.sidebar-nav li.sidebar-subitem.active {
+    background: linear-gradient(135deg, rgba(116, 44, 129, 0.15) 0%, rgba(116, 44, 129, 0.07) 100%) !important;
+    color: var(--pea-purple) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(116, 44, 129, 0.08) !important;
+}
+
+.sidebar-nav li.sidebar-subitem.active i {
+    color: var(--pea-purple);
+}
+
+.sidebar-nav li.sidebar-subitem.active::before {
+    display: block !important;
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pea-purple);
+    box-shadow: 0 0 6px var(--pea-purple);
+}
+
+.sidebar-subitem .sidebar-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: rgba(116, 44, 129, 0.1);
+    color: var(--pea-purple);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sidebar-subitem:hover .sidebar-badge {
+    background: rgba(116, 44, 129, 0.18);
+}
+
+.sidebar-subitem.active .sidebar-badge {
+    background: var(--pea-purple);
+    color: #ffffff;
+}
+
 /* User & Auth Footer Card in Sidebar */
 .sidebar-user-section {
     padding: 14px;
@@ -4208,6 +4419,90 @@ body:has(#manual-view.active) .mascot-widget {
 
 [data-theme="dark"] .sidebar-nav li.active i {
     color: #c084fc;
+}
+
+/* Dark mode for submenu */
+[data-theme="dark"] .sidebar-nav li.sidebar-nav-group,
+[data-theme="dark"] .sidebar-nav li.sidebar-nav-group.active,
+[data-theme="dark"] .sidebar-nav li.sidebar-nav-group:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+[data-theme="dark"] .sidebar-nav-parent {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar-nav-parent i {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar-nav-parent:hover {
+    background: rgba(192, 132, 252, 0.12);
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .sidebar-nav-parent:hover i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav-group.active > .sidebar-nav-parent {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(192, 132, 252, 0.12) 100%);
+    color: #f3e8ff;
+}
+
+[data-theme="dark"] .sidebar-nav-group.active > .sidebar-nav-parent i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav-group.active > .sidebar-nav-parent::before {
+    background: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-submenu {
+    border-left-color: rgba(192, 132, 252, 0.28) !important;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem i {
+    color: #64748b;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem:hover {
+    background: rgba(192, 132, 252, 0.14) !important;
+    color: #d8b4fe !important;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem:hover i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(192, 132, 252, 0.12) 100%) !important;
+    color: #f3e8ff !important;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem.active i {
+    color: #c084fc;
+}
+
+[data-theme="dark"] .sidebar-nav li.sidebar-subitem.active::before {
+    background: #c084fc !important;
+    box-shadow: 0 0 6px #c084fc !important;
+}
+
+[data-theme="dark"] .sidebar-subitem .sidebar-badge {
+    background: rgba(192, 132, 252, 0.18);
+    color: #d8b4fe;
+}
+
+[data-theme="dark"] .sidebar-subitem.active .sidebar-badge {
+    background: #c084fc;
+    color: #1e1b4b;
 }
 
 [data-theme="dark"] .sidebar-user-section {

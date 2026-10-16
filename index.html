@@ -42,7 +42,9 @@
     <meta name="theme-color" content="#742C81">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=11">
+    <link rel="stylesheet" href="style.css?v=13">
+    <!-- PSCTM Transmission & Substations Dashboard CSS -->
+    <link rel="stylesheet" href="psctm-dashboard.css?v=3">
 </head>
 
 <body>
@@ -73,9 +75,33 @@
                 <div class="sidebar-section-title">เมนูระบบ</div>
                 <nav class="sidebar-nav">
                     <ul>
-                        <li class="active" data-target="dashboard-view" onclick="toggleSidebar(false)">
+                        <li class="sidebar-nav-group active" id="sidebarGroupPsctm">
+                            <div class="sidebar-nav-parent" id="sidebarNavPsctm" onclick="handlePsctmParentClick(event)">
+                                <i class="fa-solid fa-gauge-high"></i>
+                                <span class="parent-title">DashBoard ภาพรวมสถานะงานก่อสร้าง</span>
+                                <i class="fa-solid fa-chevron-down submenu-arrow"></i>
+                            </div>
+                            <ul class="sidebar-submenu" id="sidebarSubmenuPsctm">
+                                <li class="sidebar-subitem" id="sidebarSubTrans" data-subtab="tab-transmission" onclick="handlePsctmSubtabClick('tab-transmission', event)">
+                                    <i class="fa-solid fa-tower-broadcast"></i>
+                                    <span>สถานะงานก่อสร้างสายส่ง 115 kV</span>
+                                    <span class="sidebar-badge" id="badgeTransCount">0</span>
+                                </li>
+                                <li class="sidebar-subitem" id="sidebarSubStations" data-subtab="tab-substations" onclick="handlePsctmSubtabClick('tab-substations', event)">
+                                    <i class="fa-solid fa-industry"></i>
+                                    <span>สถานะงานก่อสร้างสถานีไฟฟ้า</span>
+                                    <span class="sidebar-badge" id="badgeSubCount">0</span>
+                                </li>
+                                <li class="sidebar-subitem" id="sidebarSubPermits" data-subtab="tab-permits" onclick="handlePsctmSubtabClick('tab-permits', event)">
+                                    <i class="fa-solid fa-file-circle-check"></i>
+                                    <span>สถานะการขออนุญาตก่อสร้าง</span>
+                                    <span class="sidebar-badge" id="badgePermitCount">0</span>
+                                </li>
+                            </ul>
+                        </li>
+                        <li data-target="dashboard-view" onclick="toggleSidebar(false)">
                             <i class="fa-solid fa-chart-pie"></i>
-                            <span>ภาพรวม</span>
+                            <span>สถานะงานก่อสร้างงานโครงการ</span>
                         </li>
                         <li data-target="admin-view" class="role-admin" onclick="toggleSidebar(false)">
                             <i class="fa-solid fa-pen-to-square"></i>
@@ -194,7 +220,7 @@
 
             <div class="content-area">
                 <!-- Dashboard View -->
-                <section id="dashboard-view" class="view-section active">
+                <section id="dashboard-view" class="view-section">
                     <h1 class="page-title" id="dashboardMainTitle">โครงการก่อสร้างทั้งหมด <span class="title-year-badge" id="titleYearBadge">ปี 2569</span></h1>
                     <div class="stats-cards">
                         <div class="card stat-card" onclick="filterByStatus('all')" style="cursor: pointer;" title="คลิกเพื่อดูทั้งหมด">
@@ -336,6 +362,499 @@
                         <!-- Quick Substation Chips Bar -->
                         <div id="gisStationChips" class="gis-station-chips-bar"></div>
                         <div id="gisMapContainer" style="width: 100%; height: 540px; z-index: 1;"></div>
+                    </div>
+                </section>
+
+                <!-- PSCTM Transmission & Substations Dashboard View -->
+                <section id="psctm-dashboard-view" class="view-section active">
+                    <div class="psctm-dashboard-container">
+<div id="printReportHeader" class="print-only print-report-header" style="display: none;">
+      <div class="print-header-top">
+        <div class="print-brand">
+          <div class="print-logo-badge">PEA</div>
+          <div class="print-brand-text">
+            <h1>การไฟฟ้าส่วนภูมิภาค (PROVINCIAL ELECTRICITY AUTHORITY)</h1>
+            <p>ฝ่ายก่อสร้างและบริหารโครงการ (กบส.) · ระบบติดตามสถานะงานก่อสร้างสายส่ง 115 kV สถานีไฟฟ้า และการเบิกจ่าย</p>
+          </div>
+        </div>
+        <div class="print-doc-meta">
+          <div class="print-doc-title">รายงานสรุปผลการดำเนินงาน (Landscape A4)</div>
+          <div class="print-meta-item" id="printReportFileDate">ข้อมูล ณ วันที่: -</div>
+          <div class="print-meta-item" id="printReportPrintDate">พิมพ์รายงานเมื่อ: -</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon-wrapper">
+          <i data-lucide="zap" style="width: 28px; height: 28px;"></i>
+        </div>
+        <div class="brand-titles">
+          <h1>
+            PEA Construction Dashboard (PSCTM)
+            <span class="badge-pea">กฟก.3</span>
+          </h1>
+          <p>ระบบติดตามสถานะงานก่อสร้างสายส่ง 115 kV, สถานีไฟฟ้า และการขออนุญาต</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="file-info-badge" id="fileInfoBadge">
+          <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px;"></i>
+          <span id="activeFileName">กำลังโหลดข้อมูล...</span>
+          <span id="fileDataSourceBadge" class="badge-source"></span>
+        </div>
+
+        <input type="file" id="excelFileInput" class="file-input-hidden" accept=".xlsx, .xls">
+        <button type="button" class="btn-primary role-editor" id="btnUploadExcel" title="อัปโหลดไฟล์ Excel เพื่ออัปเดตข้อมูล">
+          <i data-lucide="upload-cloud" style="width: 15px; height: 15px;"></i>
+          อัปโหลด Excel
+        </button>
+
+        <button type="button" class="btn-secondary" id="btnDownloadExcel" style="display: none;" title="ดาวน์โหลดไฟล์ Excel ต้นฉบับล่าสุด">
+          <i data-lucide="download" style="width: 15px; height: 15px;"></i>
+          ดาวน์โหลด Excel
+        </button>
+
+        <button type="button" class="btn-secondary" id="btnPrintReport" title="พิมพ์รายงานหรือบันทึกเป็น PDF">
+          <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
+          พิมพ์รายงาน
+        </button>
+
+        <button type="button" class="theme-toggle-btn" id="btnThemeToggle" title="สลับโหมด มืด / สว่าง">
+          <i data-lucide="moon" id="themeIcon" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Viewing an older upload (history) banner -->
+    <div id="historyViewBanner" class="network-sync-banner history-view-banner" style="display: none;">
+      <div class="network-sync-banner-content">
+        <i data-lucide="history" style="width: 20px; height: 20px;"></i>
+        <span id="historyViewText">กำลังดูข้อมูลย้อนหลัง</span>
+      </div>
+      <div class="network-sync-banner-actions">
+        <button type="button" class="btn-banner-action" id="btnExitHistoryView">
+          <i data-lucide="corner-up-left" style="width: 14px; height: 14px;"></i>
+          กลับไปข้อมูลล่าสุด
+        </button>
+      </div>
+    </div>
+
+    <!-- Real-time Network Update Alert Banner -->
+    <div id="networkUpdateBanner" class="network-sync-banner" style="display: none;">
+      <div class="network-sync-banner-content">
+        <i data-lucide="bell-ring" style="width: 20px; height: 20px;"></i>
+        <span id="networkUpdateText">มีการอัปเดตข้อมูลใหม่จากเครื่องอื่นในเครือข่าย!</span>
+      </div>
+      <div class="network-sync-banner-actions">
+        <button type="button" class="btn-banner-action" id="btnReloadFromNetwork">
+          <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+          อัปเดตหน้าจอทันที
+        </button>
+        <button type="button" class="btn-banner-dismiss" id="btnDismissNetworkBanner" title="ปิดการแจ้งเตือน">
+          <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <section class="kpi-grid">
+      <!-- KPI 1: Transmission Lines -->
+      <div class="kpi-card purple">
+        <div class="kpi-info">
+          <span class="kpi-title">งานก่อสร้างสายส่ง 115 kV</span>
+          <span class="kpi-value" id="kpiTransCount">0 งาน</span>
+          <span class="kpi-subtext" id="kpiTransProgress">ความก้าวหน้าเฉลี่ย 0%</span>
+        </div>
+        <div class="kpi-icon-box">
+          <i data-lucide="activity" style="width: 22px; height: 22px;"></i>
+        </div>
+      </div>
+
+      <!-- KPI 2: Substations Active -->
+      <div class="kpi-card blue">
+        <div class="kpi-info">
+          <span class="kpi-title">สถานีไฟฟ้ากำลังก่อสร้าง</span>
+          <span class="kpi-value" id="kpiSubCount">0 แห่ง</span>
+          <span class="kpi-subtext" id="kpiSubStatus">เสร็จแล้ว 0 แห่ง / ระหว่างทำ 0 แห่ง</span>
+        </div>
+        <div class="kpi-icon-box">
+          <i data-lucide="building-2" style="width: 22px; height: 22px;"></i>
+        </div>
+      </div>
+
+      <!-- KPI 3: Permits Status -->
+      <div class="kpi-card amber">
+        <div class="kpi-info">
+          <span class="kpi-title">สถานะการขออนุญาตพื้นที่</span>
+          <span class="kpi-value" id="kpiPermitApproved">0 / 0 งาน</span>
+          <span class="kpi-subtext" id="kpiPermitPending">ได้รับอนุญาตแล้ว (รอพิจารณา 0)</span>
+        </div>
+        <div class="kpi-icon-box">
+          <i data-lucide="file-check-2" style="width: 22px; height: 22px;"></i>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- Tab 1: Executive Overview -->
+    <section class="tab-content-panel active" id="tab-overview">
+      <div class="print-only print-section-banner">
+        <h2>ส่วนที่ 1: ภาพรวมความก้าวหน้าโครงการ (Executive Summary & Overview)</h2>
+      </div>
+      <!-- Overview Visual Charts: Progress Bar + Status Doughnut -->
+      <div class="charts-grid-2" style="margin-bottom: 1.5rem;">
+        <!-- Chart 1A: Progress comparison with category filter -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="bar-chart-3" style="width: 18px; height: 18px; color: var(--pea-purple);"></i>
+              เปรียบเทียบผลงานความก้าวหน้าโครงการ (%)
+            </div>
+            <div class="chart-actions">
+              <button type="button" class="chart-toggle-btn active" id="btnFilterOverviewAll">ทั้งหมด</button>
+              <button type="button" class="chart-toggle-btn" id="btnFilterOverviewTrans">สายส่ง 115 kV</button>
+              <button type="button" class="chart-toggle-btn" id="btnFilterOverviewSub">สถานีไฟฟ้า</button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 380px;">
+            <canvas id="overviewProgressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 1B: Status Distribution Doughnut -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="pie-chart" style="width: 18px; height: 18px; color: var(--color-success);"></i>
+              สัดส่วนสถานะโครงการภาพรวม
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 380px;">
+            <canvas id="overviewStatusDonutChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Priority Highlights -->
+      <div class="dashboard-card">
+        <div class="card-header-row">
+          <div class="card-title-group">
+            <i data-lucide="bell-ring" style="width: 20px; height: 20px; color: var(--color-warning);"></i>
+            <h2>งานที่อยู่ระหว่างดำเนินการก่อสร้างในปัจจุบัน (Active Works)</h2>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>ประเภทงาน</th>
+                <th>ชื่องาน / โครงการ</th>
+                <th>ผู้ดำเนินการ / ผู้รับจ้าง</th>
+                <th>ความก้าวหน้า</th>
+                <th>สถานะ / การทดสอบ / ข้อสังเกตหน้างาน</th>
+              </tr>
+            </thead>
+            <tbody id="overviewActiveTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Transmission Lines -->
+    <section class="tab-content-panel" id="tab-transmission">
+      <div class="print-only print-section-banner">
+        <h2>ส่วนที่ 2: รายละเอียดสถานะงานก่อสร้างสายส่ง 115 kV (Transmission Lines)</h2>
+      </div>
+      <div class="dashboard-card">
+        <div class="card-header-row">
+          <div class="card-title-group">
+            <i data-lucide="git-branch" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+            <h2>รายงานสถานะการก่อสร้างสายส่ง 115 เควี ที่อยู่ระหว่างก่อสร้าง</h2>
+          </div>
+          <div class="card-actions-group">
+            <div class="search-input-wrapper">
+              <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+              <input type="text" class="search-input" id="searchTransInput" placeholder="ค้นหาสายส่ง, โครงการ...">
+            </div>
+            <select class="filter-select" id="filterTransProject">
+              <option value="all">ทุกโครงการ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>ที่</th>
+                <th>โครงการ</th>
+                <th>ชื่องานก่อสร้าง สายส่ง 115 kV</th>
+                <th class="cell-num">วงจร-กม.</th>
+                <th>ผู้ก่อสร้าง</th>
+                <th class="cell-num">สะสมปี 68 (%)</th>
+                <th class="cell-num">ผลงานปี 69 รายเดือน</th>
+                <th>ผลงานสะสมปัจจุบัน</th>
+                <th>หมายเหตุ / รายละเอียดหน้างาน</th>
+              </tr>
+            </thead>
+            <tbody id="transTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transmission Charts Grid -->
+      <div class="charts-grid-2" style="margin-top: 1.5rem;">
+        <!-- Chart 2A: Circuit-Km vs Cumulative Progress -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="git-commit" style="width: 18px; height: 18px; color: var(--pea-purple);"></i>
+              เปรียบเทียบระยะทาง (วงจร-กม.) และผลงานสะสม (%)
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="transKmProgressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2B: Transmission Monthly Progress Trend Chart -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="line-chart" style="width: 18px; height: 18px; color: var(--color-info);"></i>
+              แนวโน้มผลงานสายส่งรายเดือน ประจำปี 2569
+            </div>
+            <div class="chart-actions">
+              <button type="button" class="chart-toggle-btn active" id="btnTransModeCumulative">ผลงานสะสม (%)</button>
+              <button type="button" class="chart-toggle-btn" id="btnTransModeMonthly">ผลงานรายเดือน (%)</button>
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="transMonthlyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Substations -->
+    <section class="tab-content-panel" id="tab-substations">
+      <div class="print-only print-section-banner">
+        <h2>ส่วนที่ 3: รายละเอียดสถานะงานก่อสร้างสถานีไฟฟ้า (Substations)</h2>
+      </div>
+
+      <!-- Substation Visual Summary Charts: 30 Stations Donut & Programs Stacked Bar -->
+      <div class="charts-grid-2" style="margin-bottom: 1.5rem;">
+        <!-- Chart 3A: 30 Stations Donut Chart -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="pie-chart" style="width: 18px; height: 18px; color: var(--pea-purple);"></i>
+              สัดส่วนสถานะสถานีไฟฟ้าทั้งหมด (รวม 30 สถานี)
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="subSummaryDonutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3B: Programs Stacked Bar -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="bar-chart-2" style="width: 18px; height: 18px; color: var(--color-info);"></i>
+              สถานะงานแยกตามแผนงานโครงการ
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="subProgramsBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Macro Substation Overview Summary Table -->
+      <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+        <div class="card-header-row">
+          <div class="card-title-group">
+            <i data-lucide="layout-grid" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+            <h2>สรุปภาพรวมสถานีไฟฟ้าตามแผนงานโครงการ (รวม 30 สถานี)</h2>
+          </div>
+          <div class="card-actions-group">
+            <button type="button" class="btn-secondary btn-sm" id="btnViewAllSubstations" title="ดูรายชื่อสถานีไฟฟ้าทั้งหมด 30 สถานี">
+              <i data-lucide="layout-list" style="width: 15px; height: 15px;"></i>
+              ดูรายชื่อสถานีทั้งหมด (30 สถานี)
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>แผนงานโครงการ</th>
+                <th class="cell-num">เป้าหมาย (แห่ง)</th>
+                <th class="cell-num">ก่อสร้างแล้วเสร็จ</th>
+                <th class="cell-num">อยู่ระหว่างดำเนินการ</th>
+                <th class="cell-num">รอจัดจ้าง / ดำเนินการ</th>
+                <th>หมายเหตุ / สถานะสำคัญ</th>
+              </tr>
+            </thead>
+            <tbody id="subSummaryTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+            <tfoot id="subSummaryTableFoot">
+              <!-- Dynamically populated totals -->
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chart 3C: Active Substations Progress Comparison -->
+      <div class="chart-card" style="margin-bottom: 1.5rem;">
+        <div class="chart-header-row">
+          <div class="chart-title">
+            <i data-lucide="activity" style="width: 18px; height: 18px; color: var(--pea-purple);"></i>
+            ผลงานความก้าวหน้าสถานีไฟฟ้าที่อยู่ระหว่างดำเนินการ (%)
+          </div>
+        </div>
+        <div class="chart-canvas-wrapper" style="min-height: 240px;">
+          <canvas id="subActiveProgressChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Active Substations Detail Table -->
+      <div class="dashboard-card">
+        <div class="card-header-row">
+          <div class="card-title-group">
+            <i data-lucide="boxes" style="width: 20px; height: 20px; color: var(--color-info);"></i>
+            <h2>รายละเอียดสถานะงานก่อสร้างสถานีไฟฟ้าที่อยู่ระหว่างดำเนินการ</h2>
+          </div>
+          <div class="card-actions-group">
+            <div class="search-input-wrapper">
+              <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+              <input type="text" class="search-input" id="searchSubInput" placeholder="ค้นหาสถานีไฟฟ้า, WBS...">
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>ที่</th>
+                <th>โครงการ</th>
+                <th>สถานีไฟฟ้า</th>
+                <th>รหัส WBS</th>
+                <th>ผู้รับจ้าง / ดำเนินการ</th>
+                <th>สัญญา / ระยะเวลา</th>
+                <th>ความก้าวหน้า</th>
+                <th>ผู้ควบคุมงาน</th>
+                <th>สถานะงานก่อสร้าง / การทดสอบระบบ</th>
+              </tr>
+            </thead>
+            <tbody id="subDetailTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 5: Permits Tracking -->
+    <section class="tab-content-panel" id="tab-permits">
+      <div class="print-only print-section-banner">
+        <h2>ส่วนที่ 5: สถานะการขออนุญาตเข้าทำประโยชน์ในพื้นที่ (Permits Tracking)</h2>
+      </div>
+
+      <!-- Permits Visual Summary Charts -->
+      <div class="charts-grid-2" style="margin-bottom: 1.5rem;">
+        <!-- Chart 5A: Permit Status Donut -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="pie-chart" style="width: 18px; height: 18px; color: var(--color-warning);"></i>
+              สัดส่วนสถานะการขออนุญาต (14 งาน)
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="permitsStatusDonutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 5B: Permits by Authority Stacked Bar -->
+        <div class="chart-card">
+          <div class="chart-header-row">
+            <div class="chart-title">
+              <i data-lucide="building" style="width: 18px; height: 18px; color: var(--pea-purple);"></i>
+              การขออนุญาตแยกตามหน่วยงานเจ้าของพื้นที่
+            </div>
+          </div>
+          <div class="chart-canvas-wrapper" style="min-height: 290px;">
+            <canvas id="permitsAuthorityBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="card-header-row">
+          <div class="card-title-group">
+            <i data-lucide="clipboard-check" style="width: 20px; height: 20px; color: var(--color-warning);"></i>
+            <h2>สถานะงานขออนุญาตก่อสร้างสายส่ง และสถานีไฟฟ้า</h2>
+          </div>
+          <div class="card-actions-group">
+            <div class="search-input-wrapper">
+              <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+              <input type="text" class="search-input" id="searchPermitInput" placeholder="ค้นหารายชื่องาน, หน่วยงาน...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="filter-pills" id="permitFilterPills">
+          <button type="button" class="filter-pill active" data-filter="all">ทั้งหมด (<span id="countPillAll">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="substation">สถานีไฟฟ้า (<span id="countPillSub">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="transmission">สายส่ง 115 kV (<span id="countPillTrans">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="approved">ได้รับอนุญาตแล้ว (<span id="countPillApproved">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="pending">อยู่ระหว่างพิจารณา (<span id="countPillPending">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="revising">แก้ไขปรับแบบ (<span id="countPillRevising">0</span>)</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>ที่</th>
+                <th>ประเภทงาน</th>
+                <th>รายชื่องานก่อสร้าง</th>
+                <th>รายละเอียดงานที่ขออนุญาต</th>
+                <th>หน่วยงานเจ้าของพื้นที่</th>
+                <th>สถานะการขออนุญาต</th>
+              </tr>
+            </thead>
+            <tbody id="permitsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>ระบบติดตามสถานะงานก่อสร้างสายส่งและสถานีไฟฟ้า (PSCTM) | การไฟฟ้าส่วนภูมิภาค (PEA)</p>
+      <p style="margin-top: 0.25rem;">รองรับการตรวจสอบความถูกต้องไฟล์ Excel อัตโนมัติ (Strict Schema Validation Engine)</p>
+    </footer>
+
+  
+
+  
                     </div>
                 </section>
 
@@ -2353,6 +2872,225 @@
         </div>
     </div>
 
+<!-- Validation Error Modal -->
+  <div class="modal-overlay" id="validationModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>
+          <i data-lucide="alert-triangle" style="width: 22px; height: 22px; color: var(--color-danger);"></i>
+          ไม่สามารถอัปโหลดไฟล์ได้ (ไฟล์ไม่ตรงตามรูปแบบที่กำหนด)
+        </h3>
+        <button type="button" class="modal-close-btn" id="btnCloseValidationModal">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">
+          ไฟล์ Excel ที่ท่านเลือกไม่ผ่านเกณฑ์การตรวจสอบโครงสร้าง ระบบจึงไม่สามารถประมวลผลข้อมูลได้ รายละเอียดข้อผิดพลาดดังนี้:
+        </p>
+        <ul class="validation-error-list" id="validationErrorList">
+          <!-- Populated dynamically -->
+        </ul>
+        <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem; font-size: 0.82rem; color: var(--text-secondary);">
+          <strong style="color: var(--text-primary);">คำแนะนำ:</strong> โปรดตรวจสอบว่าไฟล์มี Sheet และหัวคอลัมน์ตรงตามมาตรฐาน เช่น <code>สถานะสายส่ง (แนบ 1)</code>, <code>สถานะการขออนุญาต</code>, <code>รายละเอียดสถานี (แนบ 2-2)</code> และชีตงบประมาณ WBS
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Popup Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="detailModalTitle">
+          <i data-lucide="info" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+          รายละเอียดงาน
+        </h3>
+        <button type="button" class="modal-close-btn" id="btnCloseDetailModal">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Station List Popup Modal (30 Substations Breakdown) -->
+  <div class="modal-overlay" id="stationListModal">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 id="stationListModalTitle">
+            <i data-lucide="building-2" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+            รายชื่อสถานีไฟฟ้าตามแผนงานโครงการ
+          </h3>
+          <span id="stationListModalSubtitle" class="modal-subtitle"></span>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseStationListModal" title="ปิดหน้าต่าง">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Controls: Search & Filter Pills -->
+        <div class="station-modal-toolbar">
+          <div class="search-input-wrapper" style="flex: 1; max-width: 340px;">
+            <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+            <input type="text" class="search-input" id="stationModalSearch" placeholder="ค้นหาชื่อสถานี, แผนงาน, หมายเหตุ...">
+          </div>
+          <div class="station-modal-pills" id="stationModalPills">
+            <!-- Filter pills generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Station Cards Container -->
+        <div class="station-cards-grid" id="stationCardsContainer">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Upload & History Modal -->
+  <div class="modal-overlay" id="uploadHistoryModal">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3>
+            <i data-lucide="upload-cloud" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+            อัปโหลดไฟล์ & ประวัติการอัปโหลด
+          </h3>
+          <span class="modal-subtitle">เลือกไฟล์ Excel ใหม่ หรือดู / ดาวน์โหลด / นำกลับมาใช้ไฟล์ที่เคยอัปโหลดก่อนหน้านี้</span>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseUploadHistoryModal" title="ปิดหน้าต่าง">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-mode-note" id="uploadModeNote"></div>
+
+        <div class="upload-form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+          <div class="upload-form-row" style="margin-bottom: 0;">
+            <label class="uploader-label" for="uploaderNameInput">
+              <i data-lucide="user" style="width: 13px; height: 13px;"></i>
+              ชื่อผู้อัปโหลด (ไม่บังคับ)
+            </label>
+            <input type="text" class="search-input uploader-input" id="uploaderNameInput" maxlength="60" placeholder="เช่น สมชาย ผบส.">
+          </div>
+          <div class="upload-form-row" style="margin-bottom: 0;">
+            <label class="uploader-label" for="uploadPasscodeInput">
+              <i data-lucide="lock" style="width: 13px; height: 13px; color: var(--pea-purple);"></i>
+              รหัสผ่านสำหรับการอัปโหลด <span style="color: var(--color-danger); font-weight: 700;">*</span>
+            </label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" class="search-input uploader-input" id="uploadPasscodeInput" placeholder="กรอกรหัสผ่าน..." autocomplete="current-password" style="padding-right: 2.2rem; width: 100%;">
+              <button type="button" id="btnTogglePasscodeVisibility" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; align-items: center;" title="แสดง/ซ่อนรหัสผ่าน">
+                <i data-lucide="eye" id="passcodeEyeIcon" style="width: 15px; height: 15px;"></i>
+              </button>
+            </div>
+            <div id="passcodeHelpText" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px;">
+              จำเป็นต้องใส่รหัสผ่านเพื่อยืนยันสิทธิ์การอัปโหลด
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="upload-dropzone" id="uploadDropzone">
+          <i data-lucide="file-up" style="width: 34px; height: 34px;"></i>
+          <span class="upload-dropzone-title">คลิกเพื่อเลือกไฟล์ Excel หรือลากไฟล์มาวางที่นี่</span>
+          <span class="upload-dropzone-sub">รองรับ .xlsx / .xls ตามรูปแบบเทมเพลตรายงานสถานะงานก่อสร้าง</span>
+        </button>
+
+        <div class="history-section-header">
+          <h4><i data-lucide="history" style="width: 16px; height: 16px;"></i> ไฟล์ที่อัปโหลดก่อนหน้านี้</h4>
+          <span class="history-count" id="historyCount"></span>
+        </div>
+        <div class="history-list" id="uploadHistoryList"></div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle);">
+          <button type="button" class="btn-secondary" id="btnDismissUploadModal">
+            <i data-lucide="check" style="width: 15px; height: 15px;"></i>
+            เสร็จสิ้น / ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Options Modal -->
+  <div class="modal-overlay" id="printOptionsModal">
+    <div class="modal-dialog modal-dialog-md">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3>
+            <i data-lucide="printer" style="width: 20px; height: 20px; color: var(--pea-purple);"></i>
+            พิมพ์รายงาน / บันทึกเป็น PDF
+          </h3>
+          <span class="modal-subtitle">จัดรูปแบบพอดีหน้ากระดาษ A4 แนวนอน (Landscape) สวยงาม แบ่งหน้าตามหัวข้ออัตโนมัติ</span>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnClosePrintOptionsModal" title="ปิดหน้าต่าง">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1.15rem;">
+          <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            เลือกรูปแบบรายงานที่ต้องการพิมพ์หรือบันทึกเป็น PDF:
+          </p>
+
+          <div class="print-option-cards" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <label class="print-option-card selected" id="optPrintAllWrap" style="display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 2px solid var(--pea-purple); background: var(--bg-secondary); cursor: pointer; transition: all var(--transition-fast);">
+              <input type="radio" name="printScope" id="optPrintAll" value="all" checked style="margin-top: 3px; accent-color: var(--pea-purple);">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                  <span>พิมพ์รายงานฉบับสมบูรณ์ (ทุกหัวข้อ แยกหน้า A4 แนวนอน)</span>
+                  <span class="badge" style="background: var(--pea-purple-glow); color: var(--pea-purple); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">แนะนำ</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                  รวบรวมข้อมูลครบทั้ง 4 หัวข้อ (ภาพรวม, สายส่ง 115 kV, สถานีไฟฟ้า, และขออนุญาตพื้นที่) โดยแต่ละหัวข้อจัดพอดี 1 หน้ากระดาษ A4 แนวนอน
+                </div>
+              </div>
+            </label>
+
+            <label class="print-option-card" id="optPrintActiveWrap" style="display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-secondary); cursor: pointer; transition: all var(--transition-fast);">
+              <input type="radio" name="printScope" id="optPrintActive" value="active" style="margin-top: 3px; accent-color: var(--pea-purple);">
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary);">
+                  พิมพ์เฉพาะหัวข้อปัจจุบัน (<span id="printCurrentTabName" style="color: var(--pea-purple);">ภาพรวมโครงการ</span>)
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                  พิมพ์เฉพาะข้อมูลในแท็บที่กำลังเปิดดูอยู่ขณะนี้ พอดีหน้ากระดาษ A4 แนวนอน
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div style="background: var(--pea-gradient-subtle); border: 1px solid var(--pea-purple-glow); border-radius: var(--radius-md); padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.25rem;">
+          <strong style="color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem; margin-bottom: 2px;">
+            <i data-lucide="info" style="width: 14px; height: 14px; color: var(--pea-purple);"></i>
+            คำแนะนำสำหรับการบันทึกเป็น PDF:
+          </strong>
+          ในหน้าต่างพิมพ์ของเบราว์เซอร์ ให้เลือก <strong>Destination: "Save as PDF"</strong> (บันทึกเป็น PDF) และเลือก <strong>Layout: "Landscape"</strong> (แนวนอน) เพื่อให้เนื้อหาแสดงผลสวยงามและลงตัวที่สุด
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.6rem;">
+          <button type="button" class="btn-secondary" id="btnCancelPrintOptions">ยกเลิก</button>
+          <button type="button" class="btn-primary" id="btnExecutePrint">
+            <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
+            เริ่มพิมพ์ / ส่งออก PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -2380,6 +3118,17 @@
     <script src="before-after.js?v=1"></script>
     <script src="weather-widget.js?v=1"></script>
     <script src="calendar-manager.js?v=2"></script>
+
+    <!-- Lucide Icons for PSCTM Dashboard -->
+    <script src="assets/lucide.min.js"></script>
+
+    <!-- PSCTM Transmission & Substations Dashboard Engine -->
+    <script src="psctm-supabase-config.js?v=3"></script>
+    <script src="psctm-storage.js?v=3"></script>
+    <script src="psctm-validator.js?v=3"></script>
+    <script src="psctm-parser.js?v=3"></script>
+    <script src="psctm-default-data.js?v=3"></script>
+    <script src="psctm-dashboard.js?v=4"></script>
 
     <!-- Main Application Core -->
     <script src="app.js?v=25"></script>

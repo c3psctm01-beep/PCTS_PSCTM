@@ -52,8 +52,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // ไม่แคชคำขอ Supabase หรือ API ภายนอก
-  if (event.request.url.includes('supabase.co') || event.request.url.includes('googleapis.com')) {
+  // ไม่แคชคำขอ Supabase, Local API, ไฟล์ข้อมูล หรือ API ภายนอก เพื่อให้ข้อมูลเป็นปัจจุบันเสมอ
+  if (event.request.url.includes('/api/') || event.request.url.includes('/data/') || event.request.url.includes('supabase.co') || event.request.url.includes('googleapis.com')) {
     return;
   }
 

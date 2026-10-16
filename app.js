@@ -847,6 +847,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 1. Highlight sidebar item
         navItems.forEach(nav => nav.classList.remove('active'));
+        const psctmGroup = document.getElementById('sidebarGroupPsctm');
+        if (psctmGroup) {
+            psctmGroup.classList.remove('active');
+            document.querySelectorAll('.sidebar-subitem').forEach(sub => sub.classList.remove('active'));
+        }
         const gisNav = document.getElementById('sidebarNavGis');
         if (gisNav) gisNav.classList.add('active');
 
@@ -870,6 +875,109 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 80);
     };
 
+    // --- PSCTM Dashboard Sidebar Submenu Handlers ---
+    window.handlePsctmParentClick = function(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const group = document.getElementById('sidebarGroupPsctm');
+        const isDashboardActive = document.getElementById('psctm-dashboard-view')?.classList.contains('active');
+
+        // Remove active from other nav items
+        navItems.forEach(nav => {
+            if (nav !== group && !nav.classList.contains('sidebar-subitem')) {
+                nav.classList.remove('active');
+            }
+        });
+
+        if (group) {
+            group.classList.add('active');
+        }
+
+        if (!isDashboardActive) {
+            // Hide all sections
+            viewSections.forEach(section => section.classList.remove('active'));
+            const targetEl = document.getElementById('psctm-dashboard-view');
+            if (targetEl) targetEl.classList.add('active');
+
+            const mascot = document.querySelector('.mascot-widget');
+            if (mascot) mascot.style.display = 'flex';
+
+            if (typeof window.renderPsctmDashboard === 'function') {
+                window.renderPsctmDashboard();
+            }
+
+            // Expand submenu
+            if (group) group.classList.add('open');
+        } else {
+            // Already active on dashboard: toggle the submenu open/collapsed
+            if (group) {
+                group.classList.toggle('open');
+            }
+        }
+
+        // If no subtab active, ensure overview is selected
+        const activeSub = document.querySelector('.sidebar-subitem.active');
+        if (!activeSub) {
+            if (window.psctmDashboard && typeof window.psctmDashboard.switchTab === 'function') {
+                window.psctmDashboard.switchTab('tab-overview');
+            }
+        }
+    };
+
+    window.handlePsctmSubtabClick = function(subtabId, e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const group = document.getElementById('sidebarGroupPsctm');
+
+        // Remove active from other top-level nav items
+        navItems.forEach(nav => {
+            if (nav !== group && !nav.classList.contains('sidebar-subitem')) {
+                nav.classList.remove('active');
+            }
+        });
+
+        if (group) {
+            group.classList.add('active');
+            group.classList.add('open');
+        }
+
+        // Highlight this subtab
+        document.querySelectorAll('.sidebar-subitem').forEach(sub => sub.classList.remove('active'));
+        const targetSub = document.querySelector(`.sidebar-subitem[data-subtab="${subtabId}"]`);
+        if (targetSub) {
+            targetSub.classList.add('active');
+        }
+
+        // Ensure psctm-dashboard-view is active
+        const isDashboardActive = document.getElementById('psctm-dashboard-view')?.classList.contains('active');
+        if (!isDashboardActive) {
+            viewSections.forEach(section => section.classList.remove('active'));
+            const targetEl = document.getElementById('psctm-dashboard-view');
+            if (targetEl) targetEl.classList.add('active');
+
+            const mascot = document.querySelector('.mascot-widget');
+            if (mascot) mascot.style.display = 'flex';
+
+            if (typeof window.renderPsctmDashboard === 'function') {
+                window.renderPsctmDashboard();
+            }
+        }
+
+        // Switch to corresponding tab
+        if (window.psctmDashboard && typeof window.psctmDashboard.switchTab === 'function') {
+            window.psctmDashboard.switchTab(subtabId);
+        }
+
+        // Close sidebar on mobile
+        if (window.innerWidth <= 992 && typeof toggleSidebar === 'function') {
+            toggleSidebar(false);
+        }
+    };
+
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetId = item.getAttribute('data-target');
@@ -881,6 +989,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Remove active from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
+
+            // Deactivate PSCTM group and its subitems when switching away
+            const psctmGroup = document.getElementById('sidebarGroupPsctm');
+            if (psctmGroup && targetId !== 'psctm-dashboard-view') {
+                psctmGroup.classList.remove('active');
+                document.querySelectorAll('.sidebar-subitem').forEach(sub => sub.classList.remove('active'));
+            }
 
             // Hide all sections
             viewSections.forEach(section => section.classList.remove('active'));
@@ -905,6 +1020,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.switchProjectView('cards');
                 } else if (typeof window.switchProjectView === 'function') {
                     window.switchProjectView(window.currentProjectViewMode || 'cards');
+                }
+            }
+
+            // If switching to psctm-dashboard-view
+            if (targetId === 'psctm-dashboard-view') {
+                if (typeof window.renderPsctmDashboard === 'function') {
+                    window.renderPsctmDashboard();
                 }
             }
 
@@ -1020,6 +1142,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // If currently in Project Details Gallery view, refresh gallery to update Admin buttons
         if (document.getElementById('project-detail-view')?.classList.contains('active') && window.currentProjectViewData) {
             window.renderGalleryTab(window.currentProjectViewData, window.currentGalleryFilterTaskId || 'all');
+        }
+
+        // Synchronize PSCTM Dashboard Excel upload button based on role
+        if (typeof window.psctmUpdateUploadRole === 'function') {
+            window.psctmUpdateUploadRole();
         }
 
         updateRoleSwitcherUI();
@@ -1318,6 +1445,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (typeof window.updateChartsTheme === 'function') {
             window.updateChartsTheme(theme);
+        }
+        if (typeof window.psctmSetTheme === 'function') {
+            window.psctmSetTheme(theme);
         }
     };
 

@@ -1,0 +1,3287 @@
+﻿window.DEFAULT_DASHBOARD_DATA = {
+  "permits": [
+    {
+      "no": 1,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "คลองส่งน้ำดำเนินสะดวก",
+      "statusText": "คลองส่งน้ำฯ ให้แก้ไขปรับแบบแผนผังการขออนุญาต\r\nอยู่ระหว่าง กอฟ. แก้ไขแบบแผนผัง",
+      "projectName": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 16",
+      "statusGroup": "revising",
+      "statusLabel": "แก้ไขปรับแบบ",
+      "permitDetail": "สะพานทางเชื่อมเข้าสถานีไฟฟ้า"
+    },
+    {
+      "no": 2,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "เทศบาลเมืองพันท้ายนรสิงห์",
+      "statusText": "เทศบาลนครพันท้ายนรสิงห์ รับทราบแล้ว \r\nตามหนังสือที่ สค 53503/580 ลงวันที่ 18 มีนาคม 2569",
+      "projectName": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 13",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "แจ้งก่อสร้างสถานี"
+    },
+    {
+      "no": 3,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "เทศบาลเมืองพันท้ายนรสิงห์",
+      "statusText": "ได้รับอนุญาตแล้ว \r\nแบบขถด.2 เลขที่ 10/2569 ลงวันที่27 กรกฎาคม 2569",
+      "projectName": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 13",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "แจ้งถมดิน"
+    },
+    {
+      "no": 4,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "แขวงทางหลวงชนบทสมุทรสาคร",
+      "statusText": "ได้รับอนุญาตแล้ว \r\nตามหนังสือที่ คค 0703.61/714 ลงวันที่ 6 มีนาคม 2569",
+      "projectName": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 13",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอทางเชื่อม"
+    },
+    {
+      "no": 5,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "แขวงทางหลวงชนบทสมุทรสาคร",
+      "statusText": "ได้รับอนุญาตแล้ว ตามหนังสือที่ คค 0703.61/905 ลงวันที่ 30 มีนาคม 2569",
+      "projectName": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 13",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอดันท่อลอด"
+    },
+    {
+      "no": 6,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "เทศบาลนครอ้อมน้อย",
+      "statusText": "อยู่ระหว่างเทศบาลนครอ้อมน้อย พิจารณา\r\nเทศบาลนครอ้อมน้อยนัดดูพื้นที่เรียบร้อยแล้ว",
+      "projectName": "งานก่อสร้างปรับปรุงสถานีไฟฟ้าอ้อมน้อย 1",
+      "statusGroup": "pending",
+      "statusLabel": "อยู่ระหว่างพิจารณา",
+      "permitDetail": "แจ้งก่อสร้างสถานี"
+    },
+    {
+      "no": 7,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "เทศบาลนครอ้อมน้อย",
+      "statusText": "อยู่ระหว่างเทศบาลนครอ้อมน้อย พิจารณา\r\nเทศบาลนครอ้อมน้อยนัดดูพื้นที่เรียบร้อยแล้ว",
+      "projectName": "งานก่อสร้างปรับปรุงสถานีไฟฟ้าอ้อมน้อย 1",
+      "statusGroup": "pending",
+      "statusLabel": "อยู่ระหว่างพิจารณา",
+      "permitDetail": "แจ้งถมดิน"
+    },
+    {
+      "no": 8,
+      "workType": "สถานีไฟฟ้า",
+      "authority": "เทศบาลนครอ้อมน้อย",
+      "statusText": "อยู่ระหว่าง กวว.(ก3) ประสานส่วนเกี่ยวข้องพิจารณาตำแหน่งต้น Riser Pole",
+      "projectName": "งานก่อสร้างปรับปรุงสถานีไฟฟ้าอ้อมน้อย 1",
+      "statusGroup": "pending",
+      "statusLabel": "อยู่ระหว่างพิจารณา",
+      "permitDetail": "ขอดันท่อลอด"
+    },
+    {
+      "no": 9,
+      "workType": "สายส่ง 115 kV",
+      "authority": "แขวงทางหลวงนครปฐม",
+      "statusText": "ได้รับอนุญาตแล้ว ตามหนังสือที่ คค 06089/ส.2(22-69)/1037 ลงวันที่ 22 เมษายน 2569",
+      "projectName": "งานก่อสร้างสายส่ง 115 เควี เพิ่มจุดจ่ายไฟที่ 2 สถานีไฟฟ้าแรงสูงกำแพงแสน (กฟผ.) ถึงสามแยกตลาดกำแพงแสน",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอปักเสาในพื้นที่แขวงทางหลวง"
+    },
+    {
+      "no": 10,
+      "workType": "สายส่ง 115 kV",
+      "authority": "แขวงทางหลวงกาญจนบุรี",
+      "statusText": "หมวดทางหลวงแกแพรก พิจารณาแล้ว\r\nอยู่ระหว่างแขวงทางหลวงกาญจนบุรี พิจารณาต่อไป",
+      "projectName": "งานก่อสร้างสายส่ง รองรับสถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+      "statusGroup": "pending",
+      "statusLabel": "อยู่ระหว่างพิจารณา",
+      "permitDetail": "ขอปักเสาพาดสาย"
+    },
+    {
+      "no": 11,
+      "workType": "สายส่ง 115 kV",
+      "authority": "พื้นที่เอกชน",
+      "statusText": "ได้รับอนุญาตขยับแนวท่อระบายน้ำและประปา และอนุญาตให้ก่อสร้างสายส่งแล้ว",
+      "projectName": "งานก่อสร้างสายส่ง 115 เควี รองรับสถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว)",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอปักเสาพาดสาย"
+    },
+    {
+      "no": 12,
+      "workType": "สายส่ง 115 kV",
+      "authority": "แขวงทางหลวงสุพรรณบุรีที่ 1",
+      "statusText": "ได้รับอนุญาตแล้ว \r\nตามหนังสือที่ คค 06143/59/2302 ลงวันที่ 19 มีนาคม 2569",
+      "projectName": "งานเชื่อมโยงสายส่งระบบ 115 เควี สถานีไฟฟ้าบริษัท ลูมินัส เอ็นเนอร์ยี จำกัด (SPP)",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอปักเสาพาดสาย"
+    },
+    {
+      "no": 13,
+      "workType": "สายส่ง 115 kV",
+      "authority": "แขวงทางหลวงสุพรรณบุรีที่ 1",
+      "statusText": "ได้รับอนุญาตแล้ว \r\nตามหนังสือที่ คค 06143/61/2392 ลงวันที่ 23 มีนาคม 2569",
+      "projectName": "งานเชื่อมโยงสายส่งระบบ 115 เควี สถานีไฟฟ้าบริษัท สยาม ไชนนิ่ง เอ็นเนอร์ยี จำกัด (SPP)",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอปักเสาพาดสาย"
+    },
+    {
+      "no": 14,
+      "workType": "สายส่ง 115 kV",
+      "authority": "แขวงทางหลวงสุพรรณบุรีที่ 1",
+      "statusText": "ได้รับอนุญาตแล้ว \r\nตามหนังสือที่ คค 06143/60/2579 ลงวันที่ 30 มีนาคม 2569",
+      "projectName": "งานเชื่อมโยงสายส่งระบบ 115 เควี สถานีไฟฟ้าบริษัท สยาม ไชนนิ่ง เอ็นเนอร์ยี จำกัด (SPP)",
+      "statusGroup": "approved",
+      "statusLabel": "ได้รับอนุญาตแล้ว",
+      "permitDetail": "ขอดันท่อลอด"
+    }
+  ],
+  "savedAt": 1791212216639,
+  "fileName": "สถานะงานก่อสร้างสายส่งและสถานีไฟฟ้า_05102026.xlsx",
+  "uploadId": "202610051456566",
+  "ganttPlans": {
+    "กาญจนบุรี 5 (ช)": {
+      "items": [
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว)",
+          "status": "in-progress",
+          "weight": 0.1,
+          "calcPct": 9,
+          "planPerf": 100,
+          "planWeeks": [
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ],
+          "actualPerf": 90,
+          "actualWeeks": [
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ก.ย. 69 W2"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "status": "completed",
+          "weight": 0.05,
+          "calcPct": 5,
+          "planPerf": 100,
+          "planWeeks": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2",
+            "ก.ย. 69 W3"
+          ],
+          "planCalcPct": 5
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "planPerf": 100,
+          "planWeeks": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ต.ค. 69 W1"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "status": "delayed",
+          "weight": 0.1,
+          "calcPct": 0,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 10
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "status": "in-progress",
+          "weight": 0.05,
+          "calcPct": 1.5,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ],
+          "actualPerf": 30,
+          "actualWeeks": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ],
+          "planCalcPct": 5
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W3"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W4",
+            "พ.ย. 69 W1",
+            "พ.ย. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4",
+            "ธ.ค. 69 W1",
+            "ธ.ค. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4",
+            "ธ.ค. 69 W1",
+            "ธ.ค. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ม.ค. 70 W2",
+            "ม.ค. 70 W3"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ม.ค. 70 W4"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ก.พ. 70 W1"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ก.พ. 70 W2",
+            "ก.พ. 70 W3"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ก.พ. 70 W4"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        }
+      ],
+      "tasks": [
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว)",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว)",
+          "perf": 90,
+          "type": "ผลการดำเนินงาน",
+          "status": "in-progress",
+          "weight": 0.1,
+          "calcPct": 9,
+          "timeline": [
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ก.ย. 69 W2"
+          ]
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2",
+            "ก.ย. 69 W3"
+          ]
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ต.ค. 69 W1"
+          ]
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2"
+          ]
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "delayed",
+          "weight": 0.1,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ]
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "perf": 30,
+          "type": "ผลการดำเนินงาน",
+          "status": "in-progress",
+          "weight": 0.05,
+          "calcPct": 1.5,
+          "timeline": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ]
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2"
+          ]
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W3"
+          ]
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W4",
+            "พ.ย. 69 W1",
+            "พ.ย. 69 W2"
+          ]
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4",
+            "ธ.ค. 69 W1",
+            "ธ.ค. 69 W2"
+          ]
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4",
+            "ธ.ค. 69 W1",
+            "ธ.ค. 69 W2"
+          ]
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ม.ค. 70 W2",
+            "ม.ค. 70 W3"
+          ]
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ม.ค. 70 W4"
+          ]
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ก.พ. 70 W1"
+          ]
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ก.พ. 70 W2",
+            "ก.พ. 70 W3"
+          ]
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ก.พ. 70 W4"
+          ]
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        }
+      ],
+      "sheetName": "กาญจนบุรี 5 (ช)",
+      "totalPlan": 50,
+      "projectName": "สถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+      "totalActual": 35.5,
+      "totalWeight": 1,
+      "timelineColumns": [
+        {
+          "week": "1",
+          "month": "ก.ค. 69",
+          "colIndex": 3
+        },
+        {
+          "week": "2",
+          "month": "ก.ค. 69",
+          "colIndex": 4
+        },
+        {
+          "week": "3",
+          "month": "ก.ค. 69",
+          "colIndex": 5
+        },
+        {
+          "week": "4",
+          "month": "ก.ค. 69",
+          "colIndex": 6
+        },
+        {
+          "week": "1",
+          "month": "ส.ค. 69",
+          "colIndex": 7
+        },
+        {
+          "week": "2",
+          "month": "ส.ค. 69",
+          "colIndex": 8
+        },
+        {
+          "week": "3",
+          "month": "ส.ค. 69",
+          "colIndex": 9
+        },
+        {
+          "week": "4",
+          "month": "ส.ค. 69",
+          "colIndex": 10
+        },
+        {
+          "week": "1",
+          "month": "ก.ย. 69",
+          "colIndex": 11
+        },
+        {
+          "week": "2",
+          "month": "ก.ย. 69",
+          "colIndex": 12
+        },
+        {
+          "week": "3",
+          "month": "ก.ย. 69",
+          "colIndex": 13
+        },
+        {
+          "week": "4",
+          "month": "ก.ย. 69",
+          "colIndex": 14
+        },
+        {
+          "week": "1",
+          "month": "ต.ค. 69",
+          "colIndex": 15
+        },
+        {
+          "week": "2",
+          "month": "ต.ค. 69",
+          "colIndex": 16
+        },
+        {
+          "week": "3",
+          "month": "ต.ค. 69",
+          "colIndex": 17
+        },
+        {
+          "week": "4",
+          "month": "ต.ค. 69",
+          "colIndex": 18
+        },
+        {
+          "week": "1",
+          "month": "พ.ย. 69",
+          "colIndex": 19
+        },
+        {
+          "week": "2",
+          "month": "พ.ย. 69",
+          "colIndex": 20
+        },
+        {
+          "week": "3",
+          "month": "พ.ย. 69",
+          "colIndex": 21
+        },
+        {
+          "week": "4",
+          "month": "พ.ย. 69",
+          "colIndex": 22
+        },
+        {
+          "week": "1",
+          "month": "ธ.ค. 69",
+          "colIndex": 23
+        },
+        {
+          "week": "2",
+          "month": "ธ.ค. 69",
+          "colIndex": 24
+        },
+        {
+          "week": "3",
+          "month": "ธ.ค. 69",
+          "colIndex": 25
+        },
+        {
+          "week": "4",
+          "month": "ธ.ค. 69",
+          "colIndex": 26
+        },
+        {
+          "week": "1",
+          "month": "ม.ค. 70",
+          "colIndex": 27
+        },
+        {
+          "week": "2",
+          "month": "ม.ค. 70",
+          "colIndex": 28
+        },
+        {
+          "week": "3",
+          "month": "ม.ค. 70",
+          "colIndex": 29
+        },
+        {
+          "week": "4",
+          "month": "ม.ค. 70",
+          "colIndex": 30
+        },
+        {
+          "week": "1",
+          "month": "ก.พ. 70",
+          "colIndex": 31
+        },
+        {
+          "week": "2",
+          "month": "ก.พ. 70",
+          "colIndex": 32
+        },
+        {
+          "week": "3",
+          "month": "ก.พ. 70",
+          "colIndex": 33
+        },
+        {
+          "week": "4",
+          "month": "ก.พ. 70",
+          "colIndex": 34
+        },
+        {
+          "week": "1",
+          "month": "มี.ค. 70",
+          "colIndex": 35
+        },
+        {
+          "week": "2",
+          "month": "มี.ค. 70",
+          "colIndex": 36
+        },
+        {
+          "week": "3",
+          "month": "มี.ค. 70",
+          "colIndex": 37
+        },
+        {
+          "week": "4",
+          "month": "มี.ค. 70",
+          "colIndex": 38
+        },
+        {
+          "week": "1",
+          "month": "เม.ย. 70",
+          "colIndex": 39
+        },
+        {
+          "week": "2",
+          "month": "เม.ย. 70",
+          "colIndex": 40
+        },
+        {
+          "week": "3",
+          "month": "เม.ย. 70",
+          "colIndex": 41
+        },
+        {
+          "week": "4",
+          "month": "เม.ย. 70",
+          "colIndex": 42
+        }
+      ],
+      "weeksFromStyles": true
+    },
+    "สมุทรสาคร 18 (ช)": {
+      "items": [
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)",
+          "status": "in-progress",
+          "weight": 0.1,
+          "calcPct": 9,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "actualPerf": 90,
+          "actualWeeks": [
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "planPerf": 100,
+          "planWeeks": [
+            "มิ.ย. 69 W4",
+            "ก.ค. 69 W1"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "มิ.ย. 69 W4",
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "status": "completed",
+          "weight": 0.05,
+          "calcPct": 5,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2"
+          ],
+          "planCalcPct": 5
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "planPerf": 100,
+          "planWeeks": [
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2"
+          ],
+          "actualPerf": 100,
+          "actualWeeks": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1"
+          ],
+          "planCalcPct": 10
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "status": "in-progress",
+          "weight": 0.05,
+          "calcPct": 2.25,
+          "planPerf": 100,
+          "planWeeks": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ],
+          "actualPerf": 45,
+          "actualWeeks": [
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2",
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ],
+          "planCalcPct": 5
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ย. 69 W1"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 5
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ย. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 5
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 100,
+          "planWeeks": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 5
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2",
+            "ต.ค. 69 W3"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2",
+            "ต.ค. 69 W3"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ต.ค. 69 W4",
+            "พ.ย. 69 W1"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "พ.ย. 69 W1"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "พ.ย. 69 W2"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "planPerf": 0,
+          "planWeeks": [
+            "ธ.ค. 69 W1"
+          ],
+          "actualPerf": 0,
+          "actualWeeks": [],
+          "planCalcPct": 0
+        }
+      ],
+      "tasks": [
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 1,
+          "name": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว)",
+          "perf": 90,
+          "type": "ผลการดำเนินงาน",
+          "status": "in-progress",
+          "weight": 0.1,
+          "calcPct": 9,
+          "timeline": [
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "มิ.ย. 69 W4",
+            "ก.ค. 69 W1"
+          ]
+        },
+        {
+          "no": 2,
+          "name": "ปรับปรุงที่ดิน",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "มิ.ย. 69 W4",
+            "ก.ค. 69 W1",
+            "ก.ค. 69 W2",
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 3,
+          "name": "ขนย้ายติดตั้งฐานราก",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4",
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2"
+          ]
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ก.ค. 69 W3",
+            "ก.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 4,
+          "name": "ขนย้ายอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ส.ค. 69 W2",
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1"
+          ]
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ส.ค. 69 W1",
+            "ส.ค. 69 W2"
+          ]
+        },
+        {
+          "no": 5,
+          "name": "ติดตั้งอุปกรณ์ป้องกัน 115 kV และหม้อแปลงไฟฟ้ากำลัง",
+          "perf": 100,
+          "type": "ผลการดำเนินงาน",
+          "status": "completed",
+          "weight": 0.1,
+          "calcPct": 10,
+          "timeline": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4",
+            "ก.ย. 69 W1"
+          ]
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ส.ค. 69 W3",
+            "ส.ค. 69 W4"
+          ]
+        },
+        {
+          "no": 6,
+          "name": "ปักเสาภายในสถานีไฟฟ้า",
+          "perf": 45,
+          "type": "ผลการดำเนินงาน",
+          "status": "in-progress",
+          "weight": 0.05,
+          "calcPct": 2.25,
+          "timeline": [
+            "ก.ย. 69 W1",
+            "ก.ย. 69 W2",
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ]
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ย. 69 W1"
+          ]
+        },
+        {
+          "no": 7,
+          "name": "ติดตั้งระบบกราวด์กริด",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ย. 69 W2"
+          ]
+        },
+        {
+          "no": 8,
+          "name": "ลงหินเบอร์ 2",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "perf": 100,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 5,
+          "timeline": [
+            "ก.ย. 69 W3",
+            "ก.ย. 69 W4"
+          ]
+        },
+        {
+          "no": 9,
+          "name": "ติดตั้ง Ladder",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "delayed",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2",
+            "ต.ค. 69 W3"
+          ]
+        },
+        {
+          "no": 10,
+          "name": "ลากสายและติดตั้งสาย Control cable",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W1",
+            "ต.ค. 69 W2",
+            "ต.ค. 69 W3"
+          ]
+        },
+        {
+          "no": 11,
+          "name": "ลากสายและติดตั้งสาย Power cable",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ต.ค. 69 W4",
+            "พ.ย. 69 W1"
+          ]
+        },
+        {
+          "no": 12,
+          "name": "CSCS",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "พ.ย. 69 W1"
+          ]
+        },
+        {
+          "no": 13,
+          "name": "Individual Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "พ.ย. 69 W2"
+          ]
+        },
+        {
+          "no": 14,
+          "name": "Commisioning Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "พ.ย. 69 W3",
+            "พ.ย. 69 W4"
+          ]
+        },
+        {
+          "no": 15,
+          "name": "Settind Relay / End to End Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "perf": 0,
+          "type": "แผนการดำเนินงาน",
+          "status": "plan",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": [
+            "ธ.ค. 69 W1"
+          ]
+        },
+        {
+          "no": 16,
+          "name": "AC Withstand Test",
+          "perf": 0,
+          "type": "ผลการดำเนินงาน",
+          "status": "not-started",
+          "weight": 0.05,
+          "calcPct": 0,
+          "timeline": []
+        }
+      ],
+      "sheetName": "สมุทรสาคร 18 (ช)",
+      "totalPlan": 65,
+      "projectName": "สถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว)",
+      "totalActual": 46.25,
+      "totalWeight": 1,
+      "timelineColumns": [
+        {
+          "week": "1",
+          "month": "มิ.ย. 69",
+          "colIndex": 3
+        },
+        {
+          "week": "2",
+          "month": "มิ.ย. 69",
+          "colIndex": 4
+        },
+        {
+          "week": "3",
+          "month": "มิ.ย. 69",
+          "colIndex": 5
+        },
+        {
+          "week": "4",
+          "month": "มิ.ย. 69",
+          "colIndex": 6
+        },
+        {
+          "week": "1",
+          "month": "ก.ค. 69",
+          "colIndex": 7
+        },
+        {
+          "week": "2",
+          "month": "ก.ค. 69",
+          "colIndex": 8
+        },
+        {
+          "week": "3",
+          "month": "ก.ค. 69",
+          "colIndex": 9
+        },
+        {
+          "week": "4",
+          "month": "ก.ค. 69",
+          "colIndex": 10
+        },
+        {
+          "week": "1",
+          "month": "ส.ค. 69",
+          "colIndex": 11
+        },
+        {
+          "week": "2",
+          "month": "ส.ค. 69",
+          "colIndex": 12
+        },
+        {
+          "week": "3",
+          "month": "ส.ค. 69",
+          "colIndex": 13
+        },
+        {
+          "week": "4",
+          "month": "ส.ค. 69",
+          "colIndex": 14
+        },
+        {
+          "week": "1",
+          "month": "ก.ย. 69",
+          "colIndex": 15
+        },
+        {
+          "week": "2",
+          "month": "ก.ย. 69",
+          "colIndex": 16
+        },
+        {
+          "week": "3",
+          "month": "ก.ย. 69",
+          "colIndex": 17
+        },
+        {
+          "week": "4",
+          "month": "ก.ย. 69",
+          "colIndex": 18
+        },
+        {
+          "week": "1",
+          "month": "ต.ค. 69",
+          "colIndex": 19
+        },
+        {
+          "week": "2",
+          "month": "ต.ค. 69",
+          "colIndex": 20
+        },
+        {
+          "week": "3",
+          "month": "ต.ค. 69",
+          "colIndex": 21
+        },
+        {
+          "week": "4",
+          "month": "ต.ค. 69",
+          "colIndex": 22
+        },
+        {
+          "week": "1",
+          "month": "พ.ย. 69",
+          "colIndex": 23
+        },
+        {
+          "week": "2",
+          "month": "พ.ย. 69",
+          "colIndex": 24
+        },
+        {
+          "week": "3",
+          "month": "พ.ย. 69",
+          "colIndex": 25
+        },
+        {
+          "week": "4",
+          "month": "พ.ย. 69",
+          "colIndex": 26
+        },
+        {
+          "week": "1",
+          "month": "ธ.ค. 69",
+          "colIndex": 27
+        },
+        {
+          "week": "2",
+          "month": "ธ.ค. 69",
+          "colIndex": 28
+        },
+        {
+          "week": "3",
+          "month": "ธ.ค. 69",
+          "colIndex": 29
+        },
+        {
+          "week": "4",
+          "month": "ธ.ค. 69",
+          "colIndex": 30
+        }
+      ],
+      "weeksFromStyles": true
+    }
+  },
+  "uploadedBy": "กบส.",
+  "excelBase64": "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",
+  "lastUpdated": "5 ตุลาคม 2569 เวลา 21:56",
+  "disbursements": [
+    {
+      "summary": {
+        "wbs": "I-68-I-KKHXX.IS.1000",
+        "desc": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 14 (ชั่วค",
+        "prPo": 0,
+        "level": 4,
+        "status": "CRTD AVAC PREL BUDG  // Z0",
+        "actTotal": 0,
+        "allocated": 29073136.18,
+        "remBudget": 285236.54,
+        "currBudget": 29358372.72,
+        "origBudget": 28208212.72,
+        "actMaterial": 0,
+        "actSiteOther": 0,
+        "distributable": 285236.54,
+        "actContracting": 0,
+        "actCoordination": 0
+      },
+      "wbsItems": [
+        {
+          "wbs": "I-68-I-KKHXX.IS.1001",
+          "desc": "งานปรับปรุงที่ดิน",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // D1",
+          "actTotal": 55140.19,
+          "allocated": 0,
+          "remBudget": 459159.81,
+          "currBudget": 514300,
+          "origBudget": 515100,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 514300,
+          "actContracting": 55140.19,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1002",
+          "desc": "งานก่อสร้างถนนลูกรังและหินคลุกบดอัดแน่น",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // D1",
+          "actTotal": 43925.23,
+          "allocated": 0,
+          "remBudget": 112774.77,
+          "currBudget": 156700,
+          "origBudget": 163000,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 156700,
+          "actContracting": 43925.23,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1003",
+          "desc": "งานโยธา",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // C1",
+          "actTotal": 874100,
+          "allocated": 0,
+          "remBudget": 77500,
+          "currBudget": 951600,
+          "origBudget": 978800,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 951600,
+          "actContracting": 874100,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1004",
+          "desc": "งานลงหินเบอร์ 2",
+          "prPo": 0,
+          "level": 5,
+          "status": "TECO  AVAC SETC BUDG ISBD NTUP  // D2",
+          "actTotal": 153000,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 153000,
+          "origBudget": 153600,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 153000,
+          "actContracting": 153000,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1005",
+          "desc": "ระบบ CSCS",
+          "prPo": 0,
+          "level": 5,
+          "status": "TECO  AVAC SETC BUDG ISBD NTUP  // D2",
+          "actTotal": 180000,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 180000,
+          "origBudget": 200000,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 180000,
+          "actContracting": 180000,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1007",
+          "desc": "งานก่อสร้าง สฟฟ.สค.14(ชค)",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP NSCH  // C1",
+          "actTotal": 3150480.4,
+          "allocated": 0,
+          "remBudget": 2930229.32,
+          "currBudget": 6080709.72,
+          "origBudget": 6080709.72,
+          "actMaterial": 0,
+          "actSiteOther": 3117980.4,
+          "distributable": 6080709.72,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1009",
+          "desc": "งานติดตั้งระบบ Fire Alarm",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // C2",
+          "actTotal": 19000,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 19000,
+          "origBudget": 19000,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 19000,
+          "actContracting": 19000,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1010",
+          "desc": "งานก่อสร้างเสาเหล็ก Monopole",
+          "prPo": 61080,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // C1",
+          "actTotal": 3187120,
+          "allocated": 0,
+          "remBudget": 61080,
+          "currBudget": 3248200,
+          "origBudget": 3248200,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 3248200,
+          "actContracting": 3187120,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1011",
+          "desc": "ก่อสร้างสายส่ง 115kV",
+          "prPo": 0,
+          "level": 5,
+          "status": "TECO  AVAC SETC BUDG NTUP  // D2",
+          "actTotal": 6318898.97,
+          "allocated": 0,
+          "remBudget": 10785687.88,
+          "currBudget": 17104586.85,
+          "origBudget": 17104586.85,
+          "actMaterial": 0,
+          "actSiteOther": 5933423.97,
+          "distributable": 17104586.85,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1012",
+          "desc": "งานติดตั้ง SF6 (XMU03S-02) TIELINE",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 24456.13,
+          "allocated": 0,
+          "remBudget": 262.58,
+          "currBudget": 24718.71,
+          "origBudget": 43363.28,
+          "actMaterial": 0,
+          "actSiteOther": 24456.13,
+          "distributable": 24718.71,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1013",
+          "desc": "งานติดตั้ง SF6 (XMU01S-02) TIELINE",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 24573.65,
+          "allocated": 0,
+          "remBudget": 262.58,
+          "currBudget": 24836.23,
+          "origBudget": 43363.28,
+          "actMaterial": 0,
+          "actSiteOther": 24573.65,
+          "distributable": 24836.23,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1014",
+          "desc": "งานติดตั้ง SF6 (XMU10S-08) TIELINE",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 24788.72,
+          "allocated": 0,
+          "remBudget": 262.58,
+          "currBudget": 25051.3,
+          "origBudget": 43363.28,
+          "actMaterial": 0,
+          "actSiteOther": 24788.72,
+          "distributable": 25051.3,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1015",
+          "desc": "งานติดตั้ง SF6 เเทน DIS หน้าวัดโกรกกราก",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 13195.11,
+          "currBudget": 13195.11,
+          "origBudget": 44443.48,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 13195.11,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1016",
+          "desc": "งานติดตั้ง SF6 เเทน DIS คลองกระโจน",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 25065.94,
+          "currBudget": 25065.94,
+          "origBudget": 44443.48,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 25065.94,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1017",
+          "desc": "งานติดตั้ง SF6 (SMF03S-14) TIELINE",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 25263.39,
+          "currBudget": 25263.39,
+          "origBudget": 43363.28,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 25263.39,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1018",
+          "desc": "งานติดตั้ง SF6 เเทน DIS ซอยคลองหลวง",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 26518.66,
+          "currBudget": 26518.66,
+          "origBudget": 47357.6,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 26518.66,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-KKHXX.IS.1019",
+          "desc": "งานปรับปรุงเคเบิลใยเเก้วนำเเสงเข้า สค.14",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 461549,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 461549,
+          "origBudget": 516804.47,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 461549,
+          "actContracting": 461549,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-68-I-TARXX.IS.1001",
+          "desc": "ปป.22kV หน้า สฟฟ.ท่ามะกา 2(ชค)",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 38839.44,
+          "allocated": 0,
+          "remBudget": 1.83,
+          "currBudget": 38841.27,
+          "origBudget": 68874,
+          "actMaterial": 0,
+          "actSiteOther": 38839.44,
+          "distributable": 38841.27,
+          "actContracting": 0,
+          "actCoordination": 0
+        }
+      ],
+      "sheetName": "สาคร14",
+      "totalPrPo": 61080,
+      "projectName": "สถานีไฟฟ้าสมุทรสาคร 14 (ชั่วคราว)",
+      "totalActual": 14555871.73,
+      "totalBudget": 29358372.72,
+      "totalRemaining": 14741420.989999998,
+      "percentCommitted": 49.79,
+      "percentDisbursed": 49.58
+    },
+    {
+      "summary": {
+        "wbs": "I-69-I-BNCXX.19.3904",
+        "desc": "งานก่อสร้างสถานีไฟฟ้าสมุทรสาคร 18 (ชั่วค",
+        "prPo": 0,
+        "level": 4,
+        "status": "CRTD AVAC PREL BUDG  // Z0",
+        "actTotal": 0,
+        "allocated": 9908274.91,
+        "remBudget": 99837.05,
+        "currBudget": 10008111.96,
+        "origBudget": 10008111.96,
+        "actMaterial": 0,
+        "actSiteOther": 0,
+        "distributable": 99837.05,
+        "actContracting": 0,
+        "actCoordination": 0
+      },
+      "wbsItems": [
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.A",
+          "desc": "ก่อสร้างสถานีไฟฟ้าสมุทรสาคร 18 (ช)",
+          "prPo": 362.62,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 1842714.47,
+          "allocated": 0,
+          "remBudget": 5288291.41,
+          "currBudget": 7131005.88,
+          "origBudget": 7131005.88,
+          "actMaterial": 0,
+          "actSiteOther": 1714677.09,
+          "distributable": 7131005.88,
+          "actContracting": 128037.38,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.B",
+          "desc": "กส.สายส่ง 115kV รองรับ สฟฟ.สค.18(ช)",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 18240,
+          "allocated": 0,
+          "remBudget": 1259649.2,
+          "currBudget": 1277889.2,
+          "origBudget": 1277889.2,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 1277889.2,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.C",
+          "desc": "กส.ระบบจำหน่าย 22kV รองรับ สฟฟ.สค.18(ช)",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 1196310.2,
+          "currBudget": 1196310.2,
+          "origBudget": 1196310.2,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 1196310.2,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.D",
+          "desc": "กส.ระบบสื่อสาร รองรับ สฟฟ.สค.18(ช)",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG ISBD NTUP  // C1",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 103286.04,
+          "currBudget": 103286.04,
+          "origBudget": 103286.04,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 103286.04,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.E",
+          "desc": "จุด A ติดตั้ง DIS Tie Line บริเวณ ปากซอย",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 32.13,
+          "allocated": 0,
+          "remBudget": 27102.87,
+          "currBudget": 27135,
+          "origBudget": 27135,
+          "actMaterial": 0,
+          "actSiteOther": 32.13,
+          "distributable": 27135,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.F",
+          "desc": "จุด B ติดตั้ง DIS Tie Line บริเวณ ปากซอย",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 17.87,
+          "allocated": 0,
+          "remBudget": 10673.25,
+          "currBudget": 10691.12,
+          "origBudget": 10691.12,
+          "actMaterial": 0,
+          "actSiteOther": 17.87,
+          "distributable": 10691.12,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.G",
+          "desc": "จุด C ติดตั้ง SF6 แทน DIS (KTB08S-11) บร",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 109.38,
+          "allocated": 0,
+          "remBudget": 44575.1,
+          "currBudget": 44684.48,
+          "origBudget": 44684.48,
+          "actMaterial": 0,
+          "actSiteOther": 109.38,
+          "distributable": 44684.48,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.H",
+          "desc": "จุด D ติดตั้ง SF6 แทน DIS (KTB08S-07) บร",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 6039.08,
+          "allocated": 0,
+          "remBudget": 38645.4,
+          "currBudget": 44684.48,
+          "origBudget": 44684.48,
+          "actMaterial": 0,
+          "actSiteOther": 6039.08,
+          "distributable": 44684.48,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.I",
+          "desc": "จุด E ติดตั้ง DIS ตัดไลน์ วงจร KTB08 บริ",
+          "prPo": 0,
+          "level": 5,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 17.1,
+          "allocated": 0,
+          "remBudget": 9769.02,
+          "currBudget": 9786.12,
+          "origBudget": 9786.12,
+          "actMaterial": 0,
+          "actSiteOther": 17.1,
+          "distributable": 9786.12,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.J",
+          "desc": "จุด F ติดตั้ง SF6 แทน DIS (KTB04S-07) บร",
+          "prPo": 0,
+          "level": 5,
+          "status": "TECO  AVAC SETC BUDG ISBD NTUP  // D2",
+          "actTotal": 26264.03,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 26264.03,
+          "origBudget": 49945.48,
+          "actMaterial": 0,
+          "actSiteOther": 26264.03,
+          "distributable": 26264.03,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.K",
+          "desc": "จุด G ติดตั้ง SF6 ตัดไลน์ วงจร SMI05 บริ",
+          "prPo": 0,
+          "level": 5,
+          "status": "TECO  AVAC SETC BUDG ISBD NTUP  // D3",
+          "actTotal": 22639.7,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 22639.7,
+          "origBudget": 59444.48,
+          "actMaterial": 0,
+          "actSiteOther": 22639.7,
+          "distributable": 22639.7,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-BNCXX.19.3904.L",
+          "desc": "จุด H ติดตั้ง SF6 ตัดไลน์ วงจร SMI05 บริ",
+          "prPo": 0,
+          "level": 5,
+          "status": "CLSD  AVAC SETC BUDG ISBD NTUP  // F4",
+          "actTotal": 13898.66,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 13898.66,
+          "origBudget": 53249.48,
+          "actMaterial": 0,
+          "actSiteOther": 13898.66,
+          "distributable": 13898.66,
+          "actContracting": 0,
+          "actCoordination": 0
+        }
+      ],
+      "sheetName": "สาคร18",
+      "totalPrPo": 362.62,
+      "projectName": "สถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว)",
+      "totalActual": 1929972.42,
+      "totalBudget": 10008111.96,
+      "totalRemaining": 8077776.920000001,
+      "percentCommitted": 19.29,
+      "percentDisbursed": 19.28
+    },
+    {
+      "summary": {
+        "wbs": "I-69-I-KCI01.19.3907",
+        "desc": "งานก่อสร้างสถานีไฟฟ้ากาญจนบุรี 5(ช)",
+        "prPo": 246439.25,
+        "level": 4,
+        "status": "REL AVAC SETC BUDG NTUP  // C1",
+        "actTotal": 1187973.4,
+        "allocated": 0,
+        "remBudget": 8706096.52,
+        "currBudget": 9894069.92,
+        "origBudget": 9894069.92,
+        "actMaterial": 0,
+        "actSiteOther": 204312.65,
+        "distributable": 9894069.92,
+        "actContracting": 859560.75,
+        "actCoordination": 0
+      },
+      "wbsItems": [
+        {
+          "wbs": "I-69-I-SMN01.19.3907",
+          "desc": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 10(คืนคลัง)",
+          "prPo": 0,
+          "level": 4,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 0,
+          "currBudget": 0,
+          "origBudget": 0,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 0,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-SMN02.19.3907",
+          "desc": "ปป. 22kV บริเวณหน้า สฟฟ.สมุทรสาคร 10(ชค)",
+          "prPo": 0,
+          "level": 4,
+          "status": "REL AVAC SETC BUDG NTUP  // D1",
+          "actTotal": 57368.52,
+          "allocated": 0,
+          "remBudget": 41833.48,
+          "currBudget": 99202,
+          "origBudget": 99202,
+          "actMaterial": 0,
+          "actSiteOther": 57368.52,
+          "distributable": 99202,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCI02.19.3907",
+          "desc": "งานก่อสร้างสายส่ง 115 kV (ภายนอก)",
+          "prPo": 255033.6,
+          "level": 4,
+          "status": "REL AVAC SETC BUDG NTUP  // C1",
+          "actTotal": 985623.04,
+          "allocated": 0,
+          "remBudget": 6997334.33,
+          "currBudget": 7982957.37,
+          "origBudget": 7982957.37,
+          "actMaterial": 0,
+          "actSiteOther": 518995.45,
+          "distributable": 7982957.37,
+          "actContracting": 466627.59,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCI03.19.3907",
+          "desc": "งาน ปป. 22kV (ใต้ 115kV) ช่วง สฟฟ.กจ.5(ช",
+          "prPo": 0,
+          "level": 4,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 2791950.44,
+          "currBudget": 2791950.44,
+          "origBudget": 2791950.44,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 2791950.44,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCI04.19.3907",
+          "desc": "งาน ปป. 22kV ช่วง สฟฟ.กจ.5(ช) - ซอยทุ่งน",
+          "prPo": 0,
+          "level": 4,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 1451420.12,
+          "currBudget": 1451420.12,
+          "origBudget": 1451420.12,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 1451420.12,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCI05.19.3907",
+          "desc": "งาน ปป. 22kV ช่วง สฟฟ.กจ.5(ช) - ศูนย์สร้",
+          "prPo": 0,
+          "level": 4,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 225852.72,
+          "currBudget": 225852.72,
+          "origBudget": 225852.72,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 225852.72,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCI06.19.3907",
+          "desc": "งานก่อสร้างเคเบิลใยแก้วนำแสง",
+          "prPo": 0,
+          "level": 4,
+          "status": "CRTD AVAC SETC BUDG  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 302512.74,
+          "currBudget": 302512.74,
+          "origBudget": 302512.74,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 302512.74,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.A",
+          "desc": "ติดตั้ง DIS Tie Line วงจร KCU03-KCU05",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 5226.12,
+          "currBudget": 5226.12,
+          "origBudget": 5226.12,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 5226.12,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.B",
+          "desc": "ติดตั้ง DIS Tie Line วงจร KCU01-KCU02",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 5222.32,
+          "currBudget": 5222.32,
+          "origBudget": 5222.32,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 5222.32,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.C",
+          "desc": "เปลี่ยน DIS ตัดไลน์ เป็น Loop Line วงจร",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 2794.44,
+          "currBudget": 2794.44,
+          "origBudget": 2794.44,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 2794.44,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.D",
+          "desc": "ติดตั้ง DIS Loop Line วงจร KCU05-KCU06",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 5226.12,
+          "currBudget": 5226.12,
+          "origBudget": 5226.12,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 5226.12,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.E",
+          "desc": "ติดตั้ง SF6 ตัดไลน์ วงจร KCU05",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 47791.28,
+          "currBudget": 47791.28,
+          "origBudget": 47791.28,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 47791.28,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.F",
+          "desc": "ติดตั้ง SF6 แทน DIS (KCA09S-03) บริเวณ",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 47997.2,
+          "currBudget": 47997.2,
+          "origBudget": 47997.2,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 47997.2,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.G",
+          "desc": "ติดตั้ง SF6 Tie Line วงจร KCA04-KCU06",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 48054.48,
+          "currBudget": 48054.48,
+          "origBudget": 48054.48,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 48054.48,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.H",
+          "desc": "ติดตั้ง SF6 ตัดไลน์ วงจร KCU01",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 46900.48,
+          "currBudget": 46900.48,
+          "origBudget": 46900.48,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 46900.48,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.I",
+          "desc": "ติดตั้ง SF6 แทน DIS (TMA02S-06)",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 47489.48,
+          "currBudget": 47489.48,
+          "origBudget": 47489.48,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 47489.48,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.J",
+          "desc": "ติดตั้ง DIS ตัดไลน์ วงจร KCU01",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 46345.96,
+          "currBudget": 46345.96,
+          "origBudget": 46345.96,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 46345.96,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-KCIPC.19.3907.K",
+          "desc": "ติดตั้ง DIS Tie Line วงจร KCU01-KCU03",
+          "prPo": 0,
+          "level": 5,
+          "status": "CRTD AVAC SETC BUDG NTUP  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 5430.92,
+          "currBudget": 5430.92,
+          "origBudget": 5430.92,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 5430.92,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-IMDXX.19.B907",
+          "desc": "จัดซื้อพัสดุงานก่อสร้าง สฟฟ.กจ.5 (ชค)",
+          "prPo": 716557.8,
+          "level": 3,
+          "status": "REL AVAC BUDG  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 13894191.21,
+          "currBudget": 13894191.21,
+          "origBudget": 16864796.21,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 13894191.21,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-SUBXX.19.B907",
+          "desc": "จัดซื้ออุปกรณ์ป้องกัน สฟฟ.กจ.5 (ชค)",
+          "prPo": 0,
+          "level": 3,
+          "status": "REL AVAC BUDG ISBD  // C1",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 393375.7,
+          "currBudget": 393375.7,
+          "origBudget": 1049575.7,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 393375.7,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-PSCXX.19.B907",
+          "desc": "จัดซื้อระบบกราวน์กริด สฟฟ.กจ.5 (ชค)",
+          "prPo": 0,
+          "level": 3,
+          "status": "REL AVAC BUDG  // B2",
+          "actTotal": 0,
+          "allocated": 0,
+          "remBudget": 464550,
+          "currBudget": 464550,
+          "origBudget": 464550,
+          "actMaterial": 0,
+          "actSiteOther": 0,
+          "distributable": 464550,
+          "actContracting": 0,
+          "actCoordination": 0
+        },
+        {
+          "wbs": "I-69-I-GMDXX.19.B907",
+          "desc": "จัดซื้อ Termination Kit สฟฟ.กจ.5 (ชค)",
+          "prPo": 0,
+          "level": 3,
+          "status": "REL AVAC BUDG ISBD  // B2",
+          "actTotal": 165600,
+          "allocated": 0,
+          "remBudget": 7200,
+          "currBudget": 172800,
+          "origBudget": 172800,
+          "actMaterial": 165600,
+          "actSiteOther": 0,
+          "distributable": 172800,
+          "actContracting": 0,
+          "actCoordination": 0
+        }
+      ],
+      "sheetName": "กาญ5",
+      "totalPrPo": 1218030.65,
+      "projectName": "สถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+      "totalActual": 2396564.96,
+      "totalBudget": 37672882.22,
+      "totalRemaining": 34058286.61,
+      "percentCommitted": 9.59,
+      "percentDisbursed": 6.36
+    }
+  ],
+  "excelFileName": "สถานะงานก่อสร้างสายส่งและสถานีไฟฟ้า_05102026.xlsx",
+  "excelFileSize": 62498,
+  "isCustomUpload": true,
+  "substationsDetail": [
+    {
+      "no": 1,
+      "wbs": "P-TDD02.2-I-SMNS1.THS2.4",
+      "name": "ท่าทราย 1 Renovate",
+      "admin": "กจค.2(บก2)",
+      "project": "คพจ.2",
+      "contract": "1/10/67 - 7/6/69",
+      "duration": "582 \r\n(540+42+32)",
+      "progress": 100,
+      "committee": "1. นายสมชาย โคตรพัฒน์     รฝ.บก2\r\n2. นายพัทธนันท์ พชิราสุวรรณ์ชล     รฝ.ปบ.(ก3)\r\n3. นายนันทวิทย์ อุยยามวงศ์     วศก.9 กจค.2(บก1)",
+      "contractor": "บริษัท อาร์ เอส เอส 2016 จำกัด (มหาชน)",
+      "statusText": "งานก่อสร้างแล้วเสร็จ\r\nAC Withstand Voltage Test เมื่อวันที่ 2 - 3 พฤษภาคม 2569",
+      "supervisor": "นายกำพล ตุ้ยเต็มวงค์\r\nอก.รย.(ก3)"
+    },
+    {
+      "no": 2,
+      "wbs": "I-68-I-KKHXX.IS.1000",
+      "name": "สมุทรสาคร 14 (ชั่วคราว)",
+      "admin": "กรย.(ก3)",
+      "project": "งบลงทุนเร่งด่วน ปี 2568",
+      "contract": "-",
+      "duration": "-",
+      "progress": 100,
+      "committee": "",
+      "contractor": "กฟภ. ดำเนินการเอง",
+      "statusText": "งานก่อสร้างแล้วเสร็จ\r\nAC Withstand Voltage Test เมื่อวันที่ 28 - 29 มิถุนายน 2569\r\nจ่ายไฟวันที่ 1 กรกฎาคม 2569",
+      "supervisor": "นายวัชระ เวทีภิรมย์\r\nพชง.7 ผจส.กรย.(ก3)"
+    },
+    {
+      "no": 3,
+      "wbs": "I-68-I-SMNXX.19.3911",
+      "name": "สมุทรสาคร 17 (ชั่วคราว)",
+      "admin": "กรย.(ก3)",
+      "project": "งบลงทุนเร่งด่วน ปี 2568",
+      "contract": "-",
+      "duration": "-",
+      "progress": 100,
+      "committee": "",
+      "contractor": "กฟภ. ดำเนินการเอง",
+      "statusText": "งานก่อสร้างแล้วเสร็จ\r\nAC Withstand เมื่อวันที่ 20 กุมภาพันธ์ 2569 \r\nจ่ายไฟวันที่ 22 กุมภาพันธ์ 2569",
+      "supervisor": "นายจักรพันธ์ นรเหรียญ\r\nพชง.6 ผจส.กรย.(ก3)"
+    },
+    {
+      "no": 4,
+      "wbs": "I-69-I-BNCXX.19.3904",
+      "name": "สมุทรสาคร 18 (ชั่วคราว)",
+      "admin": "กรย.(ก3)",
+      "project": "งบลงทุนเร่งด่วน ปี 2569",
+      "contract": "-",
+      "duration": "-",
+      "progress": 46.25,
+      "committee": "",
+      "contractor": "กฟภ. ดำเนินการเอง",
+      "statusText": "รื้อถอนสถานีไฟฟ้าสมุทรสาคร 16 (ชั่วคราว) งานรื้อถอนดำเนินการส่งคืนผลิตภัณฑ์คอนกรีต 100% เหลืองานรื้อถอนสายกราวด์กริดภายในสถานีไฟฟ้าฯ \r\nสถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว) อยู่ระหว่าง กกฟ.2 ทำฐานรากสำหรับเสา 115 kV ขั้นตอนปักเสาภายในสถานีได้ 45% ของงานปักเสาภายในสถานีไฟฟ้า",
+      "supervisor": "นายจักรพันธ์ นรเหรียญ\r\nพชง.6 ผจส.กรย.(ก3)"
+    },
+    {
+      "no": 5,
+      "wbs": "I-69-I-KCI01.19.3907",
+      "name": "กาญจนบุรี 5 (ชั่วคราว)",
+      "admin": "กรย.(ก3)",
+      "project": "งบลงทุนเร่งด่วน ปี 2569",
+      "contract": "-",
+      "duration": "-",
+      "progress": 35.5,
+      "committee": "",
+      "contractor": "กฟภ. ดำเนินการเอง",
+      "statusText": "รื้อย้ายอุปกรณ์ป้องกัน 22,115 kV และหม้อแปลงกำลัง จากสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว) ได้ประมาณ 90% ของงานรื้อถอน เหลืองานรื้อถอนสายกราวด์กริดภายในสถานีไฟฟ้าฯ และส่งคืนผลิตภัณฑ์คอนกรีต\r\nสถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว) งานขนย้ายอุปกรณ์และหม้อแปลงไฟฟ้ากำลังจากสถานีไฟฟ้าสมุทรสาคร 10 (ชั่วคราว) ไปติดตั้งสถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว) แล้วเสร็จ อยู่ระหว่างขั้นตอนปักเสาภายในสถานีไฟฟ้า",
+      "supervisor": "นายพลากร จงอมรสิริเกษม\r\nพชง.3 ผจร.กรย.(ก3)"
+    }
+  ],
+  "transmissionLines": [
+    {
+      "no": 1,
+      "name": "สถานีไฟฟ้าสินสาคร - สถานีไฟฟ้าสมุทรสาคร 13 - สถานีไฟฟ้าสมุทรสาคร 8",
+      "builder": "กกฟ.2",
+      "project": "คพจ.1",
+      "remarks": "งานก่อสร้างฐานรากเสาและสมอบกคอนกรีต ดำเนินการแล้ว 305 ฐาน\r\nงานปักเสา คอร. 22 เมตร ดำเนินการแล้ว 313 ต้น\r\nงานพาดสายไฟฟ้าและติดตั้งอุปกรณ์ ดำเนินการแล้ว 54,063/54,063 เมตร\r\nดำเนินการแล้วเสร็จ",
+      "circuitKm": 6.85,
+      "monthly2569": {
+        "ม.ค.": 5,
+        "ก.พ.": 2,
+        "มี.ค.": 8,
+        "เม.ย.": 5,
+        "พ.ค.": 4,
+        "มิ.ย.": 7,
+        "ก.ค.": 3,
+        "ส.ค.": 1,
+        "ก.ย.": 0,
+        "ต.ค.": 0,
+        "พ.ย.": 0,
+        "ธ.ค.": 0
+      },
+      "progress2568": 65,
+      "totalProgress": 100
+    },
+    {
+      "no": 2,
+      "name": "Cut&Turn (สถานีไฟฟ้าสมุทรสาคร 4-สถานีไฟฟ้าสมุทรสาคร 5)-สถานีไฟฟ้าสมุทรสาคร 11",
+      "builder": "กกฟ.2",
+      "project": "คพจ.2",
+      "remarks": "ชลประทานสมุทรสาคร และพื้นที่เอกชน อนุญาตให้ดำเนินการปักเสา พาดสายแล้ว\r\nติดตั้งเสา Monopole แล้ว 10/10 ต้น พร้อมพาดสาย",
+      "circuitKm": 10,
+      "monthly2569": {
+        "ม.ค.": 0,
+        "ก.พ.": 0,
+        "มี.ค.": 1,
+        "เม.ย.": 2,
+        "พ.ค.": 1,
+        "มิ.ย.": 1,
+        "ก.ค.": 0,
+        "ส.ค.": 0,
+        "ก.ย.": 0,
+        "ต.ค.": 0,
+        "พ.ย.": 0,
+        "ธ.ค.": 0
+      },
+      "progress2568": 95,
+      "totalProgress": 100
+    },
+    {
+      "no": 3,
+      "name": "เพิ่มจุดจ่ายไฟที่ 2 สถานีไฟฟ้าแรงสูงกำแพงแสน (กฟผ.) ถึงสามแยกตลาดกำแพงแสน",
+      "builder": "กกฟ.2",
+      "project": "งบลงทุน",
+      "remarks": "งานก่อสร้างฐานรากเสาและสมอบกคอนกรีต ดำเนินการแล้ว 67  ฐาน\r\nงานปักเสา คอร. 22 เมตร ดำเนินการแล้ว 66 ต้น\r\nงานพาดสายไฟฟ้าและติดตั้งอุปกรณ์ ดำเนินการแล้ว 16,782 เมตร\r\nกำหนด AC Withstand วันที่ 9 สิงหาคม 2569",
+      "circuitKm": 2.7,
+      "monthly2569": {
+        "ม.ค.": 8,
+        "ก.พ.": 15,
+        "มี.ค.": 19,
+        "เม.ย.": 10,
+        "พ.ค.": 10,
+        "มิ.ย.": 6,
+        "ก.ค.": 27,
+        "ส.ค.": 0,
+        "ก.ย.": 0,
+        "ต.ค.": 0,
+        "พ.ย.": 0,
+        "ธ.ค.": 0
+      },
+      "progress2568": 5,
+      "totalProgress": 100
+    },
+    {
+      "no": 4,
+      "name": "Tap line (สถานีไฟฟ้าสมุทรสาคร 6 - สถานีไฟฟ้าสินสาคร) - สถานีไฟฟ้าสมุทรสาคร 14 (ชั่วคราว)",
+      "builder": "กกฟ.2",
+      "project": "งบลงทุน(เร่งด่วน)",
+      "remarks": "งานก่อสร้างฐานรากเสาและสมอบกคอนกรีต ดำเนินการแล้ว 185 ฐาน\r\nงานปักเสา คอร. 22 เมตร ดำเนินการแล้ว 181 ต้น\r\nงานพาดสายไฟฟ้าและติดตั้งอุปกรณ์ ดำเนินการแล้ว 41,586/43,158 เมตร\r\nอยู่ระหว่างรอดับไฟเพื่อติดตั้งเสา Monopole มีแผนดำเนินการวันที่ \r\n24 พฤษภาคม 2569",
+      "circuitKm": 7.11,
+      "monthly2569": {
+        "ม.ค.": 2,
+        "ก.พ.": 3,
+        "มี.ค.": 0,
+        "เม.ย.": 0,
+        "พ.ค.": 5,
+        "มิ.ย.": 0,
+        "ก.ค.": 0,
+        "ส.ค.": 0,
+        "ก.ย.": 0,
+        "ต.ค.": 0,
+        "พ.ย.": 0,
+        "ธ.ค.": 0
+      },
+      "progress2568": 90,
+      "totalProgress": 100
+    },
+    {
+      "no": 5,
+      "name": "Tap line (สถานีไฟฟ้ากาญจนบุรี 2 - สถานีไฟฟ้าพนมทวน) - สถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+      "builder": "ผกร.กรย.(ก3)",
+      "project": "งบลงทุน(เร่งด่วน)",
+      "remarks": "งานปักเสา คอร. 22 เมตร ดำเนินการแล้ว 45/73 ต้น\r\nงานปักเสา Monopole 20 เมตร ดำเนินการแล้ว 0/4 ต้น\r\nฐานราก ดำเนินการแล้ว 68/69 ฐาน (ฐานเดี่ยว 65 ฐาน/คู่ 4 ฐาน)\r\nติดตั้ง ABS ขนาด 2000 A ใหม่ ดำเนินการแล้ว 0/1 ชุด",
+      "circuitKm": 3.12,
+      "monthly2569": {
+        "ม.ค.": 0,
+        "ก.พ.": 0,
+        "มี.ค.": 0,
+        "เม.ย.": 0,
+        "พ.ค.": 0,
+        "มิ.ย.": 0,
+        "ก.ค.": 25,
+        "ส.ค.": 8,
+        "ก.ย.": 0,
+        "ต.ค.": 0,
+        "พ.ย.": 0,
+        "ธ.ค.": 0
+      },
+      "progress2568": 0,
+      "totalProgress": 33
+    }
+  ],
+  "substationsSummary": {
+    "programs": [
+      {
+        "name": "คพจ.1",
+        "notes": "สมุทรสาคร 13 (คาดได้ผู้รับจ้างไตรมาส 3-4 ปี 2569)",
+        "target": 10,
+        "stations": [
+          {
+            "name": "กาญจนบุรี 3",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "เลาขวัญ",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สามชุก",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สุพรรณบุรี 2",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "บ้านแพ้ว 2",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 15",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "ดอนเจดีย์ (50 MVA)",
+            "notes": "เพิ่มหม้อแปลง 50 MVA แล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (เพิ่มหม้อแปลง)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "บ่อพลอย (50 MVA)",
+            "notes": "เพิ่มหม้อแปลง 50 MVA แล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (เพิ่มหม้อแปลง)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 3",
+            "notes": "งาน Renovate แล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 2 (Renovate)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 13",
+            "notes": "อยู่ระหว่างจัดหาที่ดิน/ออกแบบ หาผู้รับจ้าง (คาดได้ผู้รับจ้างไตรมาส 3-4 ปี 2569)",
+            "status": "procuring",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "รอจัดจ้าง / ดำเนินการ"
+          },
+          {
+            "name": "นครปฐม 4",
+            "notes": "ยกเลิกโครงการ (ไม่นับรวมในเป้าหมาย 10 สถานี)",
+            "status": "cancelled",
+            "category": "สถานียกเลิก",
+            "statusLabel": "ยกเลิกโครงการ"
+          },
+          {
+            "name": "สมุทรสาคร 14",
+            "notes": "ยกเลิกโครงการ (ไม่นับรวมในเป้าหมาย 10 สถานี)",
+            "status": "cancelled",
+            "category": "สถานียกเลิก",
+            "statusLabel": "ยกเลิกโครงการ"
+          }
+        ],
+        "completed": 9,
+        "procuring": 1,
+        "inProgress": 0
+      },
+      {
+        "name": "คพจ.2",
+        "notes": "กระทุ่มแบน 7, อ้อมน้อย 1 (Renovate), สมุทรสาคร 13",
+        "target": 16,
+        "stations": [
+          {
+            "name": "สมุทรสาคร 10",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 11",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "บ้านโป่ง 3",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "อ้อมน้อย 5",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "ท่ามะกา 2",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "ท่าม่วง 2",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "กระทุ่มแบน 6",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 16",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "พุทธมณฑล 3",
+            "notes": "ก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 1",
+            "notes": "งาน Renovate แล้วเสร็จ",
+            "status": "completed",
+            "category": "แผนงานที่ 2 (Renovate)",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "ท่าทราย 1 Renovate",
+            "notes": "งานก่อสร้างแล้วเสร็จ AC Withstand Voltage Test วันที่ 2 - 3 พฤษภาคม 2569",
+            "status": "completed",
+            "category": "แผนงานที่ 2 (Renovate)",
+            "detailIndex": 0,
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 16 (ชั่วคราว)",
+            "notes": "สถานีไฟฟ้าชั่วคราวก่อสร้างแล้วเสร็จ (รื้อถอนอุปกรณ์ไปติดตั้ง สฟ.สมุทรสาคร 18)",
+            "status": "completed",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "อ้อมน้อย 1 (ชั่วคราว)",
+            "notes": "สถานีไฟฟ้าชั่วคราวก่อสร้างแล้วเสร็จ",
+            "status": "completed",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "กระทุ่มแบน 7",
+            "notes": "อยู่ระหว่างจัดหาที่ดิน (รอซื้อที่ดินจาก กฟผ.)",
+            "status": "procuring",
+            "category": "แผนงานที่ 1 (สถานีใหม่)",
+            "statusLabel": "รอจัดจ้าง / ดำเนินการ"
+          },
+          {
+            "name": "สมุทรสาคร 13",
+            "notes": "เพิ่มหม้อแปลง พร้อมโครงการ คพจ.1",
+            "status": "procuring",
+            "category": "แผนงานที่ 1 (เพิ่มหม้อแปลง)",
+            "statusLabel": "รอจัดจ้าง / ดำเนินการ"
+          },
+          {
+            "name": "อ้อมน้อย 1 (Renovate)",
+            "notes": "งานปรับปรุงสถานีไฟฟ้า (คาดได้ผู้รับจ้างไตรมาส 3 ปี 2569)",
+            "status": "procuring",
+            "category": "แผนงานที่ 2 (Renovate)",
+            "statusLabel": "รอจัดจ้าง / ดำเนินการ"
+          }
+        ],
+        "completed": 13,
+        "procuring": 3,
+        "inProgress": 0
+      },
+      {
+        "name": "งบลงทุนประจำปี 2568 (ชั่วคราว)",
+        "notes": "สมุทรสาคร 17 (ช), สมุทรสาคร 14 (ช)",
+        "target": 2,
+        "stations": [
+          {
+            "name": "สมุทรสาคร 17 (ชั่วคราว)",
+            "notes": "งานก่อสร้างแล้วเสร็จ AC Withstand วันที่ 20 ก.พ. 2569 จ่ายไฟวันที่ 22 ก.พ. 2569",
+            "status": "completed",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "detailIndex": 2,
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          },
+          {
+            "name": "สมุทรสาคร 14 (ชั่วคราว)",
+            "notes": "งานก่อสร้างแล้วเสร็จ AC Withstand วันที่ 28 - 29 มิ.ย. 2569 จ่ายไฟวันที่ 1 ก.ค. 2569",
+            "status": "completed",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "detailIndex": 1,
+            "statusLabel": "ก่อสร้างแล้วเสร็จ"
+          }
+        ],
+        "completed": 2,
+        "procuring": 0,
+        "inProgress": 0
+      },
+      {
+        "name": "งบลงทุนเร่งด่วนประจำปี 2569 (ชั่วคราว)",
+        "notes": "สมุทรสาคร 18 (ช), กาญจนบุรี 5 (ช)",
+        "target": 2,
+        "stations": [
+          {
+            "name": "สมุทรสาคร 18 (ชั่วคราว)",
+            "notes": "ความก้าวหน้า 17.0% รื้อถอนอุปกรณ์ป้องกัน 22,115 kV จาก สฟ.สมุทรสาคร 16 (ช) ปรับปรุงที่ดินและเรียงฐานราก 70%",
+            "status": "inProgress",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "detailIndex": 3,
+            "statusLabel": "อยู่ระหว่างดำเนินการ"
+          },
+          {
+            "name": "กาญจนบุรี 5 (ชั่วคราว)",
+            "notes": "ความก้าวหน้า 9.0% รื้อย้ายอุปกรณ์จาก สฟ.สมุทรสาคร 10 (ช) อยู่ระหว่างปรับปรุงที่ดิน (ถมดินตามระดับ)",
+            "status": "inProgress",
+            "category": "สถานีไฟฟ้าชั่วคราว",
+            "detailIndex": 4,
+            "statusLabel": "อยู่ระหว่างดำเนินการ"
+          }
+        ],
+        "completed": 0,
+        "procuring": 0,
+        "inProgress": 2
+      }
+    ],
+    "completed": 24,
+    "procuring": 4,
+    "inProgress": 2,
+    "totalSubstations": 30
+  }
+};
