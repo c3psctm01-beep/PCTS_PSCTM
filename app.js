@@ -1580,47 +1580,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.stopPropagation();
         }
         const group = document.getElementById('sidebarGroupPsctm');
-        const isDashboardActive = document.getElementById('psctm-dashboard-view')?.classList.contains('active');
+        const isArrowClick = e && e.target && e.target.closest('.submenu-arrow');
 
-        // Remove active from other nav items
+        // If clicking specifically on the chevron arrow, toggle submenu open/collapse
+        if (isArrowClick) {
+            if (group) group.classList.toggle('open');
+            return;
+        }
+
+        // 1. Remove active from all other top-level nav items
         navItems.forEach(nav => {
             if (nav !== group && !nav.classList.contains('sidebar-subitem')) {
                 nav.classList.remove('active');
             }
         });
 
+        // 2. Remove active from all subitems so the parent Overview is highlighted
+        document.querySelectorAll('.sidebar-subitem').forEach(sub => sub.classList.remove('active'));
+
         if (group) {
             group.classList.add('active');
+            group.classList.add('open');
         }
 
-        if (!isDashboardActive) {
-            // Hide all sections
-            viewSections.forEach(section => section.classList.remove('active'));
-            const targetEl = document.getElementById('psctm-dashboard-view');
-            if (targetEl) targetEl.classList.add('active');
+        // 3. Ensure psctm-dashboard-view section is active and displayed
+        viewSections.forEach(section => section.classList.remove('active'));
+        const targetEl = document.getElementById('psctm-dashboard-view');
+        if (targetEl) targetEl.classList.add('active');
 
-            const mascot = document.querySelector('.mascot-widget');
-            if (mascot) mascot.style.display = 'flex';
+        const mascot = document.querySelector('.mascot-widget');
+        if (mascot) mascot.style.display = 'flex';
 
-            if (typeof window.renderPsctmDashboard === 'function') {
-                window.renderPsctmDashboard();
-            }
+        if (typeof window.renderPsctmDashboard === 'function') {
+            window.renderPsctmDashboard();
+        }
 
-            // Expand submenu
-            if (group) group.classList.add('open');
+        // 4. Always switch to Overview tab (tab-overview)
+        if (window.psctmDashboard && typeof window.psctmDashboard.switchTab === 'function') {
+            window.psctmDashboard.switchTab('tab-overview');
         } else {
-            // Already active on dashboard: toggle the submenu open/collapsed
-            if (group) {
-                group.classList.toggle('open');
+            document.querySelectorAll('.tab-content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            const overviewPanel = document.getElementById('tab-overview');
+            if (overviewPanel) {
+                overviewPanel.classList.add('active');
             }
+            document.querySelectorAll('.dashboard-nav-tabs .nav-tab').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-tab') === 'tab-overview');
+            });
         }
 
-        // If no subtab active, ensure overview is selected
-        const activeSub = document.querySelector('.sidebar-subitem.active');
-        if (!activeSub) {
-            if (window.psctmDashboard && typeof window.psctmDashboard.switchTab === 'function') {
-                window.psctmDashboard.switchTab('tab-overview');
-            }
+        // 5. Close sidebar on mobile
+        if (window.innerWidth <= 992 && typeof toggleSidebar === 'function') {
+            toggleSidebar(false);
         }
     };
 
