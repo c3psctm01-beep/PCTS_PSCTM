@@ -3684,6 +3684,9 @@ window.viewProjectDetails = function (projectId) {
         if (typeof window.renderSubstationWeatherWidget === 'function') {
             window.renderSubstationWeatherWidget(p);
         }
+        if (typeof window.initProjectTowers === 'function') {
+            window.initProjectTowers(p);
+        }
     }
 
     // Switch the view manually since the dummy nav item is gone
@@ -5271,6 +5274,14 @@ window.openProjectTab = function (evt, tabName) {
         setTimeout(() => {
             if (typeof window.renderBeforeAfterTab === 'function') {
                 window.renderBeforeAfterTab(window.currentProjectViewData);
+            }
+        }, 30);
+    }
+
+    if (tabName === 'tabTowerMatrix') {
+        setTimeout(() => {
+            if (typeof window.renderTowerMatrixTab === 'function') {
+                window.renderTowerMatrixTab(window.currentProjectViewData);
             }
         }, 30);
     }

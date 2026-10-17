@@ -6806,6 +6806,488 @@ body:has(#manual-view.active) .mascot-widget {
     color: #f8fafc !important;
 }
 
+/* ==========================================================================
+   FEATURE 1: Contract Penalty & EOT Calculator Styles
+   ========================================================================== */
+.eot-modal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.eot-modal-tab-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: #f8fafc;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.eot-modal-tab-btn:hover {
+    background: #f1f5f9;
+    color: var(--text-primary);
+}
+
+.eot-modal-tab-btn.active {
+    background: var(--pea-purple);
+    color: #ffffff;
+    border-color: var(--pea-purple);
+    box-shadow: 0 4px 12px rgba(116, 44, 129, 0.25);
+}
+
+.eot-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.eot-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eot-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.penalty-progress-bar {
+    background: #e2e8f0;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.penalty-progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.eot-sim-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #cbd5e1;
+    outline: none;
+    transition: background 0.2s;
+}
+
+.eot-sim-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--pea-purple);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(116, 44, 129, 0.4);
+    border: 2px solid #ffffff;
+}
+
+.eot-summary-sheet {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 24px;
+    font-family: 'Sarabun', 'Prompt', sans-serif;
+    color: #1e293b;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   FEATURE 2: Photo ZIP Downloader Styles
+   ========================================================================== */
+.photo-zip-scope-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+}
+
+.zip-scope-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.zip-scope-card:hover {
+    border-color: var(--pea-purple);
+    background: rgba(116, 44, 129, 0.02);
+}
+
+.zip-scope-card input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--pea-purple);
+    transform: scale(1.15);
+}
+
+.zip-scope-card input[type="radio"]:checked ~ .zip-scope-content strong {
+    color: var(--pea-purple);
+}
+
+.zip-scope-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zip-scope-content i {
+    font-size: 15px;
+    color: var(--pea-purple);
+    margin-bottom: 2px;
+}
+
+.zip-scope-content strong {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.zip-scope-content span {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+/* ==========================================================================
+   FEATURE 5: Transmission Line 115 kV Tower-by-Tower Matrix Styles
+   ========================================================================== */
+.tower-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.tower-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: transform 0.15s ease;
+}
+
+.tower-kpi-card:hover {
+    transform: translateY(-2px);
+}
+
+.tower-kpi-card.kpi-blocked {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.03);
+}
+
+.tower-kpi-card .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.tower-kpi-card .kpi-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tower-kpi-card .label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.tower-kpi-card .val {
+    font-size: 16px;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.tower-kpi-card .val .unit {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--text-secondary);
+}
+
+.tower-kpi-card .sub {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+}
+
+/* Bottlenecks Spotlight Banner */
+.tower-bottleneck-banner {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border: 1.5px solid #ef4444;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 15px;
+}
+
+.tower-bottleneck-banner .banner-title {
+    color: #b91c1c;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.banner-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bottleneck-pill {
+    background: #ffffff;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.bottleneck-pill:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.bottleneck-pill .t-badge {
+    background: #ef4444;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.bottleneck-pill .t-obs {
+    font-size: 12px;
+    color: #991b1b;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bottleneck-pill .btn-quick-view {
+    background: #fee2e2;
+    color: #991b1b;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+/* Tower Chips */
+.btn-tower-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: #f8fafc;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.btn-tower-chip:hover {
+    background: #f1f5f9;
+}
+
+.btn-tower-chip.active {
+    background: var(--pea-purple);
+    color: #ffffff;
+    border-color: var(--pea-purple);
+}
+
+.btn-tower-chip.chip-blocked.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* Tower Matrix Table */
+.tower-matrix-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.tower-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    min-width: 900px;
+}
+
+.tower-matrix-table th {
+    background: #f8fafc;
+    color: var(--text-primary);
+    padding: 10px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.tower-matrix-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.tower-matrix-table tbody tr:hover {
+    background: rgba(116, 44, 129, 0.02);
+}
+
+.tower-matrix-table tr.row-blocked {
+    background: rgba(239, 68, 68, 0.03);
+}
+
+/* Tower Phase Badges */
+.tower-phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.tower-phase-badge:hover {
+    transform: scale(1.04);
+}
+
+.tower-phase-badge.phase-done {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.tower-phase-badge.phase-in_progress {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.tower-phase-badge.phase-blocked {
+    background: rgba(239, 68, 68, 0.15);
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.4);
+    animation: pulseBlocked 2s infinite ease-in-out;
+}
+
+.tower-phase-badge.phase-pending {
+    background: rgba(148, 163, 184, 0.15);
+    color: #64748b;
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+@keyframes pulseBlocked {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .eot-modal-tab-btn {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .eot-modal-tab-btn:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .eot-modal-tab-btn.active {
+    background: var(--pea-purple);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .eot-kpi-card,
+[data-theme="dark"] .eot-summary-sheet,
+[data-theme="dark"] .tower-kpi-card,
+[data-theme="dark"] .tower-matrix-table-wrap,
+[data-theme="dark"] .bottleneck-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .tower-matrix-table th {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .tower-matrix-table td {
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .tower-matrix-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .zip-scope-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .btn-tower-chip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-tower-chip:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
 
 
 
