@@ -197,6 +197,75 @@ body {
   flex-wrap: wrap;
 }
 
+/* PSCTM Year Filter */
+.psctm-year-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.psctm-year-filter:hover {
+  border-color: var(--pea-purple);
+  box-shadow: 0 0 0 1px var(--pea-purple-glow);
+}
+
+.psctm-year-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--pea-purple);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.psctm-year-label i, .psctm-year-label svg {
+  color: var(--pea-purple);
+}
+
+.psctm-year-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.psctm-year-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0.1rem 1.4rem 0.1rem 0.2rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+}
+
+.psctm-year-select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.psctm-year-select-wrap .select-arrow-icon {
+  position: absolute;
+  right: 0.15rem;
+  pointer-events: none;
+  font-size: 0.72rem;
+  color: var(--pea-purple);
+}
+
 .file-info-badge {
   display: flex;
   align-items: center;

@@ -17,6 +17,7 @@
     ganttSelectedSheet: (savedPrefs && savedPrefs.ganttSelectedSheet) ? savedPrefs.ganttSelectedSheet : '',
     ganttViewMode: 'consolidated',
     permitFilter: (savedPrefs && savedPrefs.permitFilter) ? savedPrefs.permitFilter : 'all',
+    selectedYear: localStorage.getItem('pcts_year_filter') || '2569',
     overviewChartFilter: 'all',
     transChartMode: 'cumulative',
     disbUnit: 'mb',
@@ -776,10 +777,183 @@
     modal.classList.add('active');
   }
 
+  // ------------------------------------------------------------------
+  // Year Filtering Logic & Options Population
+  // ------------------------------------------------------------------
+  function extractAllYearsFromData(d) {
+    const currentYear = (new Date().getFullYear() + 543);
+    const yearsSet = new Set([currentYear, 2569, 2568]);
+
+    if (d && d.transmissionLines) {
+      d.transmissionLines.forEach(t => {
+        if (t.monthly2569) yearsSet.add(2569);
+        if (typeof t.progress2568 !== 'undefined') yearsSet.add(2568);
+        const matches = (t.remarks || '').match(/25[6-9]\d/g);
+        if (matches) matches.forEach(m => yearsSet.add(parseInt(m, 10)));
+      });
+    }
+
+    if (d && d.substationsDetail) {
+      d.substationsDetail.forEach(s => {
+        const text = (s.contract || '') + ' ' + (s.statusText || '');
+        const y4 = text.match(/25[6-9]\d/g);
+        if (y4) y4.forEach(m => yearsSet.add(parseInt(m, 10)));
+        const dMatches = (s.contract || '').match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
+        if (dMatches) {
+          dMatches.forEach(dm => {
+            const y2 = parseInt(dm.split('/')[2], 10);
+            if (y2 >= 60 && y2 <= 99) yearsSet.add(2500 + y2);
+          });
+        }
+      });
+    }
+
+    if (d && d.permits) {
+      d.permits.forEach(p => {
+        const matches = ((p.statusText || '') + ' ' + (p.permitDetail || '')).match(/25[6-9]\d/g);
+        if (matches) matches.forEach(m => yearsSet.add(parseInt(m, 10)));
+      });
+    }
+
+    const validYears = Array.from(yearsSet).filter(y => y >= 2560 && y <= 2580);
+    return validYears.sort((a, b) => b - a);
+  }
+
+  function populatePsctmYearOptions() {
+    const select = document.getElementById('psctmYearSelect');
+    if (!select || !appState.data) return;
+
+    const years = extractAllYearsFromData(appState.data);
+    const currentYear = (new Date().getFullYear() + 543);
+
+    const targetVals = [...years.map(y => y.toString()), 'all'].join(',');
+    const currentVals = Array.from(select.options).map(o => o.value).join(',');
+
+    if (currentVals !== targetVals) {
+      let html = '';
+      years.forEach(yr => {
+        const isCur = (yr === currentYear || yr === 2569);
+        const label = isCur ? `ปี ${yr} (ปีปัจจุบัน)` : `ปี ${yr}`;
+        html += `<option value="${yr}">${label}</option>`;
+      });
+      html += `<option value="all">ทุกปี (ทั้งหมด)</option>`;
+      select.innerHTML = html;
+    }
+
+    const savedYear = localStorage.getItem('pcts_year_filter') || appState.selectedYear || '2569';
+    if (years.includes(parseInt(savedYear, 10)) || savedYear === 'all') {
+      select.value = savedYear;
+      appState.selectedYear = savedYear;
+    } else {
+      select.value = '2569';
+      appState.selectedYear = '2569';
+    }
+  }
+
+  window.onPsctmYearChange = function (yearVal, syncOther = true) {
+    appState.selectedYear = yearVal;
+    localStorage.setItem('pcts_year_filter', yearVal);
+
+    const select = document.getElementById('psctmYearSelect');
+    if (select && select.value !== yearVal) {
+      select.value = yearVal;
+    }
+
+    if (syncOther) {
+      window.currentYearFilter = yearVal;
+      const otherSelect = document.getElementById('dashboardYearSelect');
+      if (otherSelect && otherSelect.value !== yearVal) {
+        otherSelect.value = yearVal;
+      }
+      const badge = document.getElementById('titleYearBadge');
+      if (badge) {
+        badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ' : `ปี ${yearVal}`;
+      }
+      if (typeof window.renderTables === 'function') {
+        window.renderTables();
+      }
+    }
+
+    renderAll();
+  };
+
+  function getActiveDataset() {
+    if (!appState.data) return null;
+    const d = appState.data;
+    const yearVal = appState.selectedYear || '2569';
+
+    if (!yearVal || yearVal === 'all') {
+      return {
+        ...d,
+        activeTrans: (d.transmissionLines || []).map(t => ({ ...t, displayProgress: t.totalProgress })),
+        activeSubs: (d.substationsDetail || []).map(s => ({ ...s, displayProgress: s.progress })),
+        activePermits: d.permits || []
+      };
+    }
+
+    const yr = parseInt(yearVal, 10);
+    const shortYr = (yr > 2500) ? (yr % 100).toString() : yr.toString();
+
+    // 1. Transmission lines
+    const activeTrans = (d.transmissionLines || []).filter(item => {
+      if (yr === 2568) {
+        return (Number(item.progress2568) > 0) || (item.remarks && item.remarks.includes('2568'));
+      }
+      if (yr === 2569) {
+        const hasMonthly = item.monthly2569 && Object.values(item.monthly2569).some(v => Number(v) > 0);
+        return hasMonthly || (item.totalProgress > (item.progress2568 || 0)) || (item.remarks && item.remarks.includes('2569'));
+      }
+      return item.remarks && item.remarks.includes(yr.toString());
+    }).map(item => {
+      const p = (yr === 2568) ? (typeof item.progress2568 !== 'undefined' ? item.progress2568 : item.totalProgress) : item.totalProgress;
+      return {
+        ...item,
+        displayProgress: p
+      };
+    });
+
+    // 2. Substations
+    const activeSubs = (d.substationsDetail || []).filter(item => {
+      const contract = item.contract || '';
+      const yearsInContract = [];
+      const dMatches = contract.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
+      if (dMatches && dMatches.length >= 2) {
+        let startYr = parseInt(dMatches[0].split('/')[2], 10) + 2500;
+        let endYr = parseInt(dMatches[1].split('/')[2], 10) + 2500;
+        for (let y = startYr; y <= endYr; y++) yearsInContract.push(y);
+      }
+      if (yearsInContract.includes(yr)) return true;
+      if (item.statusText && item.statusText.includes(yr.toString())) return true;
+      if (item.wbs && (item.wbs.includes(`-${shortYr}-`) || item.wbs.includes(yr.toString()))) return true;
+      if (yr === 2569) return true;
+      if (yr === 2568 && (item.progress >= 100 || yearsInContract.includes(2568))) return true;
+      return false;
+    }).map(item => ({
+      ...item,
+      displayProgress: item.progress
+    }));
+
+    // 3. Permits
+    const activePermits = (d.permits || []).filter(item => {
+      const text = (item.statusText || '') + ' ' + (item.permitDetail || '');
+      if (text.includes(yr.toString())) return true;
+      if (yr === 2569) return true;
+      return false;
+    });
+
+    return {
+      ...d,
+      activeTrans: activeTrans.length > 0 ? activeTrans : (d.transmissionLines || []).map(t => ({ ...t, displayProgress: t.totalProgress })),
+      activeSubs: activeSubs.length > 0 ? activeSubs : (d.substationsDetail || []).map(s => ({ ...s, displayProgress: s.progress })),
+      activePermits: activePermits.length > 0 ? activePermits : (d.permits || [])
+    };
+  }
+
   // Render Everything
   function renderAll() {
     if (!appState.data) return;
 
+    populatePsctmYearOptions();
     renderHeaderAndKPIs();
     renderOverviewTab();
     renderTransmissionTab();
@@ -794,6 +968,10 @@
   // Header & KPI Summary
   function renderHeaderAndKPIs() {
     const d = appState.data;
+    const activeData = getActiveDataset() || d;
+    const transList = activeData.activeTrans || d.transmissionLines || [];
+    const subList = activeData.activeSubs || d.substationsDetail || [];
+    const permitList = activeData.activePermits || d.permits || [];
 
     // Header info
     document.getElementById('activeFileName').textContent = `${d.fileName} (${d.lastUpdated})`;
@@ -833,9 +1011,9 @@
     }
 
     // Tab badges
-    const transCount = d.transmissionLines ? d.transmissionLines.length : 0;
-    const subCount = d.substationsDetail ? d.substationsDetail.length : 0;
-    const permitCount = d.permits ? d.permits.length : 0;
+    const transCount = transList.length;
+    const subCount = subList.length;
+    const permitCount = permitList.length;
 
     const elTrans = document.getElementById('badgeTransCount');
     if (elTrans) elTrans.textContent = transCount;
@@ -844,23 +1022,25 @@
     const elPermit = document.getElementById('badgePermitCount');
     if (elPermit) elPermit.textContent = permitCount;
 
+    const yrText = (appState.selectedYear && appState.selectedYear !== 'all') ? `ปี ${appState.selectedYear}` : 'รวมทุกปี';
+
     // KPI 1: Transmission
     const avgTransProgress = transCount > 0
-      ? (d.transmissionLines.reduce((acc, cur) => acc + cur.totalProgress, 0) / transCount).toFixed(1)
+      ? (transList.reduce((acc, cur) => acc + Number(cur.displayProgress ?? cur.totalProgress), 0) / transCount).toFixed(1)
       : '0';
     document.getElementById('kpiTransCount').textContent = `${transCount} งาน`;
-    document.getElementById('kpiTransProgress').textContent = `ความก้าวหน้าเฉลี่ย ${avgTransProgress}%`;
+    document.getElementById('kpiTransProgress').textContent = `ความก้าวหน้าเฉลี่ย ${avgTransProgress}% (${yrText})`;
 
     // KPI 2: Substations
-    const subCompleted = d.substationsDetail.filter(s => s.progress >= 100).length;
-    const subInProgress = transCount > 0 ? d.substationsDetail.length - subCompleted : 0;
+    const subCompleted = subList.filter(s => Number(s.displayProgress ?? s.progress) >= 100).length;
+    const subInProgress = transCount > 0 ? subList.length - subCompleted : 0;
     document.getElementById('kpiSubCount').textContent = `${subCount} แห่ง`;
-    document.getElementById('kpiSubStatus').textContent = `เสร็จแล้ว ${subCompleted} แห่ง / ระหว่างก่อสร้าง ${subInProgress} แห่ง`;
+    document.getElementById('kpiSubStatus').textContent = `เสร็จแล้ว ${subCompleted} แห่ง / ระหว่างทำ ${subInProgress} แห่ง (${yrText})`;
 
     // KPI 3: Permits
-    const permitsApproved = d.permits.filter(p => p.statusGroup === 'approved').length;
-    const permitsPending = d.permits.filter(p => p.statusGroup === 'pending').length;
-    const permitsRevising = d.permits.filter(p => p.statusGroup === 'revising').length;
+    const permitsApproved = permitList.filter(p => p.statusGroup === 'approved').length;
+    const permitsPending = permitList.filter(p => p.statusGroup === 'pending').length;
+    const permitsRevising = permitList.filter(p => p.statusGroup === 'revising').length;
     document.getElementById('kpiPermitApproved').textContent = `${permitsApproved} / ${permitCount} งาน`;
     document.getElementById('kpiPermitPending').textContent = `อนุมัติแล้ว (รอพิจารณา ${permitsPending}, แก้ไข ${permitsRevising})`;
   }
@@ -967,6 +1147,9 @@
   // Tab 1: Overview
   function renderOverviewTab() {
     const d = appState.data;
+    const activeData = getActiveDataset() || d;
+    const transList = activeData.activeTrans || d.transmissionLines || [];
+    const subList = activeData.activeSubs || d.substationsDetail || [];
 
     // Active Table
     const tableBody = document.getElementById('overviewActiveTableBody');
@@ -975,8 +1158,9 @@
     let rowsHtml = '';
 
     // Add active transmission lines
-    d.transmissionLines.forEach(item => {
-      const isComplete = item.totalProgress >= 100;
+    transList.forEach(item => {
+      const prog = Number(item.displayProgress ?? item.totalProgress) || 0;
+      const isComplete = prog >= 100;
       rowsHtml += `
         <tr>
           <td><span class="badge-status ${isComplete ? 'completed' : 'wbs-rel'}"><i data-lucide="radio" style="width:12px;height:12px;"></i> สายส่ง 115 kV</span></td>
@@ -985,9 +1169,9 @@
           <td>
             <div class="progress-container">
               <div class="progress-bar-bg">
-                <div class="progress-bar-fill ${isComplete ? 'success' : (item.totalProgress >= 50 ? '' : 'warning')}" style="width: ${item.totalProgress}%;"></div>
+                <div class="progress-bar-fill ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}" style="width: ${prog}%;"></div>
               </div>
-              <span class="progress-pct ${isComplete ? 'success' : (item.totalProgress >= 50 ? '' : 'warning')}">${item.totalProgress}%</span>
+              <span class="progress-pct ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}">${prog}%</span>
             </div>
           </td>
           <td class="cell-multiline">${formatTableRemarks(item.remarks)}</td>
@@ -996,8 +1180,9 @@
     });
 
     // Add active substations
-    d.substationsDetail.forEach(item => {
-      const isComplete = item.progress >= 100;
+    subList.forEach(item => {
+      const prog = Number(item.displayProgress ?? item.progress) || 0;
+      const isComplete = prog >= 100;
       rowsHtml += `
         <tr>
           <td><span class="badge-status ${isComplete ? 'completed' : 'wbs-crtd'}"><i data-lucide="zap" style="width:12px;height:12px;"></i> สถานีไฟฟ้า</span></td>
@@ -1006,9 +1191,9 @@
           <td>
             <div class="progress-container">
               <div class="progress-bar-bg">
-                <div class="progress-bar-fill ${isComplete ? 'success' : (item.progress >= 50 ? '' : 'warning')}" style="width: ${item.progress}%;"></div>
+                <div class="progress-bar-fill ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}" style="width: ${prog}%;"></div>
               </div>
-              <span class="progress-pct ${isComplete ? 'success' : (item.progress >= 50 ? '' : 'warning')}">${item.progress}%</span>
+              <span class="progress-pct ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}">${prog}%</span>
             </div>
           </td>
           <td class="cell-multiline">${formatTableRemarks(item.statusText)}</td>
@@ -1016,7 +1201,7 @@
       `;
     });
 
-    tableBody.innerHTML = rowsHtml;
+    tableBody.innerHTML = rowsHtml || '<tr><td colspan="5" style="text-align: center; padding: 25px; color: var(--text-muted);">ไม่มีรายการงานที่อยู่ระหว่างดำเนินการในปีนี้</td></tr>';
     lucide.createIcons({ root: tableBody });
 
     renderOverviewCharts();
@@ -1031,6 +1216,10 @@
     if (!isDashboardVisible()) return;
     const d = appState.data;
     if (!d || !d.transmissionLines || !d.substationsDetail) return;
+    const activeData = getActiveDataset() || d;
+    const transList = activeData.activeTrans || d.transmissionLines || [];
+    const subList = activeData.activeSubs || d.substationsDetail || [];
+
     const isDark = appState.currentTheme === 'dark';
     const textColor = isDark ? '#cbd5e1' : '#475569';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
@@ -1073,22 +1262,24 @@
       }
 
       if (filter === 'all' || filter === 'trans') {
-        d.transmissionLines.forEach(item => {
+        transList.forEach(item => {
+          const prog = Number(item.displayProgress ?? item.totalProgress) || 0;
           items.push({
             name: shortLabel(item.name),
-            progress: item.totalProgress,
+            progress: prog,
             category: 'สายส่ง 115 kV',
-            color: item.totalProgress >= 100 ? '#10b981' : (item.totalProgress >= 50 ? '#8b5cf6' : '#f59e0b')
+            color: prog >= 100 ? '#10b981' : (prog >= 50 ? '#8b5cf6' : '#f59e0b')
           });
         });
       }
       if (filter === 'all' || filter === 'sub') {
-        d.substationsDetail.forEach(item => {
+        subList.forEach(item => {
+          const prog = Number(item.displayProgress ?? item.progress) || 0;
           items.push({
             name: shortLabel(item.name),
-            progress: item.progress,
+            progress: prog,
             category: 'สถานีไฟฟ้า',
-            color: item.progress >= 100 ? '#10b981' : (item.progress >= 50 ? '#0ea5e9' : '#f59e0b')
+            color: prog >= 100 ? '#10b981' : (prog >= 50 ? '#0ea5e9' : '#f59e0b')
           });
         });
       }
@@ -1158,8 +1349,8 @@
       if (appState.charts.overviewStatusDonut) appState.charts.overviewStatusDonut.destroy();
 
       const allItems = [
-        ...d.transmissionLines.map(t => ({ p: t.totalProgress })),
-        ...d.substationsDetail.map(s => ({ p: s.progress }))
+        ...transList.map(t => ({ p: Number(t.displayProgress ?? t.totalProgress) || 0 })),
+        ...subList.map(s => ({ p: Number(s.displayProgress ?? s.progress) || 0 }))
       ];
 
       const completedCount = allItems.filter(i => i.p >= 100).length;
@@ -1233,6 +1424,9 @@
 
     if (!tableBody) return;
 
+    const activeData = getActiveDataset() || d;
+    const transList = activeData.activeTrans || d.transmissionLines || [];
+
     // Populate filter options if empty
     if (projectFilter && projectFilter.options.length <= 1) {
       const projects = [...new Set(d.transmissionLines.map(t => t.project).filter(Boolean))];
@@ -1251,7 +1445,7 @@
       const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
       const selectedProj = projectFilter ? projectFilter.value : 'all';
 
-      const filtered = d.transmissionLines.filter(item => {
+      const filtered = transList.filter(item => {
         const matchesProj = selectedProj === 'all' || item.project === selectedProj;
         const matchesSearch = !searchVal ||
           item.name.toLowerCase().includes(searchVal) ||
@@ -1261,8 +1455,9 @@
         return matchesProj && matchesSearch;
       });
 
-      tableBody.innerHTML = filtered.map(item => {
-        const isComplete = item.totalProgress >= 100;
+      tableBody.innerHTML = filtered.length > 0 ? filtered.map(item => {
+        const prog = Number(item.displayProgress ?? item.totalProgress) || 0;
+        const isComplete = prog >= 100;
         const thaiMonthsOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
         const monthlyCols = Object.entries(item.monthly2569 || {})
           .filter(([m, v]) => Number(v) > 0)
@@ -1291,15 +1486,15 @@
             <td>
               <div class="progress-container">
                 <div class="progress-bar-bg">
-                  <div class="progress-bar-fill ${isComplete ? 'success' : (item.totalProgress >= 50 ? '' : 'warning')}" style="width: ${item.totalProgress}%;"></div>
+                  <div class="progress-bar-fill ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}" style="width: ${prog}%;"></div>
                 </div>
-                <span class="progress-pct ${isComplete ? 'success' : (item.totalProgress >= 50 ? '' : 'warning')}">${item.totalProgress}%</span>
+                <span class="progress-pct ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}">${prog}%</span>
               </div>
             </td>
             <td class="cell-multiline">${formatTableRemarks(item.remarks)}</td>
           </tr>
         `;
-      }).join('');
+      }).join('') : '<tr><td colspan="9" style="text-align: center; padding: 25px; color: var(--text-muted);">ไม่มีรายการงานสายส่งที่ดำเนินงานในปีนี้</td></tr>';
       lucide.createIcons({ root: tableBody });
     }
 
@@ -1311,6 +1506,9 @@
     if (!isDashboardVisible()) return;
     const d = appState.data;
     if (!d || !d.transmissionLines || d.transmissionLines.length === 0) return;
+
+    const activeData = getActiveDataset() || d;
+    const transList = activeData.activeTrans || d.transmissionLines || [];
 
     const isDark = appState.currentTheme === 'dark';
     const textColor = isDark ? '#cbd5e1' : '#475569';
@@ -1331,7 +1529,7 @@
       if (appState.charts.transKmProgress) appState.charts.transKmProgress.destroy();
 
       // Multi-line labels to completely avoid clipping
-      const labels = d.transmissionLines.map(t => {
+      const labels = transList.map(t => {
         const sn = getShortTransName(t.name);
         if (sn.includes(' - ')) {
           const parts = sn.split(' - ');
@@ -1343,8 +1541,8 @@
         }
         return sn;
       });
-      const kmData = d.transmissionLines.map(t => Number(t.circuitKm) || 0);
-      const progData = d.transmissionLines.map(t => Number(t.totalProgress) || 0);
+      const kmData = transList.map(t => Number(t.circuitKm) || 0);
+      const progData = transList.map(t => Number(t.displayProgress ?? t.totalProgress) || 0);
       const maxKm = Math.max(...kmData, 1);
 
       appState.charts.transKmProgress = new Chart(ctxKm, {
@@ -1447,7 +1645,7 @@
       const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
       const palette = ['#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899'];
 
-      const datasets = d.transmissionLines.map((item, idx) => {
+      const datasets = transList.map((item, idx) => {
         let dataValues = [];
         if (isCumulative) {
           let running = Number(item.progress2568) || 0;
@@ -1636,11 +1834,13 @@
     // Active Substations Detail Table
     const detailTableBody = document.getElementById('subDetailTableBody');
     const searchInput = document.getElementById('searchSubInput');
+    const activeData = getActiveDataset() || d;
+    const subList = activeData.activeSubs || d.substationsDetail || [];
 
     if (detailTableBody) {
       function filterSubTable() {
         const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        const filtered = d.substationsDetail.filter(item => {
+        const filtered = subList.filter(item => {
           return !searchVal ||
             item.name.toLowerCase().includes(searchVal) ||
             item.project.toLowerCase().includes(searchVal) ||
@@ -1649,8 +1849,9 @@
             item.statusText.toLowerCase().includes(searchVal);
         });
 
-        detailTableBody.innerHTML = filtered.map(item => {
-          const isComplete = item.progress >= 100;
+        detailTableBody.innerHTML = filtered.length > 0 ? filtered.map(item => {
+          const prog = Number(item.displayProgress ?? item.progress) || 0;
+          const isComplete = prog >= 100;
           return `
             <tr>
               <td class="cell-num font-bold">${item.no}</td>
@@ -1662,20 +1863,23 @@
               <td>
                 <div class="progress-container">
                   <div class="progress-bar-bg">
-                    <div class="progress-bar-fill ${isComplete ? 'success' : (item.progress >= 50 ? '' : 'warning')}" style="width: ${item.progress}%;"></div>
+                    <div class="progress-bar-fill ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}" style="width: ${prog}%;"></div>
                   </div>
-                  <span class="progress-pct ${isComplete ? 'success' : (item.progress >= 50 ? '' : 'warning')}">${item.progress}%</span>
+                  <span class="progress-pct ${isComplete ? 'success' : (prog >= 50 ? '' : 'warning')}">${prog}%</span>
                 </div>
               </td>
               <td style="font-size:0.82rem; white-space:normal; max-width:180px;">${item.supervisor ? item.supervisor.replace(/\n/g, '<br>') : '-'}</td>
               <td class="cell-multiline">${formatTableRemarks(item.statusText)}</td>
             </tr>
           `;
-        }).join('');
+        }).join('') : '<tr><td colspan="9" style="text-align: center; padding: 25px; color: var(--text-muted);">ไม่มีรายการสถานีไฟฟ้าที่อยู่ระหว่างดำเนินการในปีนี้</td></tr>';
         lucide.createIcons({ root: detailTableBody });
       }
 
-      if (searchInput) searchInput.addEventListener('input', filterSubTable);
+      if (searchInput && !searchInput.hasAttribute('data-bound')) {
+        searchInput.setAttribute('data-bound', 'true');
+        searchInput.addEventListener('input', filterSubTable);
+      }
       filterSubTable();
     }
 
@@ -1686,6 +1890,9 @@
     if (!isDashboardVisible()) return;
     const d = appState.data;
     if (!d || !d.substationsSummary) return;
+
+    const activeData = getActiveDataset() || d;
+    const subList = activeData.activeSubs || d.substationsDetail || [];
 
     const isDark = appState.currentTheme === 'dark';
     const textColor = isDark ? '#cbd5e1' : '#475569';
@@ -1828,13 +2035,13 @@
 
     // Chart 3C: Active Substations Progress Bar Chart
     const ctxActive = document.getElementById('subActiveProgressChart');
-    if (ctxActive && d.substationsDetail) {
+    if (ctxActive) {
       if (appState.charts.subActiveProgress) appState.charts.subActiveProgress.destroy();
 
-      const labels = d.substationsDetail.map(s => {
+      const labels = subList.map(s => {
         return s.name.replace('สถานีไฟฟ้า', 'สฟ.').replace(' (ชั่วคราว)', '(ช)');
       });
-      const data = d.substationsDetail.map(s => Number(s.progress) || 0);
+      const data = subList.map(s => Number(s.displayProgress ?? s.progress) || 0);
       const colors = data.map(p => p >= 100 ? '#10b981' : (p >= 50 ? '#8b5cf6' : (p > 20 ? '#0ea5e9' : '#f59e0b')));
 
       appState.charts.subActiveProgress = new Chart(ctxActive, {
@@ -1862,7 +2069,7 @@
             tooltip: {
               callbacks: {
                 label: function(c) {
-                  const s = d.substationsDetail[c.dataIndex];
+                  const s = subList[c.dataIndex] || {};
                   return ` ความก้าวหน้า: ${c.raw}% | ผู้รับจ้าง: ${s.contractor || '-'}`;
                 }
               }
@@ -2624,13 +2831,16 @@
 
     if (!tableBody || !d.permits) return;
 
+    const activeData = getActiveDataset() || d;
+    const permitList = activeData.activePermits || d.permits || [];
+
     // Update Pill Counts
-    const totalAll = d.permits.length;
-    const totalSub = d.permits.filter(p => p.workType.includes('สถานี')).length;
-    const totalTrans = d.permits.filter(p => p.workType.includes('สายส่ง')).length;
-    const totalApproved = d.permits.filter(p => p.statusGroup === 'approved').length;
-    const totalPending = d.permits.filter(p => p.statusGroup === 'pending').length;
-    const totalRevising = d.permits.filter(p => p.statusGroup === 'revising').length;
+    const totalAll = permitList.length;
+    const totalSub = permitList.filter(p => p.workType.includes('สถานี')).length;
+    const totalTrans = permitList.filter(p => p.workType.includes('สายส่ง')).length;
+    const totalApproved = permitList.filter(p => p.statusGroup === 'approved').length;
+    const totalPending = permitList.filter(p => p.statusGroup === 'pending').length;
+    const totalRevising = permitList.filter(p => p.statusGroup === 'revising').length;
 
     document.getElementById('countPillAll').textContent = totalAll;
     document.getElementById('countPillSub').textContent = totalSub;
@@ -2659,7 +2869,7 @@
       const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
       const filter = appState.permitFilter;
 
-      const filtered = d.permits.filter(item => {
+      const filtered = permitList.filter(item => {
         let matchesPill = true;
         if (filter === 'substation') matchesPill = item.workType.includes('สถานี');
         else if (filter === 'transmission') matchesPill = item.workType.includes('สายส่ง');
@@ -2676,7 +2886,7 @@
         return matchesPill && matchesSearch;
       });
 
-      tableBody.innerHTML = filtered.map(item => {
+      tableBody.innerHTML = filtered.length > 0 ? filtered.map(item => {
         const badgeClass = item.statusGroup === 'approved' ? 'approved' : item.statusGroup === 'revising' ? 'revising' : 'pending';
         const statusIcon = item.statusGroup === 'approved' ? 'check-circle-2' : item.statusGroup === 'revising' ? 'alert-circle' : 'clock';
         return `
@@ -2692,7 +2902,7 @@
             </td>
           </tr>
         `;
-      }).join('');
+      }).join('') : '<tr><td colspan="6" style="text-align: center; padding: 25px; color: var(--text-muted);">ไม่มีรายการใบอนุญาตในปีนี้</td></tr>';
       lucide.createIcons({ root: tableBody });
     }
 
@@ -2705,6 +2915,9 @@
     const d = appState.data;
     if (!d || !d.permits || d.permits.length === 0) return;
 
+    const activeData = getActiveDataset() || d;
+    const permitList = activeData.activePermits || d.permits || [];
+
     const isDark = appState.currentTheme === 'dark';
     const textColor = isDark ? '#cbd5e1' : '#475569';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
@@ -2714,10 +2927,10 @@
     if (ctxDonut) {
       if (appState.charts.permitsStatusDonut) appState.charts.permitsStatusDonut.destroy();
 
-      const totalAll = d.permits.length;
-      const approvedCount = d.permits.filter(p => p.statusGroup === 'approved').length;
-      const pendingCount = d.permits.filter(p => p.statusGroup === 'pending').length;
-      const revisingCount = d.permits.filter(p => p.statusGroup === 'revising').length;
+      const totalAll = permitList.length;
+      const approvedCount = permitList.filter(p => p.statusGroup === 'approved').length;
+      const pendingCount = permitList.filter(p => p.statusGroup === 'pending').length;
+      const revisingCount = permitList.filter(p => p.statusGroup === 'revising').length;
       const appPct = totalAll > 0 ? ((approvedCount / totalAll) * 100).toFixed(1) : 0;
 
       appState.charts.permitsStatusDonut = new Chart(ctxDonut, {
@@ -2778,7 +2991,7 @@
       if (appState.charts.permitsAuthorityBar) appState.charts.permitsAuthorityBar.destroy();
 
       const authMap = {};
-      d.permits.forEach(p => {
+      permitList.forEach(p => {
         const auth = p.authority || 'ไม่ระบุ';
         if (!authMap[auth]) {
           authMap[auth] = { approved: 0, pending: 0, revising: 0, total: 0 };
@@ -3874,10 +4087,22 @@
   // Expose global controllers for PCTS integration immediately
   window.renderPsctmDashboard = function () {
     if (appState.data) {
+      const currentStoredYear = localStorage.getItem('pcts_year_filter') || window.currentYearFilter;
+      if (currentStoredYear && currentStoredYear !== appState.selectedYear) {
+        appState.selectedYear = currentStoredYear;
+        const sel = document.getElementById('psctmYearSelect');
+        if (sel) sel.value = currentStoredYear;
+      }
+
       if (!appState._rendered) {
         renderAll();
         appState._rendered = true;
       } else {
+        renderHeaderAndKPIs();
+        if (appState.activeTab === 'tab-overview') renderOverviewTab();
+        else if (appState.activeTab === 'tab-transmission') renderTransmissionTab();
+        else if (appState.activeTab === 'tab-substations') renderSubstationsTab();
+        else if (appState.activeTab === 'tab-permits') renderPermitsTab();
         updateAllCharts();
       }
     }

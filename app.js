@@ -2530,6 +2530,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
             window.renderGisMap();
         }
+
+        // Two-way synchronization with PSCTM Dashboard Year Selector
+        if (typeof window.onPsctmYearChange === 'function') {
+            window.onPsctmYearChange(yearVal, false);
+        }
     };
 
     window.switchProjectView = function (mode) {
