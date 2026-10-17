@@ -2376,14 +2376,14 @@
     
     <!-- Modal for User Permission Management -->
     <div id="userPermissionModal" class="modal">
-        <div class="modal-content card" style="max-width: 580px; padding: 28px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-content card" style="max-width: 600px; padding: 28px; max-height: 90vh; overflow-y: auto;">
             <span class="close-modal" onclick="closeUserPermissionModal()">&times;</span>
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(116, 44, 129, 0.12); color: #742C81; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                    <i class="fa-solid fa-user-gear"></i>
+                    <i class="fa-solid fa-user-pen"></i>
                 </div>
                 <div>
-                    <h2 style="color: var(--pea-purple); margin: 0; font-size: 20px;">กำหนดสิทธิ์และบทบาทผู้ใช้งาน</h2>
+                    <h2 style="color: var(--pea-purple); margin: 0; font-size: 20px;">แก้ไขข้อมูลและกำหนดสิทธิ์ผู้ใช้งาน</h2>
                     <p id="permModalSubtitle" style="color: var(--text-secondary); font-size: 13px; margin: 2px 0 0 0;">-</p>
                 </div>
             </div>
@@ -2393,12 +2393,23 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-size: 13px; font-weight: 600; color: #334155;">ชื่อ-นามสกุล / สังกัด</label>
-                        <input type="text" id="permUserName" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">ชื่อ-นามสกุล / ตำแหน่ง / สังกัด *</label>
+                        <input type="text" id="permUserName" required placeholder="เช่น นายสมชาย ใจดี (วิศวกร กบส.)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-size: 13px; font-weight: 600; color: #334155;">รหัสพนักงาน</label>
-                        <input type="text" id="permUserEmpId" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="permUserEmpId" placeholder="เช่น 500744" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">อีเมลผู้ใช้งาน (Email) *</label>
+                        <input type="email" id="permUserEmail" required placeholder="user@pea.co.th" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">รีเซ็ตรหัสผ่านใหม่ (ไม่บังคับ)</label>
+                        <input type="text" id="permUserPassword" placeholder="เว้นว่างไว้หากไม่ต้องการเปลี่ยน" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
                     </div>
                 </div>
 
@@ -2501,7 +2512,7 @@
                 <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
                     <button type="button" class="btn" style="background: #f1f5f9; color: #475569;" onclick="closeUserPermissionModal()">ยกเลิก</button>
                     <button type="submit" class="btn btn-primary" id="btnSavePermissions">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการเปลี่ยนแปลง
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลและสิทธิ์
                     </button>
                 </div>
             </form>

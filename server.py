@@ -456,12 +456,13 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
             }
 
             if target:
-                if 'email' in payload: target['email'] = payload['email']
+                if 'email' in payload and payload['email']: target['email'] = payload['email'].strip().lower()
                 if 'employee_id' in payload: target['employee_id'] = payload['employee_id']
                 if 'name' in payload: target['name'] = payload['name']
                 if 'role' in payload: target['role'] = payload['role']
                 if 'status' in payload: target['status'] = payload['status']
                 if 'permissions' in payload: target['permissions'] = payload['permissions']
+                if 'password' in payload and payload['password']: target['password'] = payload['password']
                 target['updated_at'] = now_text
             else:
                 new_id = user_id or f"pea-user-{int(time.time() * 1000)}"
@@ -486,6 +487,8 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                     'last_login': '-',
                     'created_at': now_text
                 }
+                if 'password' in payload and payload['password']:
+                    target['password'] = payload['password']
                 users.append(target)
 
             self._save_users(users)

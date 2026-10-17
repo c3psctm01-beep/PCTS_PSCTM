@@ -794,13 +794,13 @@ window.renderAdminUsersTable = function () {
             `;
         }
         actionsHtml += `
-            <button class="btn" style="background: #f1f5f9; color: #334155; padding: 4px 9px; font-size: 11.5px; border: 1px solid #cbd5e1;" onclick="window.openUserPermissionModal('${u.id}')" title="กำหนดสิทธิ์โดยละเอียด">
-                <i class="fa-solid fa-user-pen"></i> สิทธิ์
+            <button class="btn" style="background: #f5f3ff; color: #6b21a8; padding: 4px 10px; font-size: 12px; font-weight: 600; border: 1px solid #ddd6fe; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;" onclick="window.openUserPermissionModal('${u.id}')" title="แก้ไขข้อมูลผู้ใช้และกำหนดสิทธิ์">
+                <i class="fa-solid fa-pen-to-square"></i> แก้ไข
             </button>
-            <button class="btn" style="background: ${isSuspended ? '#ecfdf5' : '#fff1f2'}; color: ${isSuspended ? '#047857' : '#be123c'}; padding: 4px 8px; font-size: 11.5px; border: 1px solid ${isSuspended ? '#a7f3d0' : '#fecdd3'};" onclick="window.toggleUserStatus('${u.id}')" title="${isSuspended ? 'ปลดระงับการใช้งาน' : 'ระงับการใช้งาน'}">
+            <button class="btn" style="background: ${isSuspended ? '#ecfdf5' : '#fff1f2'}; color: ${isSuspended ? '#047857' : '#be123c'}; padding: 4px 8px; font-size: 11.5px; border: 1px solid ${isSuspended ? '#a7f3d0' : '#fecdd3'}; border-radius: 6px;" onclick="window.toggleUserStatus('${u.id}')" title="${isSuspended ? 'ปลดระงับการใช้งาน' : 'ระงับการใช้งาน'}">
                 <i class="fa-solid ${isSuspended ? 'fa-lock-open' : 'fa-lock'}"></i>
             </button>
-            <button class="btn" style="background: #fff1f2; color: #e11d48; padding: 4px 8px; font-size: 11.5px; border: 1px solid #fecdd3;" onclick="window.deleteAdminUser('${u.id}')" title="ลบผู้ใช้นี้">
+            <button class="btn" style="background: #fff1f2; color: #e11d48; padding: 4px 8px; font-size: 11.5px; border: 1px solid #fecdd3; border-radius: 6px;" onclick="window.deleteAdminUser('${u.id}')" title="ลบผู้ใช้นี้">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>`;
@@ -863,9 +863,13 @@ window.openUserPermissionModal = function (userId) {
     document.getElementById('permUserId').value = user.id;
     document.getElementById('permUserName').value = user.name || '';
     document.getElementById('permUserEmpId').value = user.employee_id || '';
+    const emailEl = document.getElementById('permUserEmail');
+    if (emailEl) emailEl.value = user.email || '';
+    const passEl = document.getElementById('permUserPassword');
+    if (passEl) passEl.value = '';
     document.getElementById('permUserRole').value = user.role || 'viewer';
     document.getElementById('permUserStatus').value = user.status || 'active';
-    document.getElementById('permModalSubtitle').textContent = `${user.email} (รหัสพนักงาน: ${user.employee_id || '-'})`;
+    document.getElementById('permModalSubtitle').textContent = `รหัสระบบ: ${user.id} | เข้าสู่ระบบล่าสุด: ${user.last_login || '-'}`;
 
     const p = user.permissions || {};
     document.getElementById('chkPermUploadExcel').checked = !!p.can_upload_excel;
@@ -924,8 +928,14 @@ window.submitUserPermissions = async function (e) {
     const userId = document.getElementById('permUserId').value;
     const name = document.getElementById('permUserName').value.trim();
     const empId = document.getElementById('permUserEmpId').value.trim();
+    const email = (document.getElementById('permUserEmail')?.value || '').trim().toLowerCase();
+    const password = (document.getElementById('permUserPassword')?.value || '').trim();
     const role = document.getElementById('permUserRole').value;
     const status = document.getElementById('permUserStatus').value;
+
+    if (!email) {
+        return alert('กรุณาระบุอีเมลผู้ใช้งาน');
+    }
 
     const permissions = {
         can_upload_excel: document.getElementById('chkPermUploadExcel')?.checked ?? false,
@@ -943,19 +953,26 @@ window.submitUserPermissions = async function (e) {
     try {
         const payload = {
             id: userId,
+            email: email,
             name: name,
             employee_id: empId,
             role: role,
             status: status,
             permissions: permissions
         };
+        if (password) {
+            payload.password = password;
+        }
 
         // 1. Save to Supabase (with timeout fallback)
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
             const updatePromise = db.from('user_roles').update({
-                role: role,
+                email: email,
+                name: name,
                 employee_id: empId,
+                role: role,
+                status: status,
                 permissions: permissions,
                 updated_at: new Date().toISOString()
             }).eq('id', userId);
@@ -980,12 +997,16 @@ window.submitUserPermissions = async function (e) {
         if (idx !== -1) {
             window.adminUsersList[idx] = {
                 ...window.adminUsersList[idx],
+                email: email,
                 name: name,
                 employee_id: empId,
                 role: role,
                 status: status,
                 permissions: permissions
             };
+            if (password) {
+                window.adminUsersList[idx].password = password;
+            }
             localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
         }
 
@@ -999,7 +1020,7 @@ window.submitUserPermissions = async function (e) {
             }
         } catch (e) {}
 
-        alert('บันทึกสิทธิ์และข้อมูลผู้ใช้งานเรียบร้อยแล้ว');
+        alert('บันทึกข้อมูลและสิทธิ์ผู้ใช้งานเรียบร้อยแล้ว');
         window.closeUserPermissionModal();
         updateAdminUserKPIs(window.adminUsersList);
         window.renderAdminUsersTable();
