@@ -120,7 +120,7 @@
         // 6. Footer ลิขสิทธิ์
         ctx.fillStyle = '#94a3b8';
         ctx.font = '400 20px "Sarabun", sans-serif';
-        ctx.fillText('ระบบติดตามงานก่อสร้างสถานีไฟฟ้า (PEA Construction Tracking System - PCTS Ver. 3.1) • การไฟฟ้าส่วนภูมิภาค', 70, exportCanvas.height - 30);
+        ctx.fillText('ระบบติดตามงานก่อสร้างสถานีไฟฟ้า (PEA Construction Tracking System - PCTS VER 4.0) • การไฟฟ้าส่วนภูมิภาค', 70, exportCanvas.height - 30);
 
         // ฟังก์ชันช่วยวาดสี่เหลี่ยมมุมมน
         function roundRect(context, x, y, width, height, radius, fill, stroke) {

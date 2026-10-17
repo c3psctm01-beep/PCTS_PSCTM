@@ -56,7 +56,7 @@ html, body {
     width: 100%;
 }
 
-/* ---------------- Modern Left Sidebar (PCTS PEA Ver 3.1) ---------------- */
+/* ---------------- Modern Left Sidebar (PCTS VER 4.0) ---------------- */
 .app-sidebar {
     width: 260px;
     min-width: 260px;
@@ -2149,7 +2149,7 @@ html, body {
 }
 
 /* ==========================================================================
-   MODERN UI UPGRADES (PCTS PEA Ver.3.0)
+   MODERN UI UPGRADES (PCTS VER 4.0)
    - Project Cards Grid & Card Components
    - View Mode Switcher (Card / Table)
    - S-Curve KPI Ribbon & Chart Aesthetics
@@ -4933,7 +4933,7 @@ body:has(#manual-view.active) .mascot-widget {
 }
 
 /* ==============================================================================
-   PCTS PEA Ver. 3.1+ - Phase 1 & Phase 2 Enhanced Styles
+   PCTS VER 4.0 - Phase 1 & Phase 2 Enhanced Styles
    ============================================================================== */
 
 /* --- 1. Contract Countdown & EOT Badges --- */

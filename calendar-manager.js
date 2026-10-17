@@ -2,7 +2,7 @@
  * PCTS - Construction Project Calendar Manager
  * FullCalendar v5 Integration with Thai Localization, Category Filtering,
  * WBS Tasks, Site Photos, Contract EOT, and Defect Due Dates.
- * Version: 3.1+
+ * Version: 4.0
  */
 
 (function () {
