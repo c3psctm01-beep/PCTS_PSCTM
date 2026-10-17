@@ -1,9 +1,9 @@
 [
   {
-    "id": "pea-admin-01",
-    "email": "admin@pea.co.th",
+    "id": "6c9c9665-2820-40b6-95ab-cb65262ab428",
+    "email": "puwadol0527@gmail.com",
     "employee_id": "500744",
-    "name": "ผู้ดูแลระบบ กบส. (Admin)",
+    "name": "ภูวดล (Admin)",
     "role": "admin",
     "status": "active",
     "permissions": {
@@ -13,14 +13,14 @@
       "can_export_report": true,
       "can_manage_users": true
     },
-    "last_login": "2026-10-17 21:01:32",
+    "last_login": "2026-10-17 22:30:00",
     "created_at": "2026-01-01 08:00:00"
   },
   {
-    "id": "pea-editor-01",
-    "email": "editor@pea.co.th",
-    "employee_id": "501234",
-    "name": "วิศวกรผู้ควบคุมงาน กบส. (Editor กลาง)",
+    "id": "013975c9-4ba9-4779-9182-a4c4c87a25a9",
+    "email": "puwadol.suk@pea.co.th",
+    "employee_id": "500744",
+    "name": "ภูวดล สุขศรี (กบส.)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -30,14 +30,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 18:45:00",
-    "created_at": "2026-02-15 09:30:00"
+    "last_login": "2026-10-17 22:25:00",
+    "created_at": "2026-01-02 08:00:00"
   },
   {
-    "id": "pea-editor-jakraphan",
-    "email": "jakraphan.n@pea.co.th",
-    "employee_id": "502341",
-    "name": "นายจักรพันธ์ นรเหรียญ (พชง.6 ผจส.กรย.)",
+    "id": "43c79b64-cb6d-47e9-b04c-77cab5ba35ae",
+    "email": "jeerapol20@gmail.com",
+    "employee_id": "515883",
+    "name": "จิรพล (Editor)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -47,15 +47,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 19:15:20",
-    "created_at": "2026-02-01 08:30:00",
-    "updated_at": "2026-10-17 22:01:39"
+    "last_login": "2026-10-17 20:15:00",
+    "created_at": "2026-02-01 08:00:00"
   },
   {
-    "id": "pea-editor-palakorn",
-    "email": "palakorn.j@pea.co.th",
-    "employee_id": "503452",
-    "name": "นายพลากร จงอมรสิริเกษม (พชง.3 ผจร.กรย.)",
+    "id": "d24e5505-3d40-4886-b2f3-6bc4d86194fb",
+    "email": "bangkamclub@gmail.com",
+    "employee_id": "504952",
+    "name": "บางคำคลับ (Editor)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -65,14 +64,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 17:30:45",
-    "created_at": "2026-02-10 09:00:00"
+    "last_login": "2026-10-17 19:40:00",
+    "created_at": "2026-02-05 08:00:00"
   },
   {
-    "id": "pea-editor-worapong",
-    "email": "worapong.l@pea.co.th",
-    "employee_id": "501890",
-    "name": "นายวรพงศ์ ลิ้มเจริญ (หผ.บอ.กบษ.)",
+    "id": "518644f2-4ade-45a3-95b8-5744d2729ec6",
+    "email": "Ekachai.Mor@pea.co.th",
+    "employee_id": "496800",
+    "name": "เอกชัย (Editor กฟภ.)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -82,14 +81,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 16:20:10",
-    "created_at": "2026-01-15 10:15:00"
+    "last_login": "2026-10-17 18:20:00",
+    "created_at": "2026-02-10 08:00:00"
   },
   {
-    "id": "pea-editor-ekkachai",
-    "email": "ekkachai.m@pea.co.th",
-    "employee_id": "504123",
-    "name": "นายเอกชัย หมอยาดี (ชผ.จส.กรย.)",
+    "id": "f9cf223c-331a-4d59-97e2-c2c9082823ba",
+    "email": "parakhon42@gmail.com",
+    "employee_id": "515672",
+    "name": "ภราดร (Editor)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -99,14 +98,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 15:45:00",
-    "created_at": "2026-03-01 11:00:00"
+    "last_login": "2026-10-17 17:50:00",
+    "created_at": "2026-02-12 08:00:00"
   },
   {
-    "id": "pea-editor-watchara",
-    "email": "watchara.w@pea.co.th",
-    "employee_id": "502987",
-    "name": "นายวัชระ เวทีภิรมย์ (พชง.7 ผจส.กรย.)",
+    "id": "fad38d33-e89f-4b02-83ee-a144f08d3250",
+    "email": "notwatchara29@gmail.com",
+    "employee_id": "504539",
+    "name": "วัชระ (Editor)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -116,14 +115,14 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 14:10:30",
-    "created_at": "2026-01-20 09:45:00"
+    "last_login": "2026-10-17 16:30:00",
+    "created_at": "2026-02-15 08:00:00"
   },
   {
-    "id": "pea-editor-kumpol",
-    "email": "kumpol.t@pea.co.th",
-    "employee_id": "500321",
-    "name": "นายกำพล ตุ้ยเต็มวงค์ (อก.รย.)",
+    "id": "cefdfc5f-21ad-4772-9592-bd83200de22b",
+    "email": "adminpark@gmail.com",
+    "employee_id": "466858",
+    "name": "Adminpark",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -133,41 +132,41 @@
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-17 11:25:00",
-    "created_at": "2026-01-10 08:00:00"
+    "last_login": "2026-10-17 15:10:00",
+    "created_at": "2026-02-18 08:00:00"
   },
   {
-    "id": "pea-viewer-01",
-    "email": "viewer@pea.co.th",
-    "employee_id": "505678",
-    "name": "ผู้บริหาร / ผู้สังเกตการณ์",
-    "role": "viewer",
+    "id": "4b4bd851-137d-414a-addd-80b96cd55805",
+    "email": "poppy17705@gmail.com",
+    "employee_id": "478805",
+    "name": "ป๊อปปี้ (Editor)",
+    "role": "editor",
     "status": "active",
     "permissions": {
-      "can_upload_excel": false,
-      "can_edit_wbs": false,
-      "can_manage_punchlist": false,
+      "can_upload_excel": true,
+      "can_edit_wbs": true,
+      "can_manage_punchlist": true,
       "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "2026-10-16 14:15:00",
-    "created_at": "2026-03-01 10:00:00"
+    "last_login": "2026-10-17 14:00:00",
+    "created_at": "2026-02-20 08:00:00"
   },
   {
-    "id": "pea-pending-01",
-    "email": "somchai.m@pea.co.th",
-    "employee_id": "509876",
-    "name": "สมชาย มั่นคง",
-    "role": "pending",
-    "status": "pending",
+    "id": "cea597ae-5477-498d-b9ed-36a3d7aaceea",
+    "email": "suphasek3@gmail.com",
+    "employee_id": "495353",
+    "name": "ศุภเสกข์ (Editor)",
+    "role": "editor",
+    "status": "active",
     "permissions": {
-      "can_upload_excel": false,
-      "can_edit_wbs": false,
-      "can_manage_punchlist": false,
-      "can_export_report": false,
+      "can_upload_excel": true,
+      "can_edit_wbs": true,
+      "can_manage_punchlist": true,
+      "can_export_report": true,
       "can_manage_users": false
     },
-    "last_login": "-",
-    "created_at": "2026-10-17 19:10:00"
+    "last_login": "2026-10-17 12:45:00",
+    "created_at": "2026-02-22 08:00:00"
   }
 ]

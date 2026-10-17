@@ -512,160 +512,127 @@ window.loadAdminUsers = async function (forceRefresh = false) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px; color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลผู้ใช้งาน...</td></tr>';
     }
 
-    let users = [];
-
-    // 1. Try Supabase first (if online)
+    // Get deleted blacklist from localStorage
+    let deletedList = [];
     try {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
-        const fetchPromise = db.from('user_roles').select('*').order('created_at', { ascending: false });
+        deletedList = JSON.parse(localStorage.getItem('pcts_deleted_users') || '[]');
+    } catch (e) { deletedList = []; }
+    const isDeleted = (u) => {
+        if (!u) return true;
+        const uid = String(u.id || '').toLowerCase();
+        const uemail = String(u.email || '').toLowerCase();
+        return deletedList.some(d => {
+            const dl = String(d).toLowerCase();
+            return dl === uid || dl === uemail;
+        });
+    };
+
+    // One-time purge of legacy mock users from client localStorage
+    const legacyMockEmails = ['admin@pea.co.th', 'editor@pea.co.th', 'viewer@pea.co.th', 'somchai.m@pea.co.th', 'jakraphan.n@pea.co.th', 'palakorn.j@pea.co.th', 'worapong.l@pea.co.th', 'ekkachai.m@pea.co.th', 'watchara.w@pea.co.th', 'kumpol.t@pea.co.th'];
+    if (!localStorage.getItem('pcts_users_purged_v4')) {
+        try {
+            let cached = JSON.parse(localStorage.getItem('pcts_cached_users') || '[]');
+            if (Array.isArray(cached)) {
+                cached = cached.filter(u => !u.email || !legacyMockEmails.includes(u.email.toLowerCase()));
+                localStorage.setItem('pcts_cached_users', JSON.stringify(cached));
+            }
+            localStorage.setItem('pcts_users_purged_v4', 'true');
+        } catch (e) {}
+    }
+
+    let localServerUsers = [];
+    let localUsersMap = new Map();
+
+    // 1. Fetch Local Server (/api/users) to get rich metadata (name, status, perms, last_login)
+    try {
+        const resp = await fetchWithTimeout('/api/users', { cache: 'no-store' }, 2500);
+        if (resp.ok) {
+            const json = await resp.json();
+            if (json && json.deleted_users && Array.isArray(json.deleted_users)) {
+                json.deleted_users.forEach(du => {
+                    const dlow = String(du).toLowerCase();
+                    if (!deletedList.includes(dlow)) deletedList.push(dlow);
+                });
+                try { localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList)); } catch (e) {}
+            }
+            if (json && json.users && Array.isArray(json.users)) {
+                localServerUsers = json.users;
+                json.users.forEach(u => {
+                    if (u.id) localUsersMap.set(String(u.id), u);
+                    if (u.email) localUsersMap.set(String(u.email).toLowerCase(), u);
+                });
+            }
+        }
+    } catch (err) {
+        console.warn('Local server users fetch note:', err.message);
+    }
+
+    // 2. Query Supabase user_roles (Live cloud accounts) - WITHOUT .order('created_at')!
+    let supaUsers = [];
+    try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 3000));
+        const fetchPromise = db.from('user_roles').select('*');
         const res = await Promise.race([fetchPromise, timeoutPromise]);
-        if (res && res.data && res.data.length > 0) {
-            users = res.data;
+        if (res && res.data && Array.isArray(res.data)) {
+            supaUsers = res.data;
         }
     } catch (e) {
         console.warn('Supabase users query note:', e.message);
     }
 
-    // 2. Fallback to Local Server (/api/users)
-    if (!users || users.length === 0) {
+    // If completely offline (both Supabase & server unreachable), fallback to localStorage
+    if (supaUsers.length === 0 && localServerUsers.length === 0) {
         try {
-            const resp = await fetchWithTimeout('/api/users', { cache: 'no-store' }, 2500);
-            if (resp.ok) {
-                const json = await resp.json();
-                if (json && json.users && json.users.length > 0) {
-                    users = json.users;
-                }
+            const cached = JSON.parse(localStorage.getItem('pcts_cached_users') || '[]');
+            if (Array.isArray(cached)) {
+                cached.forEach(u => {
+                    if (!legacyMockEmails.includes((u.email || '').toLowerCase())) {
+                        localServerUsers.push(u);
+                        if (u.id) localUsersMap.set(String(u.id), u);
+                        if (u.email) localUsersMap.set(String(u.email).toLowerCase(), u);
+                    }
+                });
             }
-        } catch (err) {
-            console.warn('Local server users fetch note:', err.message);
-        }
+        } catch (e) {}
     }
 
-    // 3. Fallback to cached in localStorage
-    if (!users || users.length === 0) {
-        const cached = localStorage.getItem('pcts_cached_users');
-        if (cached) {
-            try {
-                users = JSON.parse(cached);
-            } catch (e) {}
-        }
-    }
+    // Merge Supabase users with local enriched metadata
+    const userMap = new Map();
 
-    const defaultEditors = [
-        {
-            id: 'pea-admin-01',
-            email: 'admin@pea.co.th',
-            employee_id: '500744',
-            name: 'ผู้ดูแลระบบ กบส. (Admin)',
-            role: 'admin',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: true },
-            last_login: '2026-10-17 21:01:32'
-        },
-        {
-            id: 'pea-editor-01',
-            email: 'editor@pea.co.th',
-            employee_id: '501234',
-            name: 'วิศวกรผู้ควบคุมงาน กบส. (Editor กลาง)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 18:45:00'
-        },
-        {
-            id: 'pea-editor-jakraphan',
-            email: 'jakraphan.n@pea.co.th',
-            employee_id: '502341',
-            name: 'นายจักรพันธ์ นรเหรียญ (พชง.6 ผจส.กรย.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 19:15:20'
-        },
-        {
-            id: 'pea-editor-palakorn',
-            email: 'palakorn.j@pea.co.th',
-            employee_id: '503452',
-            name: 'นายพลากร จงอมรสิริเกษม (พชง.3 ผจร.กรย.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 17:30:45'
-        },
-        {
-            id: 'pea-editor-worapong',
-            email: 'worapong.l@pea.co.th',
-            employee_id: '501890',
-            name: 'นายวรพงศ์ ลิ้มเจริญ (หผ.บอ.กบษ.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 16:20:10'
-        },
-        {
-            id: 'pea-editor-ekkachai',
-            email: 'ekkachai.m@pea.co.th',
-            employee_id: '504123',
-            name: 'นายเอกชัย หมอยาดี (ชผ.จส.กรย.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 15:45:00'
-        },
-        {
-            id: 'pea-editor-watchara',
-            email: 'watchara.w@pea.co.th',
-            employee_id: '502987',
-            name: 'นายวัชระ เวทีภิรมย์ (พชง.7 ผจส.กรย.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 14:10:30'
-        },
-        {
-            id: 'pea-editor-kumpol',
-            email: 'kumpol.t@pea.co.th',
-            employee_id: '500321',
-            name: 'นายกำพล ตุ้ยเต็มวงค์ (อก.รย.)',
-            role: 'editor',
-            status: 'active',
-            permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-17 11:25:00'
-        },
-        {
-            id: 'pea-viewer-01',
-            email: 'viewer@pea.co.th',
-            employee_id: '505678',
-            name: 'ผู้บริหาร / ผู้สังเกตการณ์',
-            role: 'viewer',
-            status: 'active',
-            permissions: { can_upload_excel: false, can_edit_wbs: false, can_manage_punchlist: false, can_export_report: true, can_manage_users: false },
-            last_login: '2026-10-16 14:15:00'
-        },
-        {
-            id: 'pea-pending-01',
-            email: 'somchai.m@pea.co.th',
-            employee_id: '509876',
-            name: 'สมชาย มั่นคง',
-            role: 'pending',
-            status: 'pending',
-            permissions: { can_upload_excel: false, can_edit_wbs: false, can_manage_punchlist: false, can_export_report: false, can_manage_users: false },
-            last_login: '-'
-        }
-    ];
-
-    // 4. Default seed fallback if still empty
-    if (!users || users.length === 0) {
-        users = [...defaultEditors];
-    } else {
-        // Merge missing active editor accounts
-        defaultEditors.forEach(defU => {
-            const exists = users.some(u => (u.email && u.email.toLowerCase() === defU.email.toLowerCase()) || u.id === defU.id);
-            if (!exists) {
-                users.push(defU);
-            }
+    // If Supabase users available, add them
+    supaUsers.forEach(su => {
+        if (isDeleted(su)) return;
+        if (legacyMockEmails.includes((su.email || '').toLowerCase())) return;
+        const key = su.id || su.email;
+        const localMeta = localUsersMap.get(String(su.id)) || localUsersMap.get(String(su.email || '').toLowerCase()) || {};
+        
+        userMap.set(key, {
+            id: su.id,
+            email: su.email || localMeta.email || '',
+            employee_id: su.employee_id || localMeta.employee_id || '',
+            role: su.role || localMeta.role || 'editor',
+            name: localMeta.name || (su.email ? su.email.split('@')[0] : 'ผู้ใช้งาน'),
+            status: localMeta.status || 'active',
+            permissions: localMeta.permissions || null,
+            last_login: localMeta.last_login || '-',
+            created_at: localMeta.created_at || '-'
         });
-    }
+    });
+
+    // Add local server users that may exist locally
+    localServerUsers.forEach((lu) => {
+        if (isDeleted(lu)) return;
+        if (legacyMockEmails.includes((lu.email || '').toLowerCase())) return;
+        const key = lu.id || lu.email;
+        if (!userMap.has(key)) {
+            const emailMatch = Array.from(userMap.values()).some(u => u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase());
+            if (!emailMatch) {
+                userMap.set(key, lu);
+            }
+        }
+    });
+
+    let users = Array.from(userMap.values());
 
     // Ensure permissions object is parsed
     users = users.map(u => {
@@ -964,17 +931,20 @@ window.submitUserPermissions = async function (e) {
             payload.password = password;
         }
 
-        // 1. Save to Supabase (with timeout fallback)
+        // Unmark from deleted users if present
+        try {
+            let deletedList = JSON.parse(localStorage.getItem('pcts_deleted_users') || '[]');
+            deletedList = deletedList.filter(d => String(d).toLowerCase() !== String(userId).toLowerCase() && String(d).toLowerCase() !== String(email).toLowerCase());
+            localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList));
+        } catch (e) {}
+
+        // 1. Save to Supabase (with timeout fallback) - only valid columns: email, employee_id, role
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
             const updatePromise = db.from('user_roles').update({
                 email: email,
-                name: name,
                 employee_id: empId,
-                role: role,
-                status: status,
-                permissions: permissions,
-                updated_at: new Date().toISOString()
+                role: role
             }).eq('id', userId);
             await Promise.race([updatePromise, timeoutPromise]);
         } catch (supaErr) {
@@ -1114,19 +1084,37 @@ window.deleteAdminUser = async function (userId) {
     if (!confirm(`⚠️ ยืนยันการลบผู้ใช้ ${user.email} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
 
     try {
+        // Record in localStorage deleted_users blacklist immediately
         try {
-            await db.from('user_roles').delete().eq('id', userId);
+            let deletedList = JSON.parse(localStorage.getItem('pcts_deleted_users') || '[]');
+            if (userId && !deletedList.includes(userId)) deletedList.push(userId);
+            if (user.email && !deletedList.includes(user.email.toLowerCase())) deletedList.push(user.email.toLowerCase());
+            localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList));
         } catch (e) {}
 
+        // 1. Delete from Supabase
+        try {
+            await db.from('user_roles').delete().eq('id', userId);
+            if (user.email) {
+                await db.from('user_roles').delete().eq('email', user.email);
+            }
+        } catch (e) {
+            console.warn('Supabase delete user note:', e.message);
+        }
+
+        // 2. Delete from Local Server API
         try {
             await fetchWithTimeout('/api/users/delete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: userId })
+                body: JSON.stringify({ id: userId, email: user.email })
             }, 2500);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Local server delete note:', e.message);
+        }
 
-        window.adminUsersList = window.adminUsersList.filter(u => u.id !== userId);
+        // 3. Update memory & local cache
+        window.adminUsersList = window.adminUsersList.filter(u => u.id !== userId && (!user.email || u.email?.toLowerCase() !== user.email.toLowerCase()));
         localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
 
         alert('ลบผู้ใช้งานเรียบร้อยแล้ว');
@@ -1187,6 +1175,13 @@ window.submitAdminAddUser = async function (e) {
             created_at: new Date().toISOString()
         };
 
+        // Unmark from deleted users if present
+        try {
+            let deletedList = JSON.parse(localStorage.getItem('pcts_deleted_users') || '[]');
+            deletedList = deletedList.filter(d => String(d).toLowerCase() !== String(newId).toLowerCase() && String(d).toLowerCase() !== String(email).toLowerCase());
+            localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList));
+        } catch (e) {}
+
         // 1. Try local server
         try {
             await fetchWithTimeout('/api/users/save', {
@@ -1198,14 +1193,13 @@ window.submitAdminAddUser = async function (e) {
             console.warn('Local server save note:', e.message);
         }
 
-        // 2. Try Supabase user_roles table
+        // 2. Try Supabase user_roles table (only columns id, email, employee_id, role)
         try {
             await db.from('user_roles').insert([{
                 id: newId,
                 email: email,
                 employee_id: empId,
-                role: role,
-                permissions: perms
+                role: role
             }]);
         } catch (e) {
             console.warn('Supabase insert note:', e.message);
@@ -2219,23 +2213,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Get role & permissions from DB
             try {
-                const { data, error } = await db.from('user_roles').select('*').eq('id', session.user.id).single();
+                let userRoleData = null;
+                const { data, error } = await db.from('user_roles').select('*').eq('id', session.user.id).maybeSingle();
                 if (data && data.role) {
-                    window.currentUserEmpId = data.employee_id || '';
-                    let perms = data.permissions;
+                    userRoleData = data;
+                } else if (session.user.email) {
+                    const { data: emailData } = await db.from('user_roles').select('*').eq('email', session.user.email).maybeSingle();
+                    if (emailData && emailData.role) {
+                        userRoleData = emailData;
+                    }
+                }
+
+                // If not found in user_roles at all, auto-enroll user into user_roles
+                if (!userRoleData && session.user.email) {
+                    const defaultRole = (session.user.email.toLowerCase() === 'puwadol0527@gmail.com' || session.user.email.toLowerCase() === 'admin@pea.co.th') ? 'admin' : 'editor';
+                    try {
+                        const newEnroll = {
+                            id: session.user.id,
+                            email: session.user.email,
+                            employee_id: session.user.user_metadata?.employee_id || '',
+                            role: defaultRole
+                        };
+                        await db.from('user_roles').insert([newEnroll]);
+                        userRoleData = newEnroll;
+                    } catch (insErr) {
+                        console.warn('Auto enroll user_roles note:', insErr.message);
+                    }
+                }
+
+                // Update last_login timestamp locally & sync to server
+                const nowText = new Date().toLocaleString('sv-SE');
+                try {
+                    await fetchWithTimeout('/api/users/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: session.user.id,
+                            email: session.user.email,
+                            employee_id: userRoleData?.employee_id || '',
+                            role: userRoleData?.role || 'editor',
+                            last_login: nowText
+                        })
+                    }, 2000);
+                } catch (e) {}
+
+                if (userRoleData && userRoleData.role) {
+                    window.currentUserEmpId = userRoleData.employee_id || '';
+                    let perms = userRoleData.permissions;
                     if (typeof perms === 'string') {
                         try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
                     }
                     window.currentUserPermissions = perms || {};
-                    const userRole = data.role.toLowerCase();
+                    const userRole = userRoleData.role.toLowerCase();
 
-                    if (userRole === 'pending' || data.status === 'pending') {
+                    if (userRole === 'pending' || userRoleData.status === 'pending') {
                         alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
                         await window.logout();
                         return;
                     }
 
-                    if (data.status === 'suspended') {
+                    if (userRoleData.status === 'suspended') {
                         alert('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin');
                         await window.logout();
                         return;

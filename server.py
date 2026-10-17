@@ -68,189 +68,224 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
     def _get_users_file(self):
         return os.path.join(DATA_DIR, 'user_roles.json')
 
-    def _get_users(self):
-        users_file = self._get_users_file()
-        if os.path.exists(users_file):
+    def _get_deleted_users_file(self):
+        return os.path.join(DATA_DIR, 'deleted_users.json')
+
+    def _get_deleted_users(self):
+        del_file = self._get_deleted_users_file()
+        if os.path.exists(del_file):
             try:
-                with open(users_file, 'r', encoding='utf-8') as f:
+                with open(del_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception:
                 pass
-        # Default seed users
-        seed_users = [
-            {
-                "id": "pea-admin-01",
-                "email": "admin@pea.co.th",
-                "employee_id": "500744",
-                "name": "ผู้ดูแลระบบ กบส. (Admin)",
-                "role": "admin",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": True
+        return []
+
+    def _save_deleted_user(self, user_id=None, email=None):
+        del_users = self._get_deleted_users()
+        changed = False
+        if user_id:
+            uid = str(user_id).strip()
+            if uid and uid not in del_users:
+                del_users.append(uid)
+                changed = True
+        if email:
+            em = str(email).strip().lower()
+            if em and em not in del_users:
+                del_users.append(em)
+                changed = True
+        if changed:
+            del_file = self._get_deleted_users_file()
+            try:
+                with open(del_file, 'w', encoding='utf-8') as f:
+                    json.dump(del_users, f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
+    def _unmark_deleted_user(self, user_id=None, email=None):
+        del_users = self._get_deleted_users()
+        orig_len = len(del_users)
+        targets = set()
+        if user_id: targets.add(str(user_id).strip())
+        if email: targets.add(str(email).strip().lower())
+        del_users = [d for d in del_users if d not in targets]
+        if len(del_users) != orig_len:
+            del_file = self._get_deleted_users_file()
+            try:
+                with open(del_file, 'w', encoding='utf-8') as f:
+                    json.dump(del_users, f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+
+    def _get_users(self):
+        users_file = self._get_users_file()
+        users = []
+        if os.path.exists(users_file):
+            try:
+                with open(users_file, 'r', encoding='utf-8') as f:
+                    users = json.load(f)
+            except Exception:
+                users = []
+        if not users:
+            # Fallback to current real user accounts
+            seed_users = [
+                {
+                    "id": "6c9c9665-2820-40b6-95ab-cb65262ab428",
+                    "email": "puwadol0527@gmail.com",
+                    "employee_id": "500744",
+                    "name": "ภูวดล (Admin)",
+                    "role": "admin",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": True
+                    },
+                    "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                    "created_at": "2026-01-01 08:00:00"
                 },
-                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
-                "created_at": "2026-01-01 08:00:00"
-            },
-            {
-                "id": "pea-editor-01",
-                "email": "editor@pea.co.th",
-                "employee_id": "501234",
-                "name": "วิศวกรผู้ควบคุมงาน กบส. (Editor กลาง)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "013975c9-4ba9-4779-9182-a4c4c87a25a9",
+                    "email": "puwadol.suk@pea.co.th",
+                    "employee_id": "500744",
+                    "name": "ภูวดล สุขศรี (กบส.)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 22:25:00",
+                    "created_at": "2026-01-02 08:00:00"
                 },
-                "last_login": "2026-10-17 18:45:00",
-                "created_at": "2026-02-15 09:30:00"
-            },
-            {
-                "id": "pea-editor-jakraphan",
-                "email": "jakraphan.n@pea.co.th",
-                "employee_id": "502341",
-                "name": "นายจักรพันธ์ นรเหรียญ (พชง.6 ผจส.กรย.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "43c79b64-cb6d-47e9-b04c-77cab5ba35ae",
+                    "email": "jeerapol20@gmail.com",
+                    "employee_id": "515883",
+                    "name": "จิรพล (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 20:15:00",
+                    "created_at": "2026-02-01 08:00:00"
                 },
-                "last_login": "2026-10-17 19:15:20",
-                "created_at": "2026-02-01 08:30:00"
-            },
-            {
-                "id": "pea-editor-palakorn",
-                "email": "palakorn.j@pea.co.th",
-                "employee_id": "503452",
-                "name": "นายพลากร จงอมรสิริเกษม (พชง.3 ผจร.กรย.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "d24e5505-3d40-4886-b2f3-6bc4d86194fb",
+                    "email": "bangkamclub@gmail.com",
+                    "employee_id": "504952",
+                    "name": "บางคำคลับ (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 19:40:00",
+                    "created_at": "2026-02-05 08:00:00"
                 },
-                "last_login": "2026-10-17 17:30:45",
-                "created_at": "2026-02-10 09:00:00"
-            },
-            {
-                "id": "pea-editor-worapong",
-                "email": "worapong.l@pea.co.th",
-                "employee_id": "501890",
-                "name": "นายวรพงศ์ ลิ้มเจริญ (หผ.บอ.กบษ.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "518644f2-4ade-45a3-95b8-5744d2729ec6",
+                    "email": "Ekachai.Mor@pea.co.th",
+                    "employee_id": "496800",
+                    "name": "เอกชัย (Editor กฟภ.)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 18:20:00",
+                    "created_at": "2026-02-10 08:00:00"
                 },
-                "last_login": "2026-10-17 16:20:10",
-                "created_at": "2026-01-15 10:15:00"
-            },
-            {
-                "id": "pea-editor-ekkachai",
-                "email": "ekkachai.m@pea.co.th",
-                "employee_id": "504123",
-                "name": "นายเอกชัย หมอยาดี (ชผ.จส.กรย.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "f9cf223c-331a-4d59-97e2-c2c9082823ba",
+                    "email": "parakhon42@gmail.com",
+                    "employee_id": "515672",
+                    "name": "ภราดร (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 17:50:00",
+                    "created_at": "2026-02-12 08:00:00"
                 },
-                "last_login": "2026-10-17 15:45:00",
-                "created_at": "2026-03-01 11:00:00"
-            },
-            {
-                "id": "pea-editor-watchara",
-                "email": "watchara.w@pea.co.th",
-                "employee_id": "502987",
-                "name": "นายวัชระ เวทีภิรมย์ (พชง.7 ผจส.กรย.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "fad38d33-e89f-4b02-83ee-a144f08d3250",
+                    "email": "notwatchara29@gmail.com",
+                    "employee_id": "504539",
+                    "name": "วัชระ (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 16:30:00",
+                    "created_at": "2026-02-15 08:00:00"
                 },
-                "last_login": "2026-10-17 14:10:30",
-                "created_at": "2026-01-20 09:45:00"
-            },
-            {
-                "id": "pea-editor-kumpol",
-                "email": "kumpol.t@pea.co.th",
-                "employee_id": "500321",
-                "name": "นายกำพล ตุ้ยเต็มวงค์ (อก.รย.)",
-                "role": "editor",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": True,
-                    "can_edit_wbs": True,
-                    "can_manage_punchlist": True,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "cefdfc5f-21ad-4772-9592-bd83200de22b",
+                    "email": "adminpark@gmail.com",
+                    "employee_id": "466858",
+                    "name": "Adminpark",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 15:10:00",
+                    "created_at": "2026-02-18 08:00:00"
                 },
-                "last_login": "2026-10-17 11:25:00",
-                "created_at": "2026-01-10 08:00:00"
-            },
-            {
-                "id": "pea-viewer-01",
-                "email": "viewer@pea.co.th",
-                "employee_id": "505678",
-                "name": "ผู้บริหาร / ผู้สังเกตการณ์",
-                "role": "viewer",
-                "status": "active",
-                "permissions": {
-                    "can_upload_excel": False,
-                    "can_edit_wbs": False,
-                    "can_manage_punchlist": False,
-                    "can_export_report": True,
-                    "can_manage_users": False
+                {
+                    "id": "4b4bd851-137d-414a-addd-80b96cd55805",
+                    "email": "poppy17705@gmail.com",
+                    "employee_id": "478805",
+                    "name": "ป๊อปปี้ (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 14:00:00",
+                    "created_at": "2026-02-20 08:00:00"
                 },
-                "last_login": "2026-10-16 14:15:00",
-                "created_at": "2026-03-01 10:00:00"
-            },
-            {
-                "id": "pea-pending-01",
-                "email": "somchai.m@pea.co.th",
-                "employee_id": "509876",
-                "name": "สมชาย มั่นคง",
-                "role": "pending",
-                "status": "pending",
-                "permissions": {
-                    "can_upload_excel": False,
-                    "can_edit_wbs": False,
-                    "can_manage_punchlist": False,
-                    "can_export_report": False,
-                    "can_manage_users": False
+                {
+                    "id": "cea597ae-5477-498d-b9ed-36a3d7aaceea",
+                    "email": "suphasek3@gmail.com",
+                    "employee_id": "495353",
+                    "name": "ศุภเสกข์ (Editor)",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 12:45:00",
+                    "created_at": "2026-02-22 08:00:00"
                 },
-                "last_login": "-",
-                "created_at": "2026-10-17 19:10:00"
-            }
-        ]
-        self._save_users(seed_users)
-        return seed_users
+                {
+                    "id": "40bd0bd5-fea2-49ec-952d-3b7ba181b421",
+                    "email": "dddd@ddd.com",
+                    "employee_id": "504669",
+                    "name": "ผู้ใช้ทดสอบ dddd",
+                    "role": "editor",
+                    "status": "active",
+                    "permissions": {
+                        "can_upload_excel": True, "can_edit_wbs": True, "can_manage_punchlist": True, "can_export_report": True, "can_manage_users": False
+                    },
+                    "last_login": "2026-10-17 10:00:00",
+                    "created_at": "2026-02-25 08:00:00"
+                }
+            ]
+            self._save_users(seed_users)
+            users = seed_users
+
+        # Filter against deleted users
+        deleted_set = set(self._get_deleted_users())
+        filtered_users = []
+        for u in users:
+            uid = str(u.get('id', '')).strip()
+            uemail = str(u.get('email', '')).strip().lower()
+            if uid in deleted_set or uemail in deleted_set:
+                continue
+            filtered_users.append(u)
+        return filtered_users
 
     def _save_users(self, users):
         users_file = self._get_users_file()
@@ -271,7 +306,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
 
         if path == '/api/users':
             users = self._get_users()
-            return self._send_json({'success': True, 'users': users})
+            return self._send_json({'success': True, 'users': users, 'deleted_users': self._get_deleted_users()})
 
         super().do_GET()
 
@@ -436,9 +471,13 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
 
-            users = self._get_users()
             user_id = payload.get('id')
             email = payload.get('email', '').strip().lower()
+
+            # Unmark from deleted if being explicitly saved/re-enrolled
+            self._unmark_deleted_user(user_id=user_id, email=email)
+
+            users = self._get_users()
 
             target = None
             for u in users:
@@ -463,6 +502,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 if 'status' in payload: target['status'] = payload['status']
                 if 'permissions' in payload: target['permissions'] = payload['permissions']
                 if 'password' in payload and payload['password']: target['password'] = payload['password']
+                if 'last_login' in payload and payload['last_login']: target['last_login'] = payload['last_login']
                 target['updated_at'] = now_text
             else:
                 new_id = user_id or f"pea-user-{int(time.time() * 1000)}"
@@ -484,7 +524,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                     'role': role,
                     'status': payload.get('status', 'active'),
                     'permissions': perms,
-                    'last_login': '-',
+                    'last_login': payload.get('last_login', '-'),
                     'created_at': now_text
                 }
                 if 'password' in payload and payload['password']:
@@ -503,12 +543,13 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
 
             user_id = payload.get('id')
-            users = self._get_users()
-            orig_len = len(users)
-            users = [u for u in users if u.get('id') != user_id]
-            if len(users) == orig_len:
-                return self._send_json({'error': 'User not found'}, 404)
+            email = payload.get('email', '').strip().lower()
 
+            # Save in deleted_users blacklist permanently
+            self._save_deleted_user(user_id=user_id, email=email)
+
+            users = self._get_users()
+            users = [u for u in users if (not user_id or u.get('id') != user_id) and (not email or u.get('email', '').strip().lower() != email)]
             self._save_users(users)
             return self._send_json({'success': True, 'users': users})
 
