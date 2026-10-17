@@ -794,13 +794,13 @@ window.renderAdminUsersTable = function () {
             `;
         }
         actionsHtml += `
-            <button class="btn" style="background: #f5f3ff; color: #6b21a8; padding: 4px 10px; font-size: 12px; font-weight: 600; border: 1px solid #ddd6fe; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;" onclick="window.openUserPermissionModal('${u.id}')" title="แก้ไขข้อมูลผู้ใช้และกำหนดสิทธิ์">
+            <button class="btn btn-action-edit" onclick="window.openUserPermissionModal('${u.id}')" title="แก้ไขข้อมูลผู้ใช้และกำหนดสิทธิ์">
                 <i class="fa-solid fa-pen-to-square"></i> แก้ไข
             </button>
-            <button class="btn" style="background: ${isSuspended ? '#ecfdf5' : '#fff1f2'}; color: ${isSuspended ? '#047857' : '#be123c'}; padding: 4px 8px; font-size: 11.5px; border: 1px solid ${isSuspended ? '#a7f3d0' : '#fecdd3'}; border-radius: 6px;" onclick="window.toggleUserStatus('${u.id}')" title="${isSuspended ? 'ปลดระงับการใช้งาน' : 'ระงับการใช้งาน'}">
+            <button class="btn btn-action-toggle ${isSuspended ? 'is-suspended' : ''}" onclick="window.toggleUserStatus('${u.id}')" title="${isSuspended ? 'ปลดระงับการใช้งาน' : 'ระงับการใช้งาน'}">
                 <i class="fa-solid ${isSuspended ? 'fa-lock-open' : 'fa-lock'}"></i>
             </button>
-            <button class="btn" style="background: #fff1f2; color: #e11d48; padding: 4px 8px; font-size: 11.5px; border: 1px solid #fecdd3; border-radius: 6px;" onclick="window.deleteAdminUser('${u.id}')" title="ลบผู้ใช้นี้">
+            <button class="btn btn-action-delete" onclick="window.deleteAdminUser('${u.id}')" title="ลบผู้ใช้นี้">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </div>`;
@@ -815,10 +815,10 @@ window.renderAdminUsersTable = function () {
                     </div>
                 </div>
             </td>
-            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 12px;">${u.employee_id || '-'}</code></td>
+            <td><code class="emp-code-pill">${u.employee_id || '-'}</code></td>
             <td>${currentRoleBadge}</td>
             <td>${permChipsHtml}</td>
-            <td><span style="font-size: 12px; color: #64748b;">${u.last_login || '-'}</span></td>
+            <td><span class="user-last-login">${u.last_login || '-'}</span></td>
             <td>${statusHtml}</td>
             <td>${actionsHtml}</td>
         `;

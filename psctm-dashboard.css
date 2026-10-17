@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
 
-:root, #psctm-dashboard-view, .modal-overlay, #printReportHeader {
+:root {
   /* Color Palette - Light Theme */
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
@@ -26,6 +26,10 @@
   --pea-purple-glow: rgba(147, 51, 234, 0.18);
   --pea-gradient: linear-gradient(135deg, #581c87 0%, #7e22ce 50%, #9333ea 100%);
   --pea-gradient-subtle: linear-gradient(135deg, rgba(88, 28, 135, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%);
+
+  /* Fallback Card & Background Variables */
+  --card-bg: #ffffff;
+  --bg-tertiary: #f1f5f9;
 
   /* Status Colors */
   --color-success: #10b981;
@@ -63,7 +67,10 @@
 }
 
 /* Dark Theme Variables */
-[data-theme='dark'] {
+[data-theme='dark'],
+[data-theme='dark'] #psctm-dashboard-view,
+[data-theme='dark'] .modal-overlay,
+[data-theme='dark'] #printReportHeader {
   --bg-primary: #090d16;
   --bg-secondary: #0f172a;
   --bg-surface: #141e33;
@@ -83,6 +90,10 @@
   --pea-purple-glow: rgba(192, 132, 252, 0.2);
   --pea-gradient: linear-gradient(135deg, #7e22ce 0%, #9333ea 50%, #a855f7 100%);
   --pea-gradient-subtle: linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(192, 132, 252, 0.05) 100%);
+
+  /* Fallback Card & Background Variables */
+  --card-bg: #141e33;
+  --bg-tertiary: #1e293b;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -615,15 +626,9 @@ body {
   border: 1px solid transparent;
 }
 
+#btnThemeToggle,
 #psctm-dashboard-view .theme-toggle-btn {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-color: var(--border-subtle);
-}
-
-#psctm-dashboard-view .theme-toggle-btn:hover {
-  background: var(--border-subtle);
-  color: var(--text-primary);
+  display: none !important;
 }
 
 #psctm-dashboard-view .btn-secondary, .modal-overlay .btn-secondary {
@@ -632,7 +637,7 @@ body {
   border-color: var(--border-subtle);
 }
 
-#psctm-dashboard-view .btn-secondary, .modal-overlay .btn-secondary:hover {
+#psctm-dashboard-view .btn-secondary:hover, .modal-overlay .btn-secondary:hover {
   background: var(--border-subtle);
 }
 
