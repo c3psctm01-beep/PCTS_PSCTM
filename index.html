@@ -103,13 +103,31 @@
                             <i class="fa-solid fa-chart-pie"></i>
                             <span>สถานะงานก่อสร้างงานโครงการ</span>
                         </li>
-                        <li data-target="admin-view" class="role-admin" onclick="toggleSidebar(false)">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                            <span>ตั้งค่าแผนงาน</span>
-                        </li>
-                        <li data-target="editor-view" class="role-editor" onclick="toggleSidebar(false)">
+                        <li data-target="editor-view" class="role-editor" onclick="toggleSidebar(false)" style="display: none;">
                             <i class="fa-solid fa-camera"></i>
                             <span>รายงานความก้าวหน้า</span>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- การจัดการระบบ (เฉพาะ Admin เท่านั้น) -->
+                <div class="sidebar-section-title role-admin" style="margin-top: 20px; display: none;">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 6px; color: var(--pea-purple);"></i>
+                    <span>การจัดการระบบ (Admin)</span>
+                </div>
+                <nav class="sidebar-nav role-admin" style="display: none;">
+                    <ul>
+                        <li id="sidebarNavAdminProject" data-target="admin-view" data-admin-tab="adminTabProject" class="role-admin" onclick="toggleSidebar(false)" style="display: none;">
+                            <i class="fa-solid fa-building"></i>
+                            <span>จัดการโครงการ</span>
+                        </li>
+                        <li id="sidebarNavAdminWBS" data-target="admin-view" data-admin-tab="adminTabWBS" class="role-admin" onclick="toggleSidebar(false)" style="display: none;">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>เพิ่ม/แก้ไขแผนงานย่อย</span>
+                        </li>
+                        <li id="sidebarNavAdminUser" data-target="admin-view" data-admin-tab="adminTabUser" class="role-admin" onclick="toggleSidebar(false)" style="display: none;">
+                            <i class="fa-solid fa-users-gear"></i>
+                            <span>จัดการสิทธิ์</span>
                         </li>
                     </ul>
                 </nav>
@@ -3421,12 +3439,18 @@
                         window.authenticatedRole = 'admin';
                         window.updateRole('admin', true);
                     }
-                    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-                    const adminView = document.getElementById('admin-view');
-                    if (adminView) adminView.classList.add('active');
-                    document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
-                        n.classList.toggle('active', n.getAttribute('data-target') === 'admin-view');
-                    });
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const adminTabParam = urlParams.get('admintab') || 'adminTabProject';
+                    if (typeof window.openAdminTab === 'function') {
+                        window.openAdminTab(null, adminTabParam);
+                    } else {
+                        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                        const adminView = document.getElementById('admin-view');
+                        if (adminView) adminView.classList.add('active');
+                        document.querySelectorAll('.sidebar-nav li').forEach(n => {
+                            n.classList.toggle('active', n.getAttribute('data-admin-tab') === adminTabParam);
+                        });
+                    }
                 }, 1000);
             });
         }

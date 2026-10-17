@@ -1614,6 +1614,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Security check: Only Admin can access role-admin items or admin-view
+            if (item.classList.contains('role-admin') || targetId === 'admin-view') {
+                if (window.authenticatedRole !== 'admin') {
+                    alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถเข้าถึงส่วนนี้ได้');
+                    return;
+                }
+            }
+
             // Remove active from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
@@ -1632,6 +1640,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const targetEl = document.getElementById(targetId);
             if (targetEl) {
                 targetEl.classList.add('active');
+            }
+
+            // If switching to admin-view, activate the specific sub-tab
+            if (targetId === 'admin-view') {
+                const adminTab = item.getAttribute('data-admin-tab') || 'adminTabProject';
+                if (typeof window.openAdminTab === 'function') {
+                    window.openAdminTab(null, adminTab);
+                }
             }
 
             // Mascot widget visibility: hide completely in manual-view so it never blocks A4 document or print
@@ -1718,10 +1734,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         window.currentRole = role;
+        const currentRoleAdminItems = document.querySelectorAll('.role-admin');
+        const currentRoleEditorItems = document.querySelectorAll('.role-editor');
 
         if (role === 'viewer') {
-            roleAdminItems.forEach(el => el.style.display = 'none');
-            roleEditorItems.forEach(el => el.style.display = 'none');
+            currentRoleAdminItems.forEach(el => el.style.display = 'none');
+            currentRoleEditorItems.forEach(el => el.style.display = 'none');
             currentUserRoleText.className = 'user-role-badge role-badge-viewer';
             currentUserRoleText.innerHTML = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
                 ? '<i class="fa-solid fa-user"></i> Viewer (โหมดทดสอบ)'
@@ -1737,8 +1755,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         } else if (role === 'editor') {
-            roleAdminItems.forEach(el => el.style.display = 'none');
-            roleEditorItems.forEach(el => el.style.display = '');
+            currentRoleAdminItems.forEach(el => el.style.display = 'none');
+            currentRoleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.className = 'user-role-badge role-badge-editor';
             currentUserRoleText.innerHTML = (window.authenticatedRole === 'admin' && role !== window.authenticatedRole)
                 ? '<i class="fa-solid fa-user-gear"></i> Editor (โหมดทดสอบ)'
@@ -1754,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         } else if (role === 'admin') {
-            roleAdminItems.forEach(el => {
+            currentRoleAdminItems.forEach(el => {
                 if (el.id === 'btnDeleteDisbMonth') {
                     const hasData = window.currentProjectViewData?.disbursement?.monthlyData && Object.keys(window.currentProjectViewData.disbursement.monthlyData).length > 0;
                     el.style.display = hasData ? 'inline-flex' : 'none';
@@ -1762,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     el.style.display = '';
                 }
             });
-            roleEditorItems.forEach(el => el.style.display = '');
+            currentRoleEditorItems.forEach(el => el.style.display = '');
             currentUserRoleText.className = 'user-role-badge role-badge-admin';
             currentUserRoleText.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Admin (ผู้ดูแลระบบ)';
         }
@@ -1789,12 +1807,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const targetView = urlParams.get('view');
     if (targetView) {
         setTimeout(() => {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            const tv = document.getElementById(targetView);
-            if (tv) tv.classList.add('active');
-            document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
-                n.classList.toggle('active', n.getAttribute('data-target') === targetView);
-            });
+            if (targetView === 'admin-view') {
+                const adminTabParam = urlParams.get('admintab') || 'adminTabProject';
+                if (typeof window.openAdminTab === 'function') {
+                    window.openAdminTab(null, adminTabParam);
+                }
+            } else {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                const tv = document.getElementById(targetView);
+                if (tv) tv.classList.add('active');
+                document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
+                    n.classList.toggle('active', n.getAttribute('data-target') === targetView);
+                });
+            }
         }, 300);
     }
 
@@ -5176,36 +5201,67 @@ window.printManualA4 = function () {
 
 // --- Admin Tabs ---
 window.openAdminTab = function (evt, tabName) {
+    // 1. Guard check: only Admin can access
+    if (window.authenticatedRole !== 'admin') {
+        alert('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถเข้าถึงส่วนนี้ได้');
+        return;
+    }
+
+    // 2. Ensure admin-view section is displayed
+    const adminView = document.getElementById('admin-view');
+    if (adminView && !adminView.classList.contains('active')) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        adminView.classList.add('active');
+    }
+
     let i, tabcontent, tablinks;
 
-    // Hide all tab content
+    // 3. Hide all tab content
     tabcontent = document.getElementsByClassName("admin-tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
 
-    // Remove active class from all admin tab links
+    // 4. Remove active class from all admin tab links inside admin-view
     tablinks = document.getElementsByClassName("admin-tablinks");
     for (i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
     }
 
-    // Show current tab, add active class to button
+    // 5. Show current tab, add active class to button
     const activeTab = document.getElementById(tabName);
     if (activeTab) {
         activeTab.style.display = "flex";
         activeTab.style.flexDirection = "column";
         activeTab.style.flex = "1";
-        activeTab.style.overflow = "hidden";
+        activeTab.style.overflow = (tabName === 'adminTabUser') ? "auto" : "hidden";
     }
 
     if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
+    } else {
+        const matchingBtn = document.querySelector(`.admin-tablinks[onclick*="${tabName}"]`);
+        if (matchingBtn) matchingBtn.classList.add("active");
     }
 
+    // 6. Synchronize active state for Admin items in left sidebar
+    document.querySelectorAll('.sidebar-nav li[data-target="admin-view"]').forEach(li => {
+        if (li.getAttribute('data-admin-tab') === tabName) {
+            li.classList.add('active');
+        } else {
+            li.classList.remove('active');
+        }
+    });
+
+    // 7. Load or refresh data specific to the active tab
     if (tabName === 'adminTabUser') {
         if (typeof window.loadAdminUsers === 'function') {
             window.loadAdminUsers();
+        }
+    } else if (tabName === 'adminTabWBS') {
+        const adminSelect = document.getElementById('adminProjectSelect');
+        if (adminSelect && adminSelect.value) {
+            adminSelect.dispatchEvent(new Event('change'));
         }
     }
 };
