@@ -5253,6 +5253,18 @@ window.openAdminTab = function (evt, tabName) {
         }
     });
 
+    // Update page header title according to the active tab
+    const adminPageTitle = document.getElementById('adminPageTitle');
+    if (adminPageTitle) {
+        if (tabName === 'adminTabProject') {
+            adminPageTitle.textContent = 'จัดการโครงการ (Admin)';
+        } else if (tabName === 'adminTabWBS') {
+            adminPageTitle.textContent = 'เพิ่ม/แก้ไขแผนงานย่อย (Admin)';
+        } else if (tabName === 'adminTabUser') {
+            adminPageTitle.textContent = 'จัดการสิทธิ์ผู้ใช้งาน (Admin)';
+        }
+    }
+
     // 7. Load or refresh data specific to the active tab
     if (tabName === 'adminTabUser') {
         if (typeof window.loadAdminUsers === 'function') {

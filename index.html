@@ -1341,17 +1341,12 @@
                 <!-- Admin View -->
                 <section id="admin-view" class="view-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                        <h1 class="page-title" style="margin-bottom: 0;">จัดการโครงการและแผนงาน (Admin)</h1>
+                        <h1 class="page-title" style="margin-bottom: 0;" id="adminPageTitle">จัดการโครงการ (Admin)</h1>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn role-admin" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-file-invoice"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
                             <button class="btn" style="background-color: #f39c12; color: white;" onclick="document.getElementById('importExcelInput').click()"><i class="fa-solid fa-upload"></i> นำเข้าข้อมูล (Excel)</button>
                             <input type="file" id="importExcelInput" style="display:none;" accept=".xlsx, .xls">
                         </div>
-                    </div>
-                    <div class="project-tabs" style="margin-top: 5px;">
-                        <button class="tablinks admin-tablinks active" onclick="openAdminTab(event, 'adminTabProject')"><i class="fa-solid fa-building"></i> จัดการโครงการ</button>
-                        <button class="tablinks admin-tablinks" onclick="openAdminTab(event, 'adminTabWBS')"><i class="fa-solid fa-list-check"></i> เพิ่ม/แก้ไขแผนงานย่อย</button>
-                        <button class="tablinks admin-tablinks" onclick="openAdminTab(event, 'adminTabUser')"><i class="fa-solid fa-users"></i> จัดการสิทธิ์</button>
                     </div>
                     
                     <!-- User Management Panel -->
