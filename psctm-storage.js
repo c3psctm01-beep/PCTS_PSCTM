@@ -212,8 +212,15 @@ window.DashboardStorage = (function () {
   async function saveLatestData(data, rawFile, uploadedBy, passcode) {
     if (!data) return { success: false, serverSaved: false };
 
-    const effectivePasscode = passcode || getStoredPasscode();
-    if (effectivePasscode !== '1212312121') {
+    let effectivePasscode = passcode || getStoredPasscode();
+    const isAuth = typeof window !== 'undefined' && (
+      window.authenticatedRole === 'admin' || window.authenticatedRole === 'editor' ||
+      window.currentRole === 'admin' || window.currentRole === 'editor'
+    );
+    if (!effectivePasscode && isAuth) {
+      effectivePasscode = '1212312121';
+    }
+    if (effectivePasscode !== '1212312121' && !isAuth) {
       throw new Error('รหัสผ่านไม่ถูกต้อง (Passcode Invalid) กรุณาใส่ 1212312121');
     }
 
@@ -340,45 +347,35 @@ window.DashboardStorage = (function () {
 
   /**
    * Load the dataset to display.
-   * Instant-first approach:
-   * 1. Check Central JSON (server.py) or Local Cache immediately (<10ms).
-   * 2. Check Supabase Cloud with a strict 2.5s timeout.
+   * Priority:
+   * 1. Supabase Cloud (with strict 2.5s timeout) for instant cross-device sync.
+   * 2. LAN Central server (data/latest_data.json) if running.
+   * 3. Local Cache (IndexedDB / localStorage) for offline fallback.
    */
   async function loadLatestData() {
-    // 1. Fast Path: Central file /data/latest_data.json and local cache
+    let central = null;
+    let local = null;
+
     try {
-      const central = await fetchJson('data/latest_data.json');
-      const local = await loadFromLocal();
+      central = await fetchJson('data/latest_data.json');
+    } catch (e) {}
 
-      if (isDataset(central)) {
-        if (local && local._localOnly && (local.savedAt || 0) > (central.savedAt || 0)) {
-          local._storageSource = 'local';
-          return local;
-        }
-        central._storageSource = 'server';
-        central.isCustomUpload = true;
-        saveToLocal(central).catch(() => {});
-        return central;
-      }
+    try {
+      local = await loadFromLocal();
+    } catch (e) {}
 
-      if (local && (local._localOnly || !isHttp)) {
-        local._storageSource = 'local';
-        return local;
-      }
-    } catch (e) {
-      console.warn('Initial central/local load error:', e);
-    }
-
-    // 2. Check Supabase Cloud (with strict 2500ms timeout)
+    // 1. Check Supabase Cloud first
     const sb = getSupabase();
     if (sb) {
       try {
-        const { data: row } = await withTimeout(
+        const { data: row, error: sbErr } = await withTimeout(
           sb.from(getTableName()).select('*').eq('id', 'latest').maybeSingle(),
           2500
         );
 
-        if (row && row.data && isDataset(row.data)) {
+        if (sbErr) {
+          console.warn('Supabase fetch note:', sbErr.message);
+        } else if (row && row.data && isDataset(row.data)) {
           const cloudData = row.data;
           cloudData._storageSource = 'supabase';
           cloudData.savedAt = row.saved_at || cloudData.savedAt;
@@ -386,20 +383,37 @@ window.DashboardStorage = (function () {
           cloudData.fileName = row.file_name || cloudData.fileName;
           cloudData.isCustomUpload = true;
 
-          // Save to local cache for offline use
-          saveToLocal(cloudData).catch(() => {});
-          return cloudData;
+          const cloudTime = cloudData.savedAt || 0;
+          const centralTime = (central && central.savedAt) || 0;
+          const localTime = (local && local.savedAt) || 0;
+
+          // If cloud data is newer or equal to central and local, prioritize cloud data
+          if (cloudTime >= centralTime && cloudTime >= localTime) {
+            saveToLocal(cloudData).catch(() => {});
+            return cloudData;
+          }
         }
       } catch (err) {
         console.warn('Supabase load failed or timed out:', err);
       }
     }
 
+    // 2. Fallback: Central file /data/latest_data.json
+    if (isDataset(central)) {
+      if (local && local._localOnly && (local.savedAt || 0) > (central.savedAt || 0)) {
+        local._storageSource = 'local';
+        return local;
+      }
+      central._storageSource = 'server';
+      central.isCustomUpload = true;
+      saveToLocal(central).catch(() => {});
+      return central;
+    }
+
     // 3. Fallback: Local Cache
-    const fallbackLocal = await loadFromLocal();
-    if (fallbackLocal) {
-      fallbackLocal._storageSource = 'local';
-      return fallbackLocal;
+    if (local) {
+      local._storageSource = 'local';
+      return local;
     }
 
     return null;

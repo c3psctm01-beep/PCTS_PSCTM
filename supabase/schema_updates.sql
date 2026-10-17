@@ -188,3 +188,51 @@ ON storage.objects FOR DELETE
 TO authenticated
 USING (bucket_id = 'project-images' AND public.get_current_user_role() = 'admin');
 
+-- 9. ตารางแดชบอร์ดสถานะงานก่อสร้างและประวัติการอัปโหลด (Dashboard Persistence)
+CREATE TABLE IF NOT EXISTS public.dashboard_data (
+    id TEXT PRIMARY KEY DEFAULT 'latest',
+    file_name TEXT,
+    last_updated TEXT,
+    saved_at BIGINT,
+    saved_at_text TEXT,
+    uploaded_by TEXT,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.dashboard_history (
+    id TEXT PRIMARY KEY,
+    file_name TEXT,
+    last_updated TEXT,
+    saved_at BIGINT,
+    saved_at_text TEXT,
+    uploaded_by TEXT,
+    stats JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.dashboard_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dashboard_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all read dashboard_data" ON public.dashboard_data;
+CREATE POLICY "Allow all read dashboard_data" ON public.dashboard_data FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow all insert_update dashboard_data" ON public.dashboard_data;
+CREATE POLICY "Allow all insert_update dashboard_data" ON public.dashboard_data FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all read dashboard_history" ON public.dashboard_history;
+CREATE POLICY "Allow all read dashboard_history" ON public.dashboard_history FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow all insert dashboard_history" ON public.dashboard_history;
+CREATE POLICY "Allow all insert dashboard_history" ON public.dashboard_history FOR ALL USING (true) WITH CHECK (true);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'dashboard_data'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.dashboard_data;
+  END IF;
+END $$;
+

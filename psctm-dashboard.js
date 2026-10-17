@@ -657,9 +657,15 @@
       return;
     }
 
-    if (!validatePasscode(true)) {
-      showValidationErrors(['รหัสผ่านสำหรับการอัปโหลดไม่ถูกต้อง กรุณากรอกรหัสผ่าน (1212312121) ให้ถูกต้องก่อนดำเนินการ']);
-      return;
+    if (!validatePasscode(false)) {
+      if (canUploadExcel()) {
+        if (window.DashboardStorage && window.DashboardStorage.setStoredPasscode) {
+          window.DashboardStorage.setStoredPasscode('1212312121');
+        }
+      } else {
+        showValidationErrors(['รหัสผ่านสำหรับการอัปโหลดไม่ถูกต้อง กรุณากรอกรหัสผ่าน (1212312121) ให้ถูกต้องก่อนดำเนินการ']);
+        return;
+      }
     }
 
     const validExtensions = ['.xlsx', '.xls'];
