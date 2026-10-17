@@ -65,6 +65,96 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 return True
         return False
 
+    def _get_users_file(self):
+        return os.path.join(DATA_DIR, 'user_roles.json')
+
+    def _get_users(self):
+        users_file = self._get_users_file()
+        if os.path.exists(users_file):
+            try:
+                with open(users_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        # Default seed users
+        seed_users = [
+            {
+                "id": "pea-admin-01",
+                "email": "admin@pea.co.th",
+                "employee_id": "500744",
+                "name": "ผู้ดูแลระบบ กบส. (Admin)",
+                "role": "admin",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": True
+                },
+                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "created_at": "2026-01-01 08:00:00"
+            },
+            {
+                "id": "pea-editor-01",
+                "email": "editor@pea.co.th",
+                "employee_id": "501234",
+                "name": "วิศวกรผู้ควบคุมงาน กบส.",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "created_at": "2026-02-15 09:30:00"
+            },
+            {
+                "id": "pea-viewer-01",
+                "email": "viewer@pea.co.th",
+                "employee_id": "505678",
+                "name": "ผู้บริหาร / ผู้สังเกตการณ์",
+                "role": "viewer",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": False,
+                    "can_edit_wbs": False,
+                    "can_manage_punchlist": False,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "created_at": "2026-03-01 10:00:00"
+            },
+            {
+                "id": "pea-pending-01",
+                "email": "somchai.m@pea.co.th",
+                "employee_id": "509876",
+                "name": "สมชาย มั่นคง",
+                "role": "pending",
+                "status": "pending",
+                "permissions": {
+                    "can_upload_excel": False,
+                    "can_edit_wbs": False,
+                    "can_manage_punchlist": False,
+                    "can_export_report": False,
+                    "can_manage_users": False
+                },
+                "last_login": "-",
+                "created_at": "2026-10-17 19:10:00"
+            }
+        ]
+        self._save_users(seed_users)
+        return seed_users
+
+    def _save_users(self, users):
+        users_file = self._get_users_file()
+        with open(users_file, 'w', encoding='utf-8') as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -76,6 +166,10 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 'name': 'PCTS PEA Central Server',
                 'time': time.strftime('%Y-%m-%d %H:%M:%S')
             })
+
+        if path == '/api/users':
+            users = self._get_users()
+            return self._send_json({'success': True, 'users': users})
 
         super().do_GET()
 
@@ -231,6 +325,189 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
         # 4. /api/reset
         if path == '/api/reset':
             return self._send_json({'success': True, 'message': 'Reset performed'})
+
+        # 5. /api/users/save
+        if path == '/api/users/save':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+            except Exception as e:
+                return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
+
+            users = self._get_users()
+            user_id = payload.get('id')
+            email = payload.get('email', '').strip().lower()
+
+            target = None
+            for u in users:
+                if (user_id and u.get('id') == user_id) or (email and u.get('email', '').strip().lower() == email):
+                    target = u
+                    break
+
+            now_text = time.strftime('%Y-%m-%d %H:%M:%S')
+            default_perms = {
+                'can_upload_excel': False,
+                'can_edit_wbs': False,
+                'can_manage_punchlist': False,
+                'can_export_report': True,
+                'can_manage_users': False
+            }
+
+            if target:
+                if 'email' in payload: target['email'] = payload['email']
+                if 'employee_id' in payload: target['employee_id'] = payload['employee_id']
+                if 'name' in payload: target['name'] = payload['name']
+                if 'role' in payload: target['role'] = payload['role']
+                if 'status' in payload: target['status'] = payload['status']
+                if 'permissions' in payload: target['permissions'] = payload['permissions']
+                target['updated_at'] = now_text
+            else:
+                new_id = user_id or f"pea-user-{int(time.time() * 1000)}"
+                role = payload.get('role', 'editor')
+                perms = payload.get('permissions', default_perms)
+                if role == 'admin':
+                    perms = {
+                        'can_upload_excel': True,
+                        'can_edit_wbs': True,
+                        'can_manage_punchlist': True,
+                        'can_export_report': True,
+                        'can_manage_users': True
+                    }
+                target = {
+                    'id': new_id,
+                    'email': email,
+                    'employee_id': payload.get('employee_id', ''),
+                    'name': payload.get('name', email.split('@')[0]),
+                    'role': role,
+                    'status': payload.get('status', 'active'),
+                    'permissions': perms,
+                    'last_login': '-',
+                    'created_at': now_text
+                }
+                users.append(target)
+
+            self._save_users(users)
+            return self._send_json({'success': True, 'user': target, 'users': users})
+
+        # 6. /api/users/delete
+        if path == '/api/users/delete':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+            except Exception as e:
+                return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
+
+            user_id = payload.get('id')
+            users = self._get_users()
+            orig_len = len(users)
+            users = [u for u in users if u.get('id') != user_id]
+            if len(users) == orig_len:
+                return self._send_json({'error': 'User not found'}, 404)
+
+            self._save_users(users)
+            return self._send_json({'success': True, 'users': users})
+
+        # 7. /api/users/approve
+        if path == '/api/users/approve':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+            except Exception as e:
+                return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
+
+            user_id = payload.get('id')
+            new_role = payload.get('role', 'editor')
+            users = self._get_users()
+            target = None
+            for u in users:
+                if u.get('id') == user_id:
+                    target = u
+                    break
+
+            if not target:
+                return self._send_json({'error': 'User not found'}, 404)
+
+            target['role'] = new_role
+            target['status'] = 'active'
+            if 'permissions' in payload:
+                target['permissions'] = payload['permissions']
+            elif new_role == 'admin':
+                target['permissions'] = {
+                    'can_upload_excel': True,
+                    'can_edit_wbs': True,
+                    'can_manage_punchlist': True,
+                    'can_export_report': True,
+                    'can_manage_users': True
+                }
+            elif new_role == 'editor':
+                target['permissions'] = {
+                    'can_upload_excel': True,
+                    'can_edit_wbs': True,
+                    'can_manage_punchlist': True,
+                    'can_export_report': True,
+                    'can_manage_users': False
+                }
+            elif new_role == 'viewer':
+                target['permissions'] = {
+                    'can_upload_excel': False,
+                    'can_edit_wbs': False,
+                    'can_manage_punchlist': False,
+                    'can_export_report': True,
+                    'can_manage_users': False
+                }
+
+            self._save_users(users)
+            return self._send_json({'success': True, 'user': target, 'users': users})
+
+        # 8. /api/users/status
+        if path == '/api/users/status':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+            except Exception as e:
+                return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
+
+            user_id = payload.get('id')
+            new_status = payload.get('status', 'active')
+            users = self._get_users()
+            target = None
+            for u in users:
+                if u.get('id') == user_id:
+                    target = u
+                    break
+
+            if not target:
+                return self._send_json({'error': 'User not found'}, 404)
+
+            target['status'] = new_status
+            self._save_users(users)
+            return self._send_json({'success': True, 'user': target, 'users': users})
+
+        # 9. /api/users/login (Local/Intranet offline fallback)
+        if path == '/api/users/login':
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+            except Exception as e:
+                return self._send_json({'error': f'Invalid JSON: {str(e)}'}, 400)
+
+            email = payload.get('email', '').strip().lower()
+            users = self._get_users()
+            target = None
+            for u in users:
+                if u.get('email', '').strip().lower() == email:
+                    target = u
+                    break
+
+            if not target:
+                return self._send_json({'error': 'ไม่พบบัญชีผู้ใช้นี้ในระบบ'}, 404)
+
+            if target.get('status') == 'suspended':
+                return self._send_json({'error': 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin'}, 403)
+
+            target['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S')
+            self._save_users(users)
+            return self._send_json({'success': True, 'user': target})
 
         self.send_response(404)
         self.end_headers()

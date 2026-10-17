@@ -1,0 +1,70 @@
+[
+  {
+    "id": "pea-admin-01",
+    "email": "admin@pea.co.th",
+    "employee_id": "500744",
+    "name": "ผู้ดูแลระบบ กบส. (Admin)",
+    "role": "admin",
+    "status": "active",
+    "permissions": {
+      "can_upload_excel": true,
+      "can_edit_wbs": true,
+      "can_manage_punchlist": true,
+      "can_export_report": true,
+      "can_manage_users": true
+    },
+    "last_login": "2026-10-17 21:01:32",
+    "created_at": "2026-01-01 08:00:00"
+  },
+  {
+    "id": "pea-editor-01",
+    "email": "editor@pea.co.th",
+    "employee_id": "501234",
+    "name": "วิศวกรผู้ควบคุมงาน กบส.",
+    "role": "editor",
+    "status": "active",
+    "permissions": {
+      "can_upload_excel": true,
+      "can_edit_wbs": true,
+      "can_manage_punchlist": true,
+      "can_export_report": true,
+      "can_manage_users": false
+    },
+    "last_login": "2026-10-17 18:45:00",
+    "created_at": "2026-02-15 09:30:00"
+  },
+  {
+    "id": "pea-viewer-01",
+    "email": "viewer@pea.co.th",
+    "employee_id": "505678",
+    "name": "ผู้บริหาร / ผู้สังเกตการณ์",
+    "role": "viewer",
+    "status": "active",
+    "permissions": {
+      "can_upload_excel": false,
+      "can_edit_wbs": false,
+      "can_manage_punchlist": false,
+      "can_export_report": true,
+      "can_manage_users": false
+    },
+    "last_login": "2026-10-16 14:15:00",
+    "created_at": "2026-03-01 10:00:00"
+  },
+  {
+    "id": "pea-pending-01",
+    "email": "somchai.m@pea.co.th",
+    "employee_id": "509876",
+    "name": "สมชาย มั่นคง",
+    "role": "pending",
+    "status": "pending",
+    "permissions": {
+      "can_upload_excel": false,
+      "can_edit_wbs": false,
+      "can_manage_punchlist": false,
+      "can_export_report": false,
+      "can_manage_users": false
+    },
+    "last_login": "-",
+    "created_at": "2026-10-17 19:10:00"
+  }
+]

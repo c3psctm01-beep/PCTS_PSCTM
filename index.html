@@ -42,7 +42,7 @@
     <meta name="theme-color" content="#742C81">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
     <!-- PSCTM Transmission & Substations Dashboard CSS -->
     <link rel="stylesheet" href="psctm-dashboard.css?v=3">
 </head>
@@ -1336,28 +1336,121 @@
                         <button class="tablinks admin-tablinks" onclick="openAdminTab(event, 'adminTabUser')"><i class="fa-solid fa-users"></i> จัดการสิทธิ์</button>
                     </div>
                     
-                    <!-- User Management Table -->
-                    <div id="adminTabUser" class="admin-tabcontent" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
-                    <div class="card mt-4 flex-table-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h2>จัดการสิทธิ์ผู้ใช้งาน (รออนุมัติ)</h2>
+                    <!-- User Management Panel -->
+                    <div id="adminTabUser" class="admin-tabcontent" style="display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 30px;">
+                        <!-- KPI Cards Summary -->
+                        <div class="admin-user-kpi-grid mt-3">
+                            <div class="admin-kpi-card" onclick="filterAdminUsers('all')" style="cursor: pointer;" title="คลิกเพื่อดูผู้ใช้งานทั้งหมด">
+                                <div class="admin-kpi-icon" style="background: rgba(116, 44, 129, 0.1); color: #742C81;">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <div class="admin-kpi-info">
+                                    <span class="admin-kpi-val" id="adminStatTotal">0</span>
+                                    <span class="admin-kpi-label">ผู้ใช้งานทั้งหมด</span>
+                                </div>
+                            </div>
+                            <div class="admin-kpi-card" onclick="filterAdminUsers('admin')" style="cursor: pointer;" title="คลิกเพื่อดูผู้ดูแลระบบ">
+                                <div class="admin-kpi-icon" style="background: rgba(107, 33, 168, 0.1); color: #6b21a8;">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div class="admin-kpi-info">
+                                    <span class="admin-kpi-val" id="adminStatAdmin">0</span>
+                                    <span class="admin-kpi-label">Admin (ผู้ดูแลระบบ)</span>
+                                </div>
+                            </div>
+                            <div class="admin-kpi-card" onclick="filterAdminUsers('editor')" style="cursor: pointer;" title="คลิกเพื่อดูผู้ควบคุมงาน">
+                                <div class="admin-kpi-icon" style="background: rgba(4, 120, 87, 0.1); color: #047857;">
+                                    <i class="fa-solid fa-user-gear"></i>
+                                </div>
+                                <div class="admin-kpi-info">
+                                    <span class="admin-kpi-val" id="adminStatEditor">0</span>
+                                    <span class="admin-kpi-label">Editor (ผู้ควบคุมงาน)</span>
+                                </div>
+                            </div>
+                            <div class="admin-kpi-card" onclick="filterAdminUsers('viewer')" style="cursor: pointer;" title="คลิกเพื่อดูผู้เข้าชม">
+                                <div class="admin-kpi-icon" style="background: rgba(29, 78, 216, 0.1); color: #1d4ed8;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div class="admin-kpi-info">
+                                    <span class="admin-kpi-val" id="adminStatViewer">0</span>
+                                    <span class="admin-kpi-label">Viewer (ผู้เข้าชม)</span>
+                                </div>
+                            </div>
+                            <div class="admin-kpi-card" onclick="filterAdminUsers('pending')" style="cursor: pointer;" title="คลิกเพื่อดูผู้รออนุมัติสิทธิ์">
+                                <div id="adminPendingPulseDot" class="admin-kpi-pending-pulse" style="display: none;"></div>
+                                <div class="admin-kpi-icon" style="background: rgba(217, 119, 6, 0.1); color: #d97706;">
+                                    <i class="fa-solid fa-user-clock"></i>
+                                </div>
+                                <div class="admin-kpi-info">
+                                    <span class="admin-kpi-val" id="adminStatPending" style="color: #d97706;">0</span>
+                                    <span class="admin-kpi-label">รอการอนุมัติสิทธิ์</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="pea-table">
-                                <thead>
-                                    <tr>
-                                        <th>อีเมล</th>
-                                        <th>รหัสพนักงาน</th>
-                                        <th>สถานะปัจจุบัน</th>
-                                        <th>จัดการสิทธิ์</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminUserTableBody">
-                                    <!-- JS will inject here -->
-                                </tbody>
-                            </table>
+
+                        <!-- Card with Toolbar & Table -->
+                        <div class="card flex-table-card">
+                            <div class="admin-user-toolbar">
+                                <!-- Search Input -->
+                                <div class="admin-user-search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="adminUserSearchInput" placeholder="ค้นหาด้วยอีเมล, รหัสพนักงาน หรือชื่อ..." oninput="onAdminUserSearch(this.value)">
+                                    <button class="clear-btn" id="adminUserClearSearchBtn" onclick="clearAdminUserSearch()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+
+                                <!-- Filter Pills -->
+                                <div class="admin-filter-tabs">
+                                    <button class="admin-filter-pill active" id="filterPillAll" onclick="filterAdminUsers('all')">
+                                        ทั้งหมด <span class="pill-badge" id="pillCountAll">0</span>
+                                    </button>
+                                    <button class="admin-filter-pill" id="filterPillPending" onclick="filterAdminUsers('pending')" style="color: #d97706;">
+                                        <i class="fa-solid fa-clock"></i> รออนุมัติ <span class="pill-badge" id="pillCountPending">0</span>
+                                    </button>
+                                    <button class="admin-filter-pill" id="filterPillAdmin" onclick="filterAdminUsers('admin')">
+                                        <i class="fa-solid fa-shield-halved"></i> Admin <span class="pill-badge" id="pillCountAdmin">0</span>
+                                    </button>
+                                    <button class="admin-filter-pill" id="filterPillEditor" onclick="filterAdminUsers('editor')">
+                                        <i class="fa-solid fa-user-gear"></i> Editor <span class="pill-badge" id="pillCountEditor">0</span>
+                                    </button>
+                                    <button class="admin-filter-pill" id="filterPillViewer" onclick="filterAdminUsers('viewer')">
+                                        <i class="fa-solid fa-user"></i> Viewer <span class="pill-badge" id="pillCountViewer">0</span>
+                                    </button>
+                                    <button class="admin-filter-pill" id="filterPillSuspended" onclick="filterAdminUsers('suspended')">
+                                        <i class="fa-solid fa-ban"></i> ระงับ <span class="pill-badge" id="pillCountSuspended">0</span>
+                                    </button>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div style="display: flex; gap: 8px; margin-left: auto;">
+                                    <button class="btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" onclick="loadAdminUsers(true)" title="รีเฟรชข้อมูลผู้ใช้">
+                                        <i class="fa-solid fa-rotate"></i> รีเฟรช
+                                    </button>
+                                    <button class="btn btn-primary" onclick="openAddUserModal()">
+                                        <i class="fa-solid fa-user-plus"></i> เพิ่มผู้ใช้งาน
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- User Table -->
+                            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                                <table class="pea-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="min-width: 220px;">ผู้ใช้งาน</th>
+                                            <th style="min-width: 120px;">รหัสพนักงาน</th>
+                                            <th style="min-width: 140px;">บทบาทหลัก (Role)</th>
+                                            <th style="min-width: 220px;">สิทธิ์การทำงานเฉพาะ</th>
+                                            <th style="min-width: 140px;">เข้าสู่ระบบล่าสุด</th>
+                                            <th style="min-width: 110px;">สถานะ</th>
+                                            <th style="min-width: 180px; text-align: center;">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUserTableBody">
+                                        <!-- Injected by loadAdminUsers -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
                     </div>
 
                     <!-- Project Management Table -->
@@ -2268,7 +2361,195 @@
         </div>
     </div>
     
-    <!-- Modal for Settings -->
+    <!-- Modal for User Permission Management -->
+    <div id="userPermissionModal" class="modal">
+        <div class="modal-content card" style="max-width: 580px; padding: 28px; max-height: 90vh; overflow-y: auto;">
+            <span class="close-modal" onclick="closeUserPermissionModal()">&times;</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(116, 44, 129, 0.12); color: #742C81; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+                <div>
+                    <h2 style="color: var(--pea-purple); margin: 0; font-size: 20px;">กำหนดสิทธิ์และบทบาทผู้ใช้งาน</h2>
+                    <p id="permModalSubtitle" style="color: var(--text-secondary); font-size: 13px; margin: 2px 0 0 0;">-</p>
+                </div>
+            </div>
+
+            <form id="userPermissionForm" onsubmit="submitUserPermissions(event)" style="margin-top: 18px;">
+                <input type="hidden" id="permUserId">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">ชื่อ-นามสกุล / สังกัด</label>
+                        <input type="text" id="permUserName" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">รหัสพนักงาน</label>
+                        <input type="text" id="permUserEmpId" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">บทบาทหลัก (Role)</label>
+                        <select id="permUserRole" onchange="onPermRoleSelectChange(this.value)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; cursor: pointer;">
+                            <option value="admin">👑 Admin (ผู้ดูแลระบบ)</option>
+                            <option value="editor">🛠️ Editor (ผู้ควบคุมงาน)</option>
+                            <option value="viewer">👁️ Viewer (ผู้เข้าชม)</option>
+                            <option value="pending">⏳ Pending (รอการอนุมัติ)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 13px; font-weight: 600; color: #334155;">สถานะบัญชี</label>
+                        <select id="permUserStatus" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; cursor: pointer;">
+                            <option value="active">🟢 ใช้งานปกติ (Active)</option>
+                            <option value="pending">🟡 รอการอนุมัติ (Pending)</option>
+                            <option value="suspended">🔴 ระงับการใช้งาน (Suspended)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Granular Permissions Header & Presets -->
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">
+                            <i class="fa-solid fa-list-check" style="color: #742C81;"></i> กำหนดสิทธิ์รายข้อ (Granular Permissions)
+                        </label>
+                    </div>
+
+                    <!-- Presets -->
+                    <div class="perm-preset-bar">
+                        <button type="button" class="perm-preset-btn" onclick="applyPermPreset('admin')">
+                            <i class="fa-solid fa-crown" style="color: #6b21a8;"></i> Preset: Admin
+                        </button>
+                        <button type="button" class="perm-preset-btn" onclick="applyPermPreset('editor')">
+                            <i class="fa-solid fa-user-gear" style="color: #047857;"></i> Preset: Editor
+                        </button>
+                        <button type="button" class="perm-preset-btn" onclick="applyPermPreset('viewer')">
+                            <i class="fa-solid fa-eye" style="color: #1d4ed8;"></i> Preset: Viewer
+                        </button>
+                        <button type="button" class="perm-preset-btn" onclick="applyPermPreset('clear')">
+                            <i class="fa-solid fa-xmark"></i> ล้างทั้งหมด
+                        </button>
+                    </div>
+
+                    <!-- Permissions List -->
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" id="chkPermUploadExcel">
+                        <div class="perm-checkbox-label">
+                            <div class="perm-checkbox-title">
+                                <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> สิทธิ์นำเข้า / อัปเดตข้อมูล Excel PSCTM
+                            </div>
+                            <div class="perm-checkbox-desc">สามารถอัปโหลดไฟล์ Excel ความก้าวหน้ารายสัปดาห์ และข้อมูลสถานะงานก่อสร้างขึ้นระบบกลาง</div>
+                        </div>
+                    </label>
+
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" id="chkPermEditWBS">
+                        <div class="perm-checkbox-label">
+                            <div class="perm-checkbox-title">
+                                <i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> สิทธิ์เพิ่ม/แก้ไข แผนงาน WBS และโครงการ
+                            </div>
+                            <div class="perm-checkbox-desc">สามารถเพิ่มแผนงานย่อย ปรับสถานะความก้าวหน้า (%) และแก้ไขรายละเอียดโครงการได้</div>
+                        </div>
+                    </label>
+
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" id="chkPermManagePunch">
+                        <div class="perm-checkbox-label">
+                            <div class="perm-checkbox-title">
+                                <i class="fa-solid fa-camera" style="color: #d97706;"></i> สิทธิ์จัดการ Punch List และรูปภาพหน้างาน
+                            </div>
+                            <div class="perm-checkbox-desc">สามารถเพิ่มรายการข้อบกพร่อง (Defect), อัปเดตภาพแก้ไข, และจัดการแกลเลอรี Before/After</div>
+                        </div>
+                    </label>
+
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" id="chkPermExportReport">
+                        <div class="perm-checkbox-label">
+                            <div class="perm-checkbox-title">
+                                <i class="fa-solid fa-file-pdf" style="color: #e11d48;"></i> สิทธิ์พิมพ์และส่งออกรายงานผลการปฏิบัติงาน (PDF)
+                            </div>
+                            <div class="perm-checkbox-desc">สามารถดาวน์โหลดรายงานผลการปฏิบัติงานในรูปแบบ PDF และนำเสนองานได้</div>
+                        </div>
+                    </label>
+
+                    <label class="perm-checkbox-item">
+                        <input type="checkbox" id="chkPermManageUsers">
+                        <div class="perm-checkbox-label">
+                            <div class="perm-checkbox-title">
+                                <i class="fa-solid fa-user-shield" style="color: #742C81;"></i> สิทธิ์จัดการผู้ใช้งานและสิทธิ์ระบบ (Admin)
+                            </div>
+                            <div class="perm-checkbox-desc">สามารถอนุมัติผู้ใช้ใหม่ ปรับเปลี่ยนสิทธิ์ และจัดการผู้ใช้งานทั้งหมดในระบบได้</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
+                    <button type="button" class="btn" style="background: #f1f5f9; color: #475569;" onclick="closeUserPermissionModal()">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary" id="btnSavePermissions">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการเปลี่ยนแปลง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Admin Direct Add User -->
+    <div id="adminAddUserModal" class="modal">
+        <div class="modal-content card" style="max-width: 520px; padding: 28px; max-height: 90vh; overflow-y: auto;">
+            <span class="close-modal" onclick="closeAddUserModal()">&times;</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(116, 44, 129, 0.12); color: #742C81; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div>
+                    <h2 style="color: var(--pea-purple); margin: 0; font-size: 20px;">เพิ่มผู้ใช้งานใหม่</h2>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin: 2px 0 0 0;">กำหนดสิทธิ์และสร้างบัญชีเข้าใช้งานระบบ PCTS</p>
+                </div>
+            </div>
+
+            <form id="adminAddUserForm" onsubmit="submitAdminAddUser(event)">
+                <div class="form-group">
+                    <label style="font-size: 13px; font-weight: 600;">อีเมล (Email) *</label>
+                    <input type="email" id="addEmail" required placeholder="example@pea.co.th" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label style="font-size: 13px; font-weight: 600;">รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="addEmpId" placeholder="เช่น 500744" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 13px; font-weight: 600;">ชื่อ-นามสกุล / ตำแหน่ง</label>
+                        <input type="text" id="addName" placeholder="เช่น นายวิศวกร ควบคุมงาน" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size: 13px; font-weight: 600;">บทบาทหลัก (Initial Role)</label>
+                    <select id="addRole" onchange="onAddUserRoleChange(this.value)" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <option value="editor">🛠️ Editor (ผู้ควบคุมงาน) - สามารถอัปเดตงานและ WBS ได้</option>
+                        <option value="viewer">👁️ Viewer (ผู้เข้าชม) - ดูข้อมูลและพิมพ์รายงานอย่างเดียว</option>
+                        <option value="admin">👑 Admin (ผู้ดูแลระบบ) - จัดการได้ทุกส่วน</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size: 13px; font-weight: 600;">รหัสผ่านเริ่มต้น (Default Password)</label>
+                    <input type="text" id="addPassword" value="pea123456" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px;">
+                    <small style="color: var(--text-secondary); font-size: 11px;">รหัสผ่านเริ่มต้นสำหรับการเข้าใช้งาน ผู้ใช้สามารถเปลี่ยนได้ในภายหลัง</small>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" style="background: #f1f5f9; color: #475569;" onclick="closeAddUserModal()">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary" id="btnAddUserSubmit">
+                        <i class="fa-solid fa-check"></i> สร้างผู้ใช้งาน
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
     <!-- Modal for AI CCTV Upload -->
@@ -3131,7 +3412,7 @@
     <script src="psctm-dashboard.js?v=4"></script>
 
     <!-- Main Application Core -->
-    <script src="app.js?v=25"></script>
+    <script src="app.js?v=26"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
             window.addEventListener('load', () => {

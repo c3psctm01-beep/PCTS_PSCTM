@@ -452,65 +452,693 @@ window.loadProjects = async function () {
     }
 };
 
-// --- User Management (Admin) ---
-window.loadPendingUsers = async function () {
+// --- Comprehensive Admin User & Permission Management ---
+window.adminUsersList = [];
+window.currentAdminUserFilter = 'all';
+window.currentAdminUserSearch = '';
+
+// Helper for fetch with timeout
+function fetchWithTimeout(url, options = {}, timeoutMs = 3000) {
+    return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), timeoutMs))
+    ]);
+}
+
+function updateAdminUserKPIs(users) {
+    const list = users || [];
+    const total = list.length;
+    const admins = list.filter(u => u.role === 'admin').length;
+    const editors = list.filter(u => u.role === 'editor').length;
+    const viewers = list.filter(u => u.role === 'viewer').length;
+    const pending = list.filter(u => u.role === 'pending' || u.status === 'pending').length;
+    const suspended = list.filter(u => u.status === 'suspended').length;
+
+    const elTotal = document.getElementById('adminStatTotal');
+    const elAdmin = document.getElementById('adminStatAdmin');
+    const elEditor = document.getElementById('adminStatEditor');
+    const elViewer = document.getElementById('adminStatViewer');
+    const elPending = document.getElementById('adminStatPending');
+    const pulseDot = document.getElementById('adminPendingPulseDot');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elAdmin) elAdmin.textContent = admins;
+    if (elEditor) elEditor.textContent = editors;
+    if (elViewer) elViewer.textContent = viewers;
+    if (elPending) elPending.textContent = pending;
+    if (pulseDot) pulseDot.style.display = pending > 0 ? 'block' : 'none';
+
+    // Update Pill Count Badges
+    const pAll = document.getElementById('pillCountAll');
+    const pPending = document.getElementById('pillCountPending');
+    const pAdmin = document.getElementById('pillCountAdmin');
+    const pEditor = document.getElementById('pillCountEditor');
+    const pViewer = document.getElementById('pillCountViewer');
+    const pSuspended = document.getElementById('pillCountSuspended');
+
+    if (pAll) pAll.textContent = total;
+    if (pPending) pPending.textContent = pending;
+    if (pAdmin) pAdmin.textContent = admins;
+    if (pEditor) pEditor.textContent = editors;
+    if (pViewer) pViewer.textContent = viewers;
+    if (pSuspended) pSuspended.textContent = suspended;
+}
+
+window.loadAdminUsers = async function (forceRefresh = false) {
+    const tbody = document.getElementById('adminUserTableBody');
+    if (!tbody) return;
+
+    if (forceRefresh) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 25px; color: var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลผู้ใช้งาน...</td></tr>';
+    }
+
+    let users = [];
+
+    // 1. Try Supabase first (if online)
     try {
-        const { data, error } = await db.from('user_roles').select('*').eq('role', 'pending');
-        if (error) throw error;
-
-        const tbody = document.getElementById('adminUserTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-        if (data && data.length > 0) {
-            data.forEach(user => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${user.email || '-'}</td>
-                    <td>${user.employee_id || '-'}</td>
-                    <td><span class="status-badge" style="background-color: #FFF3E0; color: #E65100;">รออนุมัติ</span></td>
-                    <td>
-                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="approveUser('${user.id}')"><i class="fa-solid fa-check"></i> อนุมัติ (Editor)</button>
-                        <button class="btn" style="background-color: #E74C3C; color: white; padding: 5px 10px; font-size: 12px;" onclick="rejectUser('${user.id}')"><i class="fa-solid fa-xmark"></i> ปฏิเสธ</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">ไม่มีผู้ใช้งานที่รออนุมัติ</td></tr>';
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+        const fetchPromise = db.from('user_roles').select('*').order('created_at', { ascending: false });
+        const res = await Promise.race([fetchPromise, timeoutPromise]);
+        if (res && res.data && res.data.length > 0) {
+            users = res.data;
         }
-    } catch (err) {
-        console.error('Error loading pending users:', err);
+    } catch (e) {
+        console.warn('Supabase users query note:', e.message);
+    }
+
+    // 2. Fallback to Local Server (/api/users)
+    if (!users || users.length === 0) {
+        try {
+            const resp = await fetchWithTimeout('/api/users', { cache: 'no-store' }, 2500);
+            if (resp.ok) {
+                const json = await resp.json();
+                if (json && json.users && json.users.length > 0) {
+                    users = json.users;
+                }
+            }
+        } catch (err) {
+            console.warn('Local server users fetch note:', err.message);
+        }
+    }
+
+    // 3. Fallback to cached in localStorage
+    if (!users || users.length === 0) {
+        const cached = localStorage.getItem('pcts_cached_users');
+        if (cached) {
+            try {
+                users = JSON.parse(cached);
+            } catch (e) {}
+        }
+    }
+
+    // 4. Default seed fallback if still empty
+    if (!users || users.length === 0) {
+        users = [
+            {
+                id: 'pea-admin-01',
+                email: 'admin@pea.co.th',
+                employee_id: '500744',
+                name: 'ผู้ดูแลระบบ กบส. (Admin)',
+                role: 'admin',
+                status: 'active',
+                permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: true },
+                last_login: '2026-10-17 20:30:00'
+            },
+            {
+                id: 'pea-editor-01',
+                email: 'editor@pea.co.th',
+                employee_id: '501234',
+                name: 'วิศวกรผู้ควบคุมงาน กบส.',
+                role: 'editor',
+                status: 'active',
+                permissions: { can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false },
+                last_login: '2026-10-17 18:45:00'
+            },
+            {
+                id: 'pea-viewer-01',
+                email: 'viewer@pea.co.th',
+                employee_id: '505678',
+                name: 'ผู้บริหาร / ผู้สังเกตการณ์',
+                role: 'viewer',
+                status: 'active',
+                permissions: { can_upload_excel: false, can_edit_wbs: false, can_manage_punchlist: false, can_export_report: true, can_manage_users: false },
+                last_login: '2026-10-16 14:15:00'
+            },
+            {
+                id: 'pea-pending-01',
+                email: 'somchai.m@pea.co.th',
+                employee_id: '509876',
+                name: 'สมชาย มั่นคง',
+                role: 'pending',
+                status: 'pending',
+                permissions: { can_upload_excel: false, can_edit_wbs: false, can_manage_punchlist: false, can_export_report: false, can_manage_users: false },
+                last_login: '-'
+            }
+        ];
+    }
+
+    // Ensure permissions object is parsed
+    users = users.map(u => {
+        let perms = u.permissions;
+        if (typeof perms === 'string') {
+            try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
+        }
+        if (!perms || typeof perms !== 'object') {
+            perms = {
+                can_upload_excel: u.role === 'admin' || u.role === 'editor',
+                can_edit_wbs: u.role === 'admin' || u.role === 'editor',
+                can_manage_punchlist: u.role === 'admin' || u.role === 'editor',
+                can_export_report: true,
+                can_manage_users: u.role === 'admin'
+            };
+        }
+        return {
+            ...u,
+            permissions: perms,
+            status: u.status || (u.role === 'pending' ? 'pending' : 'active')
+        };
+    });
+
+    window.adminUsersList = users;
+    try {
+        localStorage.setItem('pcts_cached_users', JSON.stringify(users));
+    } catch (e) {}
+
+    // Update KPI Counters
+    updateAdminUserKPIs(users);
+
+    // Render Table
+    window.renderAdminUsersTable();
+};
+
+window.renderAdminUsersTable = function () {
+    const tbody = document.getElementById('adminUserTableBody');
+    if (!tbody) return;
+
+    let filtered = [...window.adminUsersList];
+
+    // Filter by role / status tab
+    const filter = window.currentAdminUserFilter || 'all';
+    if (filter === 'pending') {
+        filtered = filtered.filter(u => u.role === 'pending' || u.status === 'pending');
+    } else if (filter === 'admin') {
+        filtered = filtered.filter(u => u.role === 'admin');
+    } else if (filter === 'editor') {
+        filtered = filtered.filter(u => u.role === 'editor');
+    } else if (filter === 'viewer') {
+        filtered = filtered.filter(u => u.role === 'viewer');
+    } else if (filter === 'suspended') {
+        filtered = filtered.filter(u => u.status === 'suspended');
+    }
+
+    // Filter by search query
+    const q = (window.currentAdminUserSearch || '').toLowerCase().trim();
+    if (q) {
+        filtered = filtered.filter(u => {
+            const email = (u.email || '').toLowerCase();
+            const empId = (u.employee_id || '').toLowerCase();
+            const name = (u.name || '').toLowerCase();
+            const role = (u.role || '').toLowerCase();
+            return email.includes(q) || empId.includes(q) || name.includes(q) || role.includes(q);
+        });
+    }
+
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 35px 20px; color: var(--text-secondary);">
+            <i class="fa-solid fa-user-slash" style="font-size: 24px; opacity: 0.5; margin-bottom: 8px;"></i><br>
+            ไม่พบข้อมูลผู้ใช้งานที่ตรงกับเงื่อนไข
+        </td></tr>`;
+        return;
+    }
+
+    filtered.forEach(u => {
+        const tr = document.createElement('tr');
+
+        // Avatar color gradient based on role
+        let avatarBg = 'linear-gradient(135deg, #742C81 0%, #a855f7 100%)';
+        let initial = (u.name || u.email || 'U').charAt(0).toUpperCase();
+        if (u.role === 'editor') avatarBg = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+        else if (u.role === 'viewer') avatarBg = 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)';
+        else if (u.role === 'pending') avatarBg = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)';
+        else if (u.status === 'suspended') avatarBg = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
+
+        // Role badge
+        const roleBadges = {
+            admin: '<span class="role-badge-pill role-admin"><i class="fa-solid fa-crown"></i> Admin</span>',
+            editor: '<span class="role-badge-pill role-editor"><i class="fa-solid fa-user-gear"></i> Editor</span>',
+            viewer: '<span class="role-badge-pill role-viewer"><i class="fa-solid fa-eye"></i> Viewer</span>',
+            pending: '<span class="role-badge-pill role-pending"><i class="fa-solid fa-clock"></i> รออนุมัติ</span>'
+        };
+        const currentRoleBadge = roleBadges[u.role] || `<span class="role-badge-pill">${u.role}</span>`;
+
+        // Granular permission chips
+        const p = u.permissions || {};
+        let permChipsHtml = `
+            <div class="perm-badges-container">
+                <span class="perm-chip ${p.can_upload_excel ? 'perm-active' : ''}" title="นำเข้า Excel PSCTM"><i class="fa-solid fa-file-excel"></i> Excel</span>
+                <span class="perm-chip ${p.can_edit_wbs ? 'perm-active' : ''}" title="แก้ไข WBS/โครงการ"><i class="fa-solid fa-pen-to-square"></i> WBS</span>
+                <span class="perm-chip ${p.can_manage_punchlist ? 'perm-active' : ''}" title="จัดการ Punch List/ภาพ"><i class="fa-solid fa-camera"></i> Punch</span>
+                <span class="perm-chip ${p.can_export_report ? 'perm-active' : ''}" title="ส่งออกรายงาน PDF"><i class="fa-solid fa-file-pdf"></i> PDF</span>
+                ${u.role === 'admin' ? '<span class="perm-chip perm-active" title="ผู้ดูแลระบบ"><i class="fa-solid fa-shield-halved"></i> Super</span>' : ''}
+            </div>
+        `;
+
+        // Status indicator
+        const isSuspended = u.status === 'suspended';
+        const isPending = u.status === 'pending' || u.role === 'pending';
+        let statusHtml = '<span class="user-status-indicator active"><span class="user-status-dot"></span> ปกติ</span>';
+        if (isSuspended) {
+            statusHtml = '<span class="user-status-indicator suspended"><span class="user-status-dot"></span> ระงับ</span>';
+        } else if (isPending) {
+            statusHtml = '<span class="user-status-indicator pending"><span class="user-status-dot"></span> รออนุมัติ</span>';
+        }
+
+        // Action buttons
+        let actionsHtml = '<div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">';
+        if (isPending) {
+            actionsHtml += `
+                <button class="btn btn-primary" style="padding: 4px 9px; font-size: 11.5px;" onclick="window.quickApproveUser('${u.id}', 'editor')" title="อนุมัติให้เป็น Editor ทันที">
+                    <i class="fa-solid fa-check"></i> อนุมัติ
+                </button>
+            `;
+        }
+        actionsHtml += `
+            <button class="btn" style="background: #f1f5f9; color: #334155; padding: 4px 9px; font-size: 11.5px; border: 1px solid #cbd5e1;" onclick="window.openUserPermissionModal('${u.id}')" title="กำหนดสิทธิ์โดยละเอียด">
+                <i class="fa-solid fa-user-pen"></i> สิทธิ์
+            </button>
+            <button class="btn" style="background: ${isSuspended ? '#ecfdf5' : '#fff1f2'}; color: ${isSuspended ? '#047857' : '#be123c'}; padding: 4px 8px; font-size: 11.5px; border: 1px solid ${isSuspended ? '#a7f3d0' : '#fecdd3'};" onclick="window.toggleUserStatus('${u.id}')" title="${isSuspended ? 'ปลดระงับการใช้งาน' : 'ระงับการใช้งาน'}">
+                <i class="fa-solid ${isSuspended ? 'fa-lock-open' : 'fa-lock'}"></i>
+            </button>
+            <button class="btn" style="background: #fff1f2; color: #e11d48; padding: 4px 8px; font-size: 11.5px; border: 1px solid #fecdd3;" onclick="window.deleteAdminUser('${u.id}')" title="ลบผู้ใช้นี้">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>`;
+
+        tr.innerHTML = `
+            <td>
+                <div class="user-info-cell">
+                    <div class="user-avatar" style="background: ${avatarBg};">${initial}</div>
+                    <div>
+                        <div class="user-name-title">${u.name || (u.email ? u.email.split('@')[0] : 'ผู้ใช้งาน')}</div>
+                        <div class="user-email-subtitle"><i class="fa-regular fa-envelope"></i> ${u.email || '-'}</div>
+                    </div>
+                </div>
+            </td>
+            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 12px;">${u.employee_id || '-'}</code></td>
+            <td>${currentRoleBadge}</td>
+            <td>${permChipsHtml}</td>
+            <td><span style="font-size: 12px; color: #64748b;">${u.last_login || '-'}</span></td>
+            <td>${statusHtml}</td>
+            <td>${actionsHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+};
+
+window.filterAdminUsers = function (role) {
+    window.currentAdminUserFilter = role;
+    const pillIds = {
+        all: 'filterPillAll',
+        pending: 'filterPillPending',
+        admin: 'filterPillAdmin',
+        editor: 'filterPillEditor',
+        viewer: 'filterPillViewer',
+        suspended: 'filterPillSuspended'
+    };
+    Object.keys(pillIds).forEach(k => {
+        const el = document.getElementById(pillIds[k]);
+        if (el) el.classList.toggle('active', k === role);
+    });
+    window.renderAdminUsersTable();
+};
+
+window.onAdminUserSearch = function (val) {
+    window.currentAdminUserSearch = val || '';
+    const clearBtn = document.getElementById('adminUserClearSearchBtn');
+    if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+    window.renderAdminUsersTable();
+};
+
+window.clearAdminUserSearch = function () {
+    const input = document.getElementById('adminUserSearchInput');
+    if (input) input.value = '';
+    window.onAdminUserSearch('');
+};
+
+window.openUserPermissionModal = function (userId) {
+    const user = window.adminUsersList.find(u => u.id === userId);
+    if (!user) return alert('ไม่พบข้อมูลผู้ใช้งาน');
+
+    document.getElementById('permUserId').value = user.id;
+    document.getElementById('permUserName').value = user.name || '';
+    document.getElementById('permUserEmpId').value = user.employee_id || '';
+    document.getElementById('permUserRole').value = user.role || 'viewer';
+    document.getElementById('permUserStatus').value = user.status || 'active';
+    document.getElementById('permModalSubtitle').textContent = `${user.email} (รหัสพนักงาน: ${user.employee_id || '-'})`;
+
+    const p = user.permissions || {};
+    document.getElementById('chkPermUploadExcel').checked = !!p.can_upload_excel;
+    document.getElementById('chkPermEditWBS').checked = !!p.can_edit_wbs;
+    document.getElementById('chkPermManagePunch').checked = !!p.can_manage_punchlist;
+    document.getElementById('chkPermExportReport').checked = !!p.can_export_report;
+    document.getElementById('chkPermManageUsers').checked = !!p.can_manage_users || user.role === 'admin';
+
+    document.getElementById('userPermissionModal').style.display = 'flex';
+};
+
+window.closeUserPermissionModal = function () {
+    document.getElementById('userPermissionModal').style.display = 'none';
+};
+
+window.onPermRoleSelectChange = function (role) {
+    window.applyPermPreset(role);
+};
+
+window.applyPermPreset = function (preset) {
+    const chkExcel = document.getElementById('chkPermUploadExcel');
+    const chkWBS = document.getElementById('chkPermEditWBS');
+    const chkPunch = document.getElementById('chkPermManagePunch');
+    const chkReport = document.getElementById('chkPermExportReport');
+    const chkUsers = document.getElementById('chkPermManageUsers');
+
+    if (preset === 'admin') {
+        if (chkExcel) chkExcel.checked = true;
+        if (chkWBS) chkWBS.checked = true;
+        if (chkPunch) chkPunch.checked = true;
+        if (chkReport) chkReport.checked = true;
+        if (chkUsers) chkUsers.checked = true;
+    } else if (preset === 'editor') {
+        if (chkExcel) chkExcel.checked = true;
+        if (chkWBS) chkWBS.checked = true;
+        if (chkPunch) chkPunch.checked = true;
+        if (chkReport) chkReport.checked = true;
+        if (chkUsers) chkUsers.checked = false;
+    } else if (preset === 'viewer') {
+        if (chkExcel) chkExcel.checked = false;
+        if (chkWBS) chkWBS.checked = false;
+        if (chkPunch) chkPunch.checked = false;
+        if (chkReport) chkReport.checked = true;
+        if (chkUsers) chkUsers.checked = false;
+    } else if (preset === 'clear') {
+        if (chkExcel) chkExcel.checked = false;
+        if (chkWBS) chkWBS.checked = false;
+        if (chkPunch) chkPunch.checked = false;
+        if (chkReport) chkReport.checked = false;
+        if (chkUsers) chkUsers.checked = false;
     }
 };
 
-window.approveUser = async function (userId) {
-    if (!confirm('ยืนยันการอนุมัติสิทธิ์เป็น Editor ให้ผู้ใช้นี้?')) return;
+window.submitUserPermissions = async function (e) {
+    e.preventDefault();
+    const userId = document.getElementById('permUserId').value;
+    const name = document.getElementById('permUserName').value.trim();
+    const empId = document.getElementById('permUserEmpId').value.trim();
+    const role = document.getElementById('permUserRole').value;
+    const status = document.getElementById('permUserStatus').value;
+
+    const permissions = {
+        can_upload_excel: document.getElementById('chkPermUploadExcel')?.checked ?? false,
+        can_edit_wbs: document.getElementById('chkPermEditWBS')?.checked ?? false,
+        can_manage_punchlist: document.getElementById('chkPermManagePunch')?.checked ?? false,
+        can_export_report: document.getElementById('chkPermExportReport')?.checked ?? true,
+        can_manage_users: (document.getElementById('chkPermManageUsers')?.checked ?? false) || role === 'admin'
+    };
+
+    const btn = document.getElementById('btnSavePermissions');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+    btn.disabled = true;
+
     try {
-        let { error } = await db.rpc('approve_user_role', { target_user_id: userId, new_role: 'editor' });
-        if (error) {
-            // Fallback to direct table update if RPC function is not created yet
-            const direct = await db.from('user_roles').update({ role: 'editor' }).eq('id', userId);
-            if (direct.error) throw direct.error;
+        const payload = {
+            id: userId,
+            name: name,
+            employee_id: empId,
+            role: role,
+            status: status,
+            permissions: permissions
+        };
+
+        // 1. Save to Supabase (with timeout fallback)
+        try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+            const updatePromise = db.from('user_roles').update({
+                role: role,
+                employee_id: empId,
+                permissions: permissions,
+                updated_at: new Date().toISOString()
+            }).eq('id', userId);
+            await Promise.race([updatePromise, timeoutPromise]);
+        } catch (supaErr) {
+            console.warn('Supabase update note:', supaErr.message);
         }
-        alert('อนุมัติสิทธิ์เรียบร้อยแล้ว');
-        window.loadPendingUsers();
+
+        // 2. Save to Central Server API (/api/users/save)
+        try {
+            await fetchWithTimeout('/api/users/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }, 3000);
+        } catch (apiErr) {
+            console.warn('Local server save note:', apiErr.message);
+        }
+
+        // 3. Update in local memory list
+        const idx = window.adminUsersList.findIndex(u => u.id === userId);
+        if (idx !== -1) {
+            window.adminUsersList[idx] = {
+                ...window.adminUsersList[idx],
+                name: name,
+                employee_id: empId,
+                role: role,
+                status: status,
+                permissions: permissions
+            };
+            localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
+        }
+
+        // 4. If current user was edited, update active session
+        try {
+            const currentSession = (await db.auth.getSession())?.data?.session;
+            if (currentSession && currentSession.user && currentSession.user.id === userId) {
+                window.authenticatedRole = role;
+                window.currentUserPermissions = permissions;
+                window.updateRole(role, true);
+            }
+        } catch (e) {}
+
+        alert('บันทึกสิทธิ์และข้อมูลผู้ใช้งานเรียบร้อยแล้ว');
+        window.closeUserPermissionModal();
+        updateAdminUserKPIs(window.adminUsersList);
+        window.renderAdminUsersTable();
+    } catch (err) {
+        alert('เกิดข้อผิดพลาดในการบันทึก: ' + err.message);
+    } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
+};
+
+window.quickApproveUser = async function (userId, role = 'editor') {
+    if (!confirm(`ยืนยันการอนุมัติสิทธิ์ให้เป็น ${role.toUpperCase()} แก่ผู้ใช้นี้?`)) return;
+
+    try {
+        const perms = role === 'admin' ? {
+            can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: true
+        } : {
+            can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false
+        };
+
+        // Try Supabase RPC or direct update
+        try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+            const p1 = db.rpc('approve_user_role', { target_user_id: userId, new_role: role });
+            const res = await Promise.race([p1, timeoutPromise]);
+            if (res.error) {
+                await db.from('user_roles').update({ role: role }).eq('id', userId);
+            }
+        } catch (e) {
+            console.warn('Supabase quick approve note:', e.message);
+        }
+
+        // Try local server
+        try {
+            await fetchWithTimeout('/api/users/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId, role: role, permissions: perms })
+            }, 2500);
+        } catch (e) {}
+
+        // Update in memory
+        const target = window.adminUsersList.find(u => u.id === userId);
+        if (target) {
+            target.role = role;
+            target.status = 'active';
+            target.permissions = perms;
+            localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
+        }
+
+        alert(`อนุมัติสิทธิ์เป็น ${role.toUpperCase()} สำเร็จเรียบร้อยแล้ว`);
+        updateAdminUserKPIs(window.adminUsersList);
+        window.renderAdminUsersTable();
     } catch (err) {
         alert('เกิดข้อผิดพลาด: ' + err.message);
     }
 };
 
-window.rejectUser = async function (userId) {
-    if (!confirm('ยืนยันการปฏิเสธและลบคำขอนี้?')) return;
+window.toggleUserStatus = async function (userId) {
+    const user = window.adminUsersList.find(u => u.id === userId);
+    if (!user) return;
+    const newStatus = user.status === 'suspended' ? 'active' : 'suspended';
+    const actionText = newStatus === 'suspended' ? 'ระงับการใช้งาน' : 'เปิดใช้งาน';
+
+    if (!confirm(`ต้องการ ${actionText} ผู้ใช้ ${user.email} หรือไม่?`)) return;
+
     try {
-        const { error } = await db.from('user_roles').delete().eq('id', userId);
-        if (error) throw error;
-        alert('ปฏิเสธคำขอเรียบร้อยแล้ว');
-        window.loadPendingUsers();
+        try {
+            await fetchWithTimeout('/api/users/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId, status: newStatus })
+            }, 2500);
+        } catch (e) {}
+
+        user.status = newStatus;
+        localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
+        alert(`ดำเนินการ ${actionText} เรียบร้อยแล้ว`);
+        updateAdminUserKPIs(window.adminUsersList);
+        window.renderAdminUsersTable();
     } catch (err) {
         alert('เกิดข้อผิดพลาด: ' + err.message);
     }
 };
+
+window.deleteAdminUser = async function (userId) {
+    const user = window.adminUsersList.find(u => u.id === userId);
+    if (!user) return;
+
+    if (!confirm(`⚠️ ยืนยันการลบผู้ใช้ ${user.email} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+
+    try {
+        try {
+            await db.from('user_roles').delete().eq('id', userId);
+        } catch (e) {}
+
+        try {
+            await fetchWithTimeout('/api/users/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId })
+            }, 2500);
+        } catch (e) {}
+
+        window.adminUsersList = window.adminUsersList.filter(u => u.id !== userId);
+        localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
+
+        alert('ลบผู้ใช้งานเรียบร้อยแล้ว');
+        updateAdminUserKPIs(window.adminUsersList);
+        window.renderAdminUsersTable();
+    } catch (err) {
+        alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+};
+
+window.openAddUserModal = function () {
+    const m = document.getElementById('adminAddUserModal');
+    if (m) m.style.display = 'flex';
+};
+
+window.closeAddUserModal = function () {
+    const m = document.getElementById('adminAddUserModal');
+    if (m) m.style.display = 'none';
+    document.getElementById('adminAddUserForm')?.reset();
+};
+
+window.onAddUserRoleChange = function (role) {
+    // Role change hook if needed
+};
+
+window.submitAdminAddUser = async function (e) {
+    e.preventDefault();
+    const email = document.getElementById('addEmail').value.trim();
+    const empId = document.getElementById('addEmpId').value.trim();
+    const name = document.getElementById('addName').value.trim() || email.split('@')[0];
+    const role = document.getElementById('addRole').value;
+    const password = document.getElementById('addPassword').value.trim();
+
+    const btn = document.getElementById('btnAddUserSubmit');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง...';
+    btn.disabled = true;
+
+    try {
+        const perms = role === 'admin' ? {
+            can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: true
+        } : (role === 'editor' ? {
+            can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false
+        } : {
+            can_upload_excel: false, can_edit_wbs: false, can_manage_punchlist: false, can_export_report: true, can_manage_users: false
+        });
+
+        const newId = `pea-user-${Date.now()}`;
+        const newUser = {
+            id: newId,
+            email: email,
+            employee_id: empId,
+            name: name,
+            role: role,
+            status: 'active',
+            permissions: perms,
+            password: password,
+            created_at: new Date().toISOString()
+        };
+
+        // 1. Try local server
+        try {
+            await fetchWithTimeout('/api/users/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newUser)
+            }, 3000);
+        } catch (e) {
+            console.warn('Local server save note:', e.message);
+        }
+
+        // 2. Try Supabase user_roles table
+        try {
+            await db.from('user_roles').insert([{
+                id: newId,
+                email: email,
+                employee_id: empId,
+                role: role,
+                permissions: perms
+            }]);
+        } catch (e) {
+            console.warn('Supabase insert note:', e.message);
+        }
+
+        window.adminUsersList.unshift(newUser);
+        localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
+
+        alert(`สร้างผู้ใช้งาน ${email} (${role.toUpperCase()}) สำเร็จแล้ว!`);
+        window.closeAddUserModal();
+        updateAdminUserKPIs(window.adminUsersList);
+        window.renderAdminUsersTable();
+    } catch (err) {
+        alert('เกิดข้อผิดพลาดในการสร้างผู้ใช้งาน: ' + err.message);
+    } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
+};
+
+// Aliases for compatibility with any existing calls
+window.loadPendingUsers = window.loadAdminUsers;
+window.approveUser = function(userId) { window.quickApproveUser(userId, 'editor'); };
+window.rejectUser = function(userId) { window.deleteAdminUser(userId); };
 
 window.saveProjects = async function (projectId = null) {
     try {
@@ -1215,66 +1843,144 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Auth Form Listener
+    // Auth Form Listener with Dual-Mode (Online Supabase + Intranet Local Server)
     document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
         const btn = document.getElementById('loginBtnSpinner');
         btn.textContent = 'กำลังเข้าสู่ระบบ...';
         btn.disabled = true;
 
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        let supaSuccess = false;
+        // 1. Try Supabase Auth first
+        try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+            const res = await Promise.race([db.auth.signInWithPassword({ email, password }), timeoutPromise]);
+            if (!res.error && res.data && res.data.user) {
+                supaSuccess = true;
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginForm').reset();
+                alert('เข้าสู่ระบบสำเร็จ! (โหมด Cloud Online)');
+            }
+        } catch (supaErr) {
+            console.warn('Supabase login check note:', supaErr.message);
+        }
+
+        // 2. If Supabase fails or network is offline, attempt Local Server (/api/users/login)
+        if (!supaSuccess) {
+            try {
+                const resp = await fetchWithTimeout('/api/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                }, 2500);
+
+                if (resp.ok) {
+                    const json = await resp.json();
+                    if (json.success && json.user) {
+                        const user = json.user;
+                        if (user.status === 'suspended') {
+                            alert('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin');
+                            btn.textContent = 'เข้าสู่ระบบ';
+                            btn.disabled = false;
+                            return;
+                        }
+                        if (user.role === 'pending' || user.status === 'pending') {
+                            alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
+                            btn.textContent = 'เข้าสู่ระบบ';
+                            btn.disabled = false;
+                            return;
+                        }
+
+                        // Apply user session locally
+                        window.currentUser = user;
+                        window.currentUserEmpId = user.employee_id || '';
+                        window.currentUserPermissions = user.permissions || {};
+                        window.authenticatedRole = user.role;
+                        window.updateRole(user.role, true);
+
+                        try {
+                            localStorage.setItem('pcts_local_user', JSON.stringify(user));
+                        } catch (e) {}
+
+                        const btnLogin = document.getElementById('btnLogin');
+                        const userInfo = document.getElementById('userInfo');
+                        const userEmailDisplay = document.getElementById('userEmailDisplay');
+                        if (btnLogin) btnLogin.style.display = 'none';
+                        if (userInfo) userInfo.style.display = 'block';
+                        if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+
+                        if (user.role === 'admin') {
+                            window.loadAdminUsers();
+                        }
+
+                        document.getElementById('loginModal').style.display = 'none';
+                        document.getElementById('loginForm').reset();
+                        alert(`เข้าสู่ระบบสำเร็จ! (${user.role.toUpperCase()} - เซิร์ฟเวอร์กลาง Intranet)`);
+                        btn.textContent = 'เข้าสู่ระบบ';
+                        btn.disabled = false;
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn('Local server login check note:', err.message);
+            }
+
+            alert('เข้าสู่ระบบไม่สำเร็จ: กรุณาตรวจสอบอีเมลหรือรหัสผ่าน');
+        }
 
         btn.textContent = 'เข้าสู่ระบบ';
         btn.disabled = false;
-
-        if (error) {
-            alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message);
-            console.error('Login Error:', error);
-        } else {
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('loginForm').reset();
-            alert('เข้าสู่ระบบสำเร็จ!');
-        }
     });
 
     document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const empId = document.getElementById('regEmpId').value;
-        const email = document.getElementById('regEmail').value;
+        const empId = document.getElementById('regEmpId').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
         const btn = document.getElementById('regBtnSpinner');
 
         btn.textContent = 'กำลังสมัคร...';
         btn.disabled = true;
 
-        // 1. Sign up user
-        const { data, error } = await db.auth.signUp({ email, password });
+        let regSuccess = false;
 
-        if (error) {
-            alert('สมัครใช้งานไม่สำเร็จ: ' + error.message);
-            console.error('Signup Error:', error);
-            btn.textContent = 'สมัครใช้งาน';
-            btn.disabled = false;
-            return;
+        // 1. Try Supabase sign up
+        try {
+            const { data, error } = await db.auth.signUp({ email, password });
+            if (!error && data && data.user) {
+                regSuccess = true;
+                await db.from('user_roles').insert([
+                    { id: data.user.id, email: email, employee_id: empId, role: 'pending' }
+                ]);
+            }
+        } catch (e) {
+            console.warn('Supabase signup bypass note:', e.message);
         }
 
-        // 2. Insert into user_roles with pending status
-        if (data && data.user) {
-            const { error: insertError } = await db.from('user_roles').insert([
-                { id: data.user.id, email: email, employee_id: empId, role: 'pending' }
-            ]);
+        // 2. Also register in local server
+        try {
+            await fetchWithTimeout('/api/users/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    employee_id: empId,
+                    role: 'pending',
+                    status: 'pending'
+                })
+            }, 2500);
+            regSuccess = true;
+        } catch (e) {}
 
-            if (insertError) {
-                console.error('Error inserting user_roles:', insertError);
-                alert('สมัครสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึกข้อมูลคำขอ: ' + (insertError.message || JSON.stringify(insertError)));
-            } else {
-                alert('สมัครใช้งานสำเร็จ! กรุณารอ Admin อนุมัติสิทธิ์การใช้งาน (Pending Approval)');
-                document.getElementById('loginModal').style.display = 'none';
-                document.getElementById('registerForm').reset();
-                window.logout(); // Ensure they are logged out until approved (optional, but good practice if email verification is off)
-            }
+        if (regSuccess) {
+            alert('สมัครใช้งานสำเร็จ! กรุณารอ Admin อนุมัติสิทธิ์การใช้งาน (Pending Approval)');
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('registerForm').reset();
+            window.logout();
+        } else {
+            alert('สมัครใช้งานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
 
         btn.textContent = 'สมัครใช้งาน';
@@ -1289,18 +1995,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.textContent = 'กำลังส่ง...';
         btn.disabled = true;
 
-        const { data, error } = await db.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + window.location.pathname,
-        });
-
-        btn.textContent = 'ส่งลิงก์รีเซ็ตรหัสผ่าน';
-        btn.disabled = false;
-
-        if (error) {
-            alert('เกิดข้อผิดพลาด: ' + error.message);
-        } else {
+        try {
+            const { error } = await db.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname,
+            });
+            if (error) throw error;
             alert('ส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว กรุณาตรวจสอบกล่องข้อความ');
             window.switchAuthTab('login');
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        } finally {
+            btn.textContent = 'ส่งลิงก์รีเซ็ตรหัสผ่าน';
+            btn.disabled = false;
         }
     });
 
@@ -1312,26 +2018,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.textContent = 'กำลังบันทึก...';
         btn.disabled = true;
 
-        const { data, error } = await db.auth.updateUser({ password: newPassword });
-
-        btn.textContent = 'ยืนยันรหัสผ่านใหม่';
-        btn.disabled = false;
-
-        if (error) {
-            alert('เกิดข้อผิดพลาด: ' + error.message);
-        } else {
+        try {
+            const { error } = await db.auth.updateUser({ password: newPassword });
+            if (error) throw error;
             alert('ตั้งรหัสผ่านใหม่สำเร็จแล้ว');
             window.switchAuthTab('login');
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        } finally {
+            btn.textContent = 'ยืนยันรหัสผ่านใหม่';
+            btn.disabled = false;
         }
     });
 
     window.logout = async function () {
         window.authenticatedRole = 'viewer';
+        window.currentUser = null;
+        window.currentUserPermissions = {};
+        try {
+            localStorage.removeItem('pcts_local_user');
+        } catch (e) {}
         if (typeof window.updateRole === 'function') {
             window.updateRole('viewer', true);
         }
-        await db.auth.signOut();
+        const btnLogin = document.getElementById('btnLogin');
+        const userInfo = document.getElementById('userInfo');
+        if (btnLogin) btnLogin.style.display = 'block';
+        if (userInfo) userInfo.style.display = 'none';
+        try {
+            await db.auth.signOut();
+        } catch (e) {}
     };
+
+    // Restore offline/intranet session if saved
+    try {
+        const storedUser = localStorage.getItem('pcts_local_user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            if (user && user.role) {
+                window.currentUser = user;
+                window.currentUserEmpId = user.employee_id || '';
+                window.currentUserPermissions = user.permissions || {};
+                window.authenticatedRole = user.role;
+                window.updateRole(user.role, true);
+                const btnLogin = document.getElementById('btnLogin');
+                const userInfo = document.getElementById('userInfo');
+                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                if (btnLogin) btnLogin.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'block';
+                if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+                if (user.role === 'admin') {
+                    window.loadAdminUsers();
+                }
+            }
+        }
+    } catch (e) {}
 
     // Listen to Auth State Changes
     db.auth.onAuthStateChange(async (event, session) => {
@@ -1347,31 +2088,43 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('userInfo').style.display = 'block';
             document.getElementById('userEmailDisplay').textContent = session.user.email;
 
-            // Get role from DB
-            const { data, error } = await db.from('user_roles').select('role, employee_id').eq('id', session.user.id).single();
-            console.log('Role fetch:', data, error);
-            if (data && data.role) {
-                window.currentUserEmpId = data.employee_id || '';
-                const userRole = data.role.toLowerCase();
+            // Get role & permissions from DB
+            try {
+                const { data, error } = await db.from('user_roles').select('*').eq('id', session.user.id).single();
+                if (data && data.role) {
+                    window.currentUserEmpId = data.employee_id || '';
+                    let perms = data.permissions;
+                    if (typeof perms === 'string') {
+                        try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
+                    }
+                    window.currentUserPermissions = perms || {};
+                    const userRole = data.role.toLowerCase();
 
-                if (userRole === 'pending') {
-                    alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
-                    await window.logout();
-                    return;
-                }
+                    if (userRole === 'pending' || data.status === 'pending') {
+                        alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
+                        await window.logout();
+                        return;
+                    }
 
-                window.authenticatedRole = userRole;
-                window.updateRole(userRole, true);
-                if (userRole === 'admin') {
-                    console.log('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Admin');
-                    window.loadPendingUsers(); // Load users for admin
-                } else if (userRole === 'editor') {
-                    console.log('เข้าสู่ระบบสำเร็จ! คุณได้รับสิทธิ์ระดับ Editor');
+                    if (data.status === 'suspended') {
+                        alert('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin');
+                        await window.logout();
+                        return;
+                    }
+
+                    window.authenticatedRole = userRole;
+                    window.updateRole(userRole, true);
+                    if (userRole === 'admin') {
+                        window.loadAdminUsers();
+                    }
+                } else {
+                    window.authenticatedRole = 'viewer';
+                    window.updateRole('viewer', true);
                 }
-            } else {
-                console.warn('Role not found or error, falling back to viewer');
+            } catch (err) {
+                console.warn('Role fetch note:', err);
                 window.authenticatedRole = 'viewer';
-                window.updateRole('viewer', true); // fallback
+                window.updateRole('viewer', true);
             }
         } else {
             if (urlParams.get('role') === 'admin') {
@@ -1379,7 +2132,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (typeof window.updateRole === 'function') {
                     window.updateRole('admin', true);
                 }
-            } else {
+                window.loadAdminUsers();
+            } else if (!localStorage.getItem('pcts_local_user')) {
                 document.getElementById('btnLogin').style.display = 'block';
                 document.getElementById('userInfo').style.display = 'none';
                 window.authenticatedRole = 'viewer';
@@ -4447,6 +5201,12 @@ window.openAdminTab = function (evt, tabName) {
 
     if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
+    }
+
+    if (tabName === 'adminTabUser') {
+        if (typeof window.loadAdminUsers === 'function') {
+            window.loadAdminUsers();
+        }
     }
 };
 
