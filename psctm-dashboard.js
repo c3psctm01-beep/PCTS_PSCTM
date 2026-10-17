@@ -16,8 +16,10 @@
     disbSelectedProjectIndex: (savedPrefs && typeof savedPrefs.disbSelectedProjectIndex !== 'undefined') ? savedPrefs.disbSelectedProjectIndex : 0,
     ganttSelectedSheet: (savedPrefs && savedPrefs.ganttSelectedSheet) ? savedPrefs.ganttSelectedSheet : '',
     ganttViewMode: 'consolidated',
-    permitFilter: (savedPrefs && savedPrefs.permitFilter) ? savedPrefs.permitFilter : 'all',
-    selectedYear: localStorage.getItem('pcts_year_filter') || '2569',
+    selectedYear: (function () {
+      const y = localStorage.getItem('pcts_year_filter') || '2569';
+      return (y !== 'all' && parseInt(y, 10) < 2569) ? '2569' : y;
+    })(),
     overviewChartFilter: 'all',
     transChartMode: 'cumulative',
     disbUnit: 'mb',
@@ -781,15 +783,18 @@
   // Year Filtering Logic & Options Population
   // ------------------------------------------------------------------
   function extractAllYearsFromData(d) {
-    const currentYear = (new Date().getFullYear() + 543);
-    const yearsSet = new Set([currentYear, 2569, 2568]);
+    const baseYear = 2569;
+    const currentYear = Math.max((new Date().getFullYear() + 543), baseYear);
+    const yearsSet = new Set([baseYear, currentYear]);
 
     if (d && d.transmissionLines) {
       d.transmissionLines.forEach(t => {
         if (t.monthly2569) yearsSet.add(2569);
-        if (typeof t.progress2568 !== 'undefined') yearsSet.add(2568);
         const matches = (t.remarks || '').match(/25[6-9]\d/g);
-        if (matches) matches.forEach(m => yearsSet.add(parseInt(m, 10)));
+        if (matches) matches.forEach(m => {
+          const y = parseInt(m, 10);
+          if (y >= baseYear) yearsSet.add(y);
+        });
       });
     }
 
@@ -797,12 +802,15 @@
       d.substationsDetail.forEach(s => {
         const text = (s.contract || '') + ' ' + (s.statusText || '');
         const y4 = text.match(/25[6-9]\d/g);
-        if (y4) y4.forEach(m => yearsSet.add(parseInt(m, 10)));
+        if (y4) y4.forEach(m => {
+          const y = parseInt(m, 10);
+          if (y >= baseYear) yearsSet.add(y);
+        });
         const dMatches = (s.contract || '').match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
         if (dMatches) {
           dMatches.forEach(dm => {
             const y2 = parseInt(dm.split('/')[2], 10);
-            if (y2 >= 60 && y2 <= 99) yearsSet.add(2500 + y2);
+            if (y2 >= 69 && y2 <= 99) yearsSet.add(2500 + y2);
           });
         }
       });
@@ -811,11 +819,15 @@
     if (d && d.permits) {
       d.permits.forEach(p => {
         const matches = ((p.statusText || '') + ' ' + (p.permitDetail || '')).match(/25[6-9]\d/g);
-        if (matches) matches.forEach(m => yearsSet.add(parseInt(m, 10)));
+        if (matches) matches.forEach(m => {
+          const y = parseInt(m, 10);
+          if (y >= baseYear) yearsSet.add(y);
+        });
       });
     }
 
-    const validYears = Array.from(yearsSet).filter(y => y >= 2560 && y <= 2580);
+    // กรองเฉพาะปี 2569 เป็นต้นไป ไม่เอาปีก่อนหน้านี้
+    const validYears = Array.from(yearsSet).filter(y => y >= baseYear && y <= 2580);
     return validYears.sort((a, b) => b - a);
   }
 
@@ -836,12 +848,16 @@
         const label = isCur ? `ปี ${yr} (ปีปัจจุบัน)` : `ปี ${yr}`;
         html += `<option value="${yr}">${label}</option>`;
       });
-      html += `<option value="all">ทุกปี (ทั้งหมด)</option>`;
+      html += `<option value="all">ทุกปี (ตั้งแต่ปี 2569)</option>`;
       select.innerHTML = html;
     }
 
     const savedYear = localStorage.getItem('pcts_year_filter') || appState.selectedYear || '2569';
-    if (years.includes(parseInt(savedYear, 10)) || savedYear === 'all') {
+    if (savedYear !== 'all' && parseInt(savedYear, 10) < 2569) {
+      select.value = '2569';
+      appState.selectedYear = '2569';
+      localStorage.setItem('pcts_year_filter', '2569');
+    } else if (years.includes(parseInt(savedYear, 10)) || savedYear === 'all') {
       select.value = savedYear;
       appState.selectedYear = savedYear;
     } else {
@@ -851,6 +867,9 @@
   }
 
   window.onPsctmYearChange = function (yearVal, syncOther = true) {
+    if (yearVal !== 'all' && parseInt(yearVal, 10) < 2569) {
+      yearVal = '2569';
+    }
     appState.selectedYear = yearVal;
     localStorage.setItem('pcts_year_filter', yearVal);
 
@@ -867,7 +886,7 @@
       }
       const badge = document.getElementById('titleYearBadge');
       if (badge) {
-        badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ' : `ปี ${yearVal}`;
+        badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ (ตั้งแต่ปี 2569)' : `ปี ${yearVal}`;
       }
       if (typeof window.renderTables === 'function') {
         window.renderTables();
@@ -880,7 +899,11 @@
   function getActiveDataset() {
     if (!appState.data) return null;
     const d = appState.data;
-    const yearVal = appState.selectedYear || '2569';
+    let yearVal = appState.selectedYear || '2569';
+    if (yearVal !== 'all' && parseInt(yearVal, 10) < 2569) {
+      yearVal = '2569';
+      appState.selectedYear = '2569';
+    }
 
     if (!yearVal || yearVal === 'all') {
       return {
@@ -894,23 +917,17 @@
     const yr = parseInt(yearVal, 10);
     const shortYr = (yr > 2500) ? (yr % 100).toString() : yr.toString();
 
-    // 1. Transmission lines
+    // 1. Transmission lines (ปี 2569 เป็นต้นไป)
     const activeTrans = (d.transmissionLines || []).filter(item => {
-      if (yr === 2568) {
-        return (Number(item.progress2568) > 0) || (item.remarks && item.remarks.includes('2568'));
-      }
       if (yr === 2569) {
         const hasMonthly = item.monthly2569 && Object.values(item.monthly2569).some(v => Number(v) > 0);
-        return hasMonthly || (item.totalProgress > (item.progress2568 || 0)) || (item.remarks && item.remarks.includes('2569'));
+        return hasMonthly || (item.totalProgress > 0) || (item.remarks && item.remarks.includes('2569'));
       }
       return item.remarks && item.remarks.includes(yr.toString());
-    }).map(item => {
-      const p = (yr === 2568) ? (typeof item.progress2568 !== 'undefined' ? item.progress2568 : item.totalProgress) : item.totalProgress;
-      return {
-        ...item,
-        displayProgress: p
-      };
-    });
+    }).map(item => ({
+      ...item,
+      displayProgress: item.totalProgress
+    }));
 
     // 2. Substations
     const activeSubs = (d.substationsDetail || []).filter(item => {
@@ -926,7 +943,6 @@
       if (item.statusText && item.statusText.includes(yr.toString())) return true;
       if (item.wbs && (item.wbs.includes(`-${shortYr}-`) || item.wbs.includes(yr.toString()))) return true;
       if (yr === 2569) return true;
-      if (yr === 2568 && (item.progress >= 100 || yearsInContract.includes(2568))) return true;
       return false;
     }).map(item => ({
       ...item,
@@ -4087,7 +4103,11 @@
   // Expose global controllers for PCTS integration immediately
   window.renderPsctmDashboard = function () {
     if (appState.data) {
-      const currentStoredYear = localStorage.getItem('pcts_year_filter') || window.currentYearFilter;
+      let currentStoredYear = localStorage.getItem('pcts_year_filter') || window.currentYearFilter;
+      if (currentStoredYear && currentStoredYear !== 'all' && parseInt(currentStoredYear, 10) < 2569) {
+        currentStoredYear = '2569';
+        localStorage.setItem('pcts_year_filter', '2569');
+      }
       if (currentStoredYear && currentStoredYear !== appState.selectedYear) {
         appState.selectedYear = currentStoredYear;
         const sel = document.getElementById('psctmYearSelect');

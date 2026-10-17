@@ -2362,8 +2362,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     })();
 
     // --- Project View Mode & Search State ---
-    window.CURRENT_THAI_YEAR = new Date().getFullYear() + 543;
-    window.currentYearFilter = localStorage.getItem('pcts_year_filter') || window.CURRENT_THAI_YEAR.toString();
+    window.CURRENT_THAI_YEAR = Math.max(new Date().getFullYear() + 543, 2569);
+    let initYear = localStorage.getItem('pcts_year_filter') || window.CURRENT_THAI_YEAR.toString();
+    if (initYear !== 'all' && parseInt(initYear, 10) < 2569) {
+        initYear = '2569';
+        localStorage.setItem('pcts_year_filter', '2569');
+    }
+    window.currentYearFilter = initYear;
     window.currentProjectViewMode = localStorage.getItem('pcts_project_view_mode') || 'cards';
     window.dashboardSearchQuery = '';
 
@@ -2465,30 +2470,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.isProjectInYear = function (p, targetYear) {
-        if (!targetYear || targetYear === 'all') return true;
-        const target = parseInt(targetYear, 10);
         const pYears = window.getProjectActiveYears(p);
+        if (!targetYear || targetYear === 'all') {
+            return pYears.some(y => y >= 2569);
+        }
+        const target = parseInt(targetYear, 10);
+        if (isNaN(target) || target < 2569) return false;
         return pYears.includes(target);
     };
 
     /**
      * ดึงปี พ.ศ. ทั้งหมดที่มีในระบบมาแสดงในตัวเลือก (Dropdown)
+     * เฉพาะปี 2569 เป็นต้นไป
      */
     window.renderDashboardYearOptions = function () {
         const select = document.getElementById('dashboardYearSelect');
         if (!select) return;
 
-        const currentYear = window.CURRENT_THAI_YEAR;
-        const allYearsSet = new Set([currentYear]);
+        const baseYear = 2569;
+        const currentYear = Math.max(window.CURRENT_THAI_YEAR || baseYear, baseYear);
+        const allYearsSet = new Set([baseYear, currentYear]);
 
         const list = (window.projects && window.projects.length > 0) ? window.projects : (window.defaultProjects || []);
         list.forEach(p => {
             const pYears = window.getProjectActiveYears(p);
-            pYears.forEach(y => allYearsSet.add(y));
+            pYears.forEach(y => {
+                if (y >= baseYear && y <= 2580) {
+                    allYearsSet.add(y);
+                }
+            });
         });
 
-        // จัดเรียง: ปีปัจจุบันขึ้นก่อนเสมอ ตามด้วยปีอื่นๆ เรียงจากมากไปน้อย และตัวเลือกทั้งหมด
-        const otherYears = Array.from(allYearsSet).filter(y => y !== currentYear).sort((a, b) => b - a);
+        // จัดเรียง: ปีปัจจุบันขึ้นก่อนเสมอ ตามด้วยปีอื่นๆ >= 2569 เรียงจากมากไปน้อย และตัวเลือกทั้งหมด
+        const otherYears = Array.from(allYearsSet).filter(y => y !== currentYear && y >= baseYear).sort((a, b) => b - a);
         const orderedYears = [currentYear, ...otherYears];
 
         let html = '';
@@ -2497,32 +2511,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             const label = isCurrent ? `ปี ${yr} (ปีปัจจุบัน)` : `ปี ${yr}`;
             html += `<option value="${yr}">${label}</option>`;
         });
-        html += `<option value="all">ทุกปีโครงการ (ทั้งหมด)</option>`;
+        html += `<option value="all">ทุกปีโครงการ (ตั้งแต่ปี 2569)</option>`;
 
         select.innerHTML = html;
 
-        // ตรวจสอบค่าที่เลือกไว้
-        if (window.currentYearFilter && (allYearsSet.has(parseInt(window.currentYearFilter)) || window.currentYearFilter === 'all')) {
+        // ตรวจสอบค่าที่เลือกไว้ (ไม่ยอมรับปีก่อนหน้า 2569)
+        if (window.currentYearFilter && (window.currentYearFilter === 'all' || (parseInt(window.currentYearFilter, 10) >= baseYear && allYearsSet.has(parseInt(window.currentYearFilter, 10))))) {
             select.value = window.currentYearFilter;
         } else {
             select.value = currentYear.toString();
             window.currentYearFilter = currentYear.toString();
+            localStorage.setItem('pcts_year_filter', window.currentYearFilter);
         }
 
         // ปรับ Badge หัวข้อหน้า
         const badge = document.getElementById('titleYearBadge');
         if (badge) {
-            badge.innerText = window.currentYearFilter === 'all' ? 'ทุกปีโครงการ' : `ปี ${window.currentYearFilter}`;
+            badge.innerText = window.currentYearFilter === 'all' ? 'ทุกปีโครงการ (ตั้งแต่ปี 2569)' : `ปี ${window.currentYearFilter}`;
         }
     };
 
     window.changeDashboardYearFilter = function (yearVal) {
+        if (yearVal !== 'all' && parseInt(yearVal, 10) < 2569) {
+            yearVal = '2569';
+        }
         window.currentYearFilter = yearVal;
         localStorage.setItem('pcts_year_filter', yearVal);
 
         const badge = document.getElementById('titleYearBadge');
         if (badge) {
-            badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ' : `ปี ${yearVal}`;
+            badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ (ตั้งแต่ปี 2569)' : `ปี ${yearVal}`;
         }
 
         renderTables();
@@ -2651,13 +2669,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Render Tables & Cards ---
     window.renderTables = function () {
         const currentThaiYear = window.CURRENT_THAI_YEAR || (new Date().getFullYear() + 543);
-        const activeYear = window.currentYearFilter || currentThaiYear.toString();
+        let activeYear = window.currentYearFilter || currentThaiYear.toString();
+        if (activeYear !== 'all' && parseInt(activeYear, 10) < 2569) {
+            activeYear = '2569';
+            window.currentYearFilter = '2569';
+        }
 
-        // 1. กรองโครงการตามปี พ.ศ. (โครงการข้ามปีจะแสดงทั้ง 2 ปี และโครงการที่ยังไม่แล้วเสร็จจะแสดงต่อเนื่องจนกว่าจะเสร็จ)
+        // 1. กรองโครงการตามปี พ.ศ. (เริ่มปี 2569 เป็นต้นไป ไม่เอาปีก่อนหน้านี้)
         let yearFilteredProjects = projects;
         if (activeYear !== 'all') {
             const yr = parseInt(activeYear, 10);
             yearFilteredProjects = projects.filter(p => window.getProjectActiveYears(p).includes(yr));
+        } else {
+            yearFilteredProjects = projects.filter(p => window.getProjectActiveYears(p).some(y => y >= 2569));
         }
 
         // Update Stats based on Year-Filtered Projects

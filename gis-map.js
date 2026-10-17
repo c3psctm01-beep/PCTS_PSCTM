@@ -319,8 +319,8 @@
 
         let projs = (window.projects && window.projects.length > 0) ? window.projects : (window.defaultProjects || []);
 
-        // กรองตามปี พ.ศ. โครงการ (ถ้าไม่ได้เลือก 'all')
-        if (window.currentYearFilter && window.currentYearFilter !== 'all' && typeof window.isProjectInYear === 'function') {
+        // กรองตามปี พ.ศ. โครงการ (เริ่มปี 2569 เป็นต้นไป)
+        if (typeof window.isProjectInYear === 'function') {
             projs = projs.filter(p => window.isProjectInYear(p, window.currentYearFilter));
         }
         const bounds = [];
