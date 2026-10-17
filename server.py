@@ -99,7 +99,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 "id": "pea-editor-01",
                 "email": "editor@pea.co.th",
                 "employee_id": "501234",
-                "name": "วิศวกรผู้ควบคุมงาน กบส.",
+                "name": "วิศวกรผู้ควบคุมงาน กบส. (Editor กลาง)",
                 "role": "editor",
                 "status": "active",
                 "permissions": {
@@ -109,8 +109,110 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                     "can_export_report": True,
                     "can_manage_users": False
                 },
-                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "last_login": "2026-10-17 18:45:00",
                 "created_at": "2026-02-15 09:30:00"
+            },
+            {
+                "id": "pea-editor-jakraphan",
+                "email": "jakraphan.n@pea.co.th",
+                "employee_id": "502341",
+                "name": "นายจักรพันธ์ นรเหรียญ (พชง.6 ผจส.กรย.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 19:15:20",
+                "created_at": "2026-02-01 08:30:00"
+            },
+            {
+                "id": "pea-editor-palakorn",
+                "email": "palakorn.j@pea.co.th",
+                "employee_id": "503452",
+                "name": "นายพลากร จงอมรสิริเกษม (พชง.3 ผจร.กรย.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 17:30:45",
+                "created_at": "2026-02-10 09:00:00"
+            },
+            {
+                "id": "pea-editor-worapong",
+                "email": "worapong.l@pea.co.th",
+                "employee_id": "501890",
+                "name": "นายวรพงศ์ ลิ้มเจริญ (หผ.บอ.กบษ.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 16:20:10",
+                "created_at": "2026-01-15 10:15:00"
+            },
+            {
+                "id": "pea-editor-ekkachai",
+                "email": "ekkachai.m@pea.co.th",
+                "employee_id": "504123",
+                "name": "นายเอกชัย หมอยาดี (ชผ.จส.กรย.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 15:45:00",
+                "created_at": "2026-03-01 11:00:00"
+            },
+            {
+                "id": "pea-editor-watchara",
+                "email": "watchara.w@pea.co.th",
+                "employee_id": "502987",
+                "name": "นายวัชระ เวทีภิรมย์ (พชง.7 ผจส.กรย.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 14:10:30",
+                "created_at": "2026-01-20 09:45:00"
+            },
+            {
+                "id": "pea-editor-kumpol",
+                "email": "kumpol.t@pea.co.th",
+                "employee_id": "500321",
+                "name": "นายกำพล ตุ้ยเต็มวงค์ (อก.รย.)",
+                "role": "editor",
+                "status": "active",
+                "permissions": {
+                    "can_upload_excel": True,
+                    "can_edit_wbs": True,
+                    "can_manage_punchlist": True,
+                    "can_export_report": True,
+                    "can_manage_users": False
+                },
+                "last_login": "2026-10-17 11:25:00",
+                "created_at": "2026-01-10 08:00:00"
             },
             {
                 "id": "pea-viewer-01",
@@ -126,7 +228,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                     "can_export_report": True,
                     "can_manage_users": False
                 },
-                "last_login": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "last_login": "2026-10-16 14:15:00",
                 "created_at": "2026-03-01 10:00:00"
             },
             {
