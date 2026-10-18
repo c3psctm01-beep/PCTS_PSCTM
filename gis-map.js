@@ -393,7 +393,7 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                        <button type="button" class="btn btn-primary" onclick="viewProjectDetails(${p.id})" style="padding: 7px 10px; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <button type="button" class="btn btn-primary" onclick="viewProjectDetails('${p.id}')" style="padding: 7px 10px; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
                             <i class="fa-solid fa-eye"></i> รายละเอียด
                         </button>
                         <a href="${googleNavUrl}" target="_blank" class="btn" style="padding: 7px 10px; font-size: 11.5px; font-weight: 600; background: #10B981; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; text-decoration: none; border-radius: 6px;">

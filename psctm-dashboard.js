@@ -1180,7 +1180,10 @@
       rowsHtml += `
         <tr>
           <td><span class="badge-status ${isComplete ? 'completed' : 'wbs-rel'}"><i data-lucide="radio" style="width:12px;height:12px;"></i> สายส่ง 115 kV</span></td>
-          <td class="cell-multiline cell-bold">${escapeHtml(item.name)} <br><small style="color:var(--text-muted); font-weight:normal;">${escapeHtml(item.project)} (${formatKm(item.circuitKm)} วงจร-กม.)</small></td>
+          <td class="cell-multiline cell-bold" onclick="if(window.openPsctmItemProjectDetail) window.openPsctmItemProjectDetail('${escapeHtml(item.name).replace(/'/g, "\\'")}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+            <span style="color: var(--pea-purple); text-decoration: underline; text-decoration-color: rgba(116,44,129,0.3); text-underline-offset: 3px;">${escapeHtml(item.name)}</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px; opacity: 0.7;"></i>
+            <br><small style="color:var(--text-muted); font-weight:normal;">${escapeHtml(item.project)} (${formatKm(item.circuitKm)} วงจร-กม.)</small>
+          </td>
           <td style="font-weight:500;">${escapeHtml(item.builder)}</td>
           <td>
             <div class="progress-container">
@@ -1202,7 +1205,10 @@
       rowsHtml += `
         <tr>
           <td><span class="badge-status ${isComplete ? 'completed' : 'wbs-crtd'}"><i data-lucide="zap" style="width:12px;height:12px;"></i> สถานีไฟฟ้า</span></td>
-          <td class="cell-multiline cell-bold">${escapeHtml(item.name)} <br><small style="color:var(--text-muted); font-weight:normal;">${escapeHtml(item.project)} (WBS: ${escapeHtml(item.wbs)})</small></td>
+          <td class="cell-multiline cell-bold" onclick="if(window.openPsctmItemProjectDetail) window.openPsctmItemProjectDetail('${escapeHtml(item.name).replace(/'/g, "\\'")}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+            <span style="color: var(--pea-purple); text-decoration: underline; text-decoration-color: rgba(116,44,129,0.3); text-underline-offset: 3px;">${escapeHtml(item.name)}</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px; opacity: 0.7;"></i>
+            <br><small style="color:var(--text-muted); font-weight:normal;">${escapeHtml(item.project)} (WBS: ${escapeHtml(item.wbs)})</small>
+          </td>
           <td style="font-weight:500;">${escapeHtml(item.contractor)}</td>
           <td>
             <div class="progress-container">
@@ -1492,7 +1498,9 @@
           <tr>
             <td class="cell-num font-bold">${item.no}</td>
             <td><span class="badge-status wbs-rel">${escapeHtml(item.project)}</span></td>
-            <td class="cell-multiline cell-bold">${escapeHtml(item.name)}</td>
+            <td class="cell-multiline cell-bold" onclick="if(window.openPsctmItemProjectDetail) window.openPsctmItemProjectDetail('${escapeHtml(item.name).replace(/'/g, "\\'")}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+              <span style="color: var(--pea-purple); text-decoration: underline; text-decoration-color: rgba(116,44,129,0.3); text-underline-offset: 3px;">${escapeHtml(item.name)}</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px; opacity: 0.7;"></i>
+            </td>
             <td class="cell-num font-bold" style="color:var(--color-info);">${formatKm(item.circuitKm)}</td>
             <td style="font-weight:500;">${escapeHtml(item.builder)}</td>
             <td class="cell-num font-bold">${item.progress2568}%</td>
@@ -1872,7 +1880,9 @@
             <tr>
               <td class="cell-num font-bold">${item.no}</td>
               <td><span class="badge-status wbs-rel">${escapeHtml(item.project)}</span></td>
-              <td class="cell-bold">${escapeHtml(item.name)}</td>
+              <td class="cell-bold" onclick="if(window.openPsctmItemProjectDetail) window.openPsctmItemProjectDetail('${escapeHtml(item.name).replace(/'/g, "\\'")}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+                <span style="color: var(--pea-purple); text-decoration: underline; text-decoration-color: rgba(116,44,129,0.3); text-underline-offset: 3px;">${escapeHtml(item.name)}</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; margin-left: 4px; opacity: 0.7;"></i>
+              </td>
               <td style="font-family:monospace; font-size:0.8rem; background:var(--bg-secondary); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">${escapeHtml(item.wbs)}</td>
               <td style="font-weight:500;">${escapeHtml(item.contractor)}</td>
               <td style="font-size:0.82rem;">${escapeHtml(item.contract)}<br><small style="color:var(--text-muted);">${item.duration ? item.duration + ' วัน' : ''}</small></td>

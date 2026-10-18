@@ -3227,7 +3227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </span>
                     </div>
                     <div class="project-card-body">
-                        <h3 class="project-card-title" onclick="viewProjectDetails(${p.id})" title="${p.name}">
+                        <h3 class="project-card-title" onclick="viewProjectDetails('${p.id}')" title="${p.name}">
                             ${p.name}
                         </h3>
                         <div class="project-meta-grid">
@@ -3278,7 +3278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span><i class="fa-solid fa-list-check"></i> ${taskCount} งาน</span>
                             <span><i class="fa-regular fa-images"></i> ${photoCount} รูป</span>
                         </div>
-                        <button class="btn-card-details" onclick="viewProjectDetails(${p.id})">
+                        <button class="btn-card-details" onclick="viewProjectDetails('${p.id}')">
                             ดูรายละเอียด <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
@@ -3296,8 +3296,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const tr = document.createElement('tr');
                 const tableTypeClass = projectType === 'ดำเนินการเอง' ? 'color: #2980b9; font-weight: 600;' : 'color: #e67e22; font-weight: 600;';
                 tr.innerHTML = `
-                    <td>
-                        <strong>${p.name}</strong>
+                    <td onclick="viewProjectDetails('${p.id}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+                        <strong style="color: var(--pea-purple); cursor: pointer;">${p.name}</strong>
                         <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                             ${workTypeBadgeHtml}
                             ${multiYearBadgeHtml}
@@ -3324,7 +3324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="progress-bar-actual" style="width: ${disbPct}%; background-color: #2ecc71;"></div>
                         </div>
                     </td>
-                    <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewProjectDetails(${p.id})">ดูรายละเอียด</button></td>
+                    <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewProjectDetails('${p.id}')">ดูรายละเอียด</button></td>
                 `;
                 dashboardTbody.appendChild(tr);
             }
@@ -3348,8 +3348,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const wtInfoAdmin = window.getWorkTypeBadgeInfo(p.workType || window.inferProjectWorkType(p));
                 const adminWorkTypeBadge = `<span class="project-worktype-badge ${wtInfoAdmin.badgeClass}" style="margin-top: 3px;"><i class="${wtInfoAdmin.icon}"></i> ${wtInfoAdmin.label}</span>`;
                 tr.innerHTML = `
-                    <td>
-                        <strong>${p.name}</strong>
+                    <td onclick="viewProjectDetails('${p.id}')" style="cursor: pointer;" title="คลิกเพื่อดูรายละเอียดโครงการ">
+                        <strong style="color: var(--pea-purple);">${p.name}</strong>
                         <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                             ${adminWorkTypeBadge}
                             ${yearChip}
@@ -3359,9 +3359,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>${p.contractor}</td>
                     <td>${p.supervisor || '-'}</td>
                     <td><span class="status-badge ${statusClass}">${p.status}</span></td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" onclick="openProjectModal(${p.id})"><i class="fa-solid fa-edit"></i></button>
-                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px; background-color: #E74C3C;" onclick="deleteProject(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                    <td style="white-space: nowrap;">
+                        <button class="btn btn-outline" style="padding: 5px 10px; font-size: 12px; margin-right: 5px; color: var(--pea-purple); border: 1px solid var(--pea-purple);" onclick="viewProjectDetails('${p.id}')" title="ดูรายละเอียดโครงการ"><i class="fa-solid fa-eye"></i> ดูรายละเอียด</button>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" onclick="openProjectModal(${p.id})" title="แก้ไขโครงการ"><i class="fa-solid fa-edit"></i></button>
+                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px; background-color: #E74C3C;" onclick="deleteProject(${p.id})" title="ลบโครงการ"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 adminTbody.appendChild(tr);
@@ -3863,29 +3864,85 @@ window.updateSCurve = function (p) {
 
 // Global function to navigate from card/table button
 window.viewProjectDetails = function (projectId) {
-    const p = projects.find(proj => proj.id === projectId);
-    if (p) {
-        window.currentProjectViewData = p;
-        document.getElementById('detailProjectTitle').innerText = p.name;
-        const statusColors = {
-            'อยู่ระหว่างก่อสร้าง': { bg: 'rgba(39, 174, 96, 0.12)', color: '#27ae60' },
-            'อยู่ระหว่างจัดจ้าง': { bg: 'rgba(212, 172, 13, 0.15)', color: '#d4ac0d' },
-            'ออกแบบประมาณการ': { bg: 'rgba(142, 68, 173, 0.12)', color: '#8e44ad' },
-            'รองบประมาณ': { bg: 'rgba(230, 126, 34, 0.12)', color: '#e67e22' },
-            'แล้วเสร็จ': { bg: 'rgba(41, 128, 185, 0.12)', color: '#2980b9' }
-        };
-        const sColor = statusColors[p.status] || { bg: '#f1f5f9', color: '#64748b' };
+    const projectList = (window.projects && window.projects.length) ? window.projects : (typeof projects !== 'undefined' ? projects : []);
+    let p = projectList.find(proj => String(proj.id) === String(projectId));
+    if (!p) {
+        p = projectList.find(proj => proj.name === projectId || proj.name?.includes(projectId) || String(projectId).includes(proj.name));
+    }
+    if (!p && projectList.length > 0) {
+        p = projectList[0];
+    }
 
-        let contractBadgeHtml = '';
-        if (typeof window.calculateProjectContractInfo === 'function') {
+    // Track previous view to return accurately when user clicks back
+    const activeSection = document.querySelector('.view-section.active');
+    if (activeSection && activeSection.id !== 'project-detail-view') {
+        window.lastViewBeforeDetail = activeSection.id;
+    }
+
+    // 1. Switch the view manually & immediately so navigation succeeds without waiting
+    document.querySelectorAll('.view-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    const detailView = document.getElementById('project-detail-view');
+    if (detailView) {
+        detailView.classList.add('active');
+    }
+    document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
+
+    // Critical for mobile & desktop UX: always scroll to top
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.scrollTop = 0;
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) contentArea.scrollTop = 0;
+
+    // Reset default tab to WBS if openProjectTab is available
+    try {
+        if (typeof window.openProjectTab === 'function') {
+            const firstTabBtn = document.querySelector('.project-tabs .tablinks');
+            window.openProjectTab({ currentTarget: firstTabBtn }, 'tabWBS');
+        }
+    } catch (e) {
+        console.warn('Tab reset error:', e);
+    }
+
+    if (!p) {
+        console.warn('viewProjectDetails: Project not found for:', projectId);
+        return;
+    }
+
+    window.currentProjectViewData = p;
+
+    // Set title safely
+    const titleEl = document.getElementById('detailProjectTitle');
+    if (titleEl) titleEl.innerText = p.name;
+
+    const statusColors = {
+        'อยู่ระหว่างก่อสร้าง': { bg: 'rgba(39, 174, 96, 0.12)', color: '#27ae60' },
+        'อยู่ระหว่างจัดจ้าง': { bg: 'rgba(212, 172, 13, 0.15)', color: '#d4ac0d' },
+        'ออกแบบประมาณการ': { bg: 'rgba(142, 68, 173, 0.12)', color: '#8e44ad' },
+        'รองบประมาณ': { bg: 'rgba(230, 126, 34, 0.12)', color: '#e67e22' },
+        'แล้วเสร็จ': { bg: 'rgba(41, 128, 185, 0.12)', color: '#2980b9' }
+    };
+    const sColor = statusColors[p.status] || { bg: '#f1f5f9', color: '#64748b' };
+
+    let contractBadgeHtml = '';
+    if (typeof window.calculateProjectContractInfo === 'function') {
+        try {
             const cInfo = window.calculateProjectContractInfo(p);
             if (cInfo && cInfo.badgeHtml) {
                 contractBadgeHtml = cInfo.badgeHtml;
             }
-        }
+        } catch (_) {}
+    }
 
-        const wtInfo = window.getWorkTypeBadgeInfo(p.workType || window.inferProjectWorkType(p));
-        document.getElementById('detailProjectInfo').innerHTML = `
+    const wtInfo = (typeof window.getWorkTypeBadgeInfo === 'function')
+        ? window.getWorkTypeBadgeInfo(p.workType || (typeof window.inferProjectWorkType === 'function' ? window.inferProjectWorkType(p) : ''))
+        : { bg: '#f1f5f9', color: '#64748b', border: '#e2e8f0', icon: 'fa-solid fa-briefcase', label: p.workType || 'งานก่อสร้าง' };
+
+    const infoEl = document.getElementById('detailProjectInfo');
+    if (infoEl) {
+        infoEl.innerHTML = `
             <span class="detail-info-item worktype-chip" style="background:${wtInfo.bg}; color:${wtInfo.color}; border: 1px solid ${wtInfo.border}; font-weight:600;"><i class="${wtInfo.icon}"></i> <span><strong>ประเภทงาน:</strong> ${wtInfo.label}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-handshake" style="color: #64748b;"></i> <span><strong>รูปแบบสัญญา:</strong> ${p.type || 'จ้างเหมา'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-building" style="color: #64748b;"></i> <span><strong>ผู้รับเหมา:</strong> ${p.contractor || '-'}</span></span>
@@ -3895,8 +3952,10 @@ window.viewProjectDetails = function (projectId) {
             <span class="detail-info-item status-chip" style="background:${sColor.bg}; color:${sColor.color}; border-color:${sColor.color}30; font-weight:600;"><i class="fa-solid fa-circle-dot"></i> <span>${p.status}</span></span>
             ${contractBadgeHtml}
         `;
+    }
 
-        const tbody = document.getElementById('detailTaskTableBody');
+    const tbody = document.getElementById('detailTaskTableBody');
+    if (tbody) {
         tbody.innerHTML = '';
         if (p.tasks && p.tasks.length > 0) {
             p.tasks.forEach(t => {
@@ -3917,8 +3976,10 @@ window.viewProjectDetails = function (projectId) {
         } else {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">ยังไม่มีข้อมูลแผนงานย่อย</td></tr>';
         }
+    }
 
-        // --- Render Gantt Chart & KPI Ribbon ---
+    // --- Render Gantt Chart & KPI Ribbon ---
+    try {
         const allTasks = p.tasks || [];
         const completedTasks = allTasks.filter(t => (parseFloat(t.actual) || 0) >= 100).length;
         const inProgressTasks = allTasks.filter(t => (parseFloat(t.actual) || 0) > 0 && (parseFloat(t.actual) || 0) < 100).length;
@@ -3935,17 +3996,17 @@ window.viewProjectDetails = function (projectId) {
         if (elGanttPending) elGanttPending.innerText = pendingTasks;
 
         const ganttContainer = document.getElementById('ganttChart');
-        if (allTasks.length > 0) {
-            const ganttTasks = allTasks.filter(t => t.startDate && t.endDate).map(t => ({
-                id: `Task_${t.id}`,
-                name: t.name,
-                start: t.startDate,
-                end: t.endDate,
-                progress: t.actual || 0
-            }));
+        if (ganttContainer) {
+            if (allTasks.length > 0) {
+                const ganttTasks = allTasks.filter(t => t.startDate && t.endDate).map(t => ({
+                    id: `Task_${t.id}`,
+                    name: t.name,
+                    start: t.startDate,
+                    end: t.endDate,
+                    progress: t.actual || 0
+                }));
 
-            if (ganttTasks.length > 0) {
-                try {
+                if (ganttTasks.length > 0 && typeof Gantt !== 'undefined') {
                     ganttContainer.innerHTML = '';
                     window.currentGantt = new Gantt("#ganttChart", ganttTasks, {
                         header_height: 50,
@@ -3989,24 +4050,37 @@ window.viewProjectDetails = function (projectId) {
                     if (typeof stretchGanttNative === 'function') {
                         stretchGanttNative(window.currentGantt);
                     }
-
-                } catch (e) {
-                    console.error("Gantt Chart Error:", e);
+                } else {
+                    ganttContainer.innerHTML = '<text x="20" y="40" fill="#7f8c8d">ต้องระบุวันที่เริ่มต้นและสิ้นสุดของแผนงานย่อย เพื่อแสดงผลในรูปแบบ Gantt Chart</text>';
                 }
             } else {
-                ganttContainer.innerHTML = '<text x="20" y="40" fill="#7f8c8d">ต้องระบุวันที่เริ่มต้นและสิ้นสุดของแผนงานย่อย เพื่อแสดงผลในรูปแบบ Gantt Chart</text>';
+                ganttContainer.innerHTML = '<text x="20" y="40" fill="#7f8c8d">ยังไม่มีแผนงานย่อย</text>';
             }
-        } else {
-            ganttContainer.innerHTML = '<text x="20" y="40" fill="#7f8c8d">ยังไม่มีแผนงานย่อย</text>';
         }
+    } catch (e) {
+        console.warn("Gantt Chart Render Error:", e);
+    }
 
-        // --- Render Progress Gallery (Grouped by Sub-Task) ---
-        window.renderGalleryTab(p);
+    // --- Render Progress Gallery (Grouped by Sub-Task) ---
+    try {
+        if (typeof window.renderGalleryTab === 'function') {
+            window.renderGalleryTab(p);
+        }
+    } catch (e) {
+        console.warn('Gallery render error:', e);
+    }
 
-        // Update S-Curve
-        window.updateSCurve(p);
+    // Update S-Curve
+    try {
+        if (typeof window.updateSCurve === 'function') {
+            window.updateSCurve(p);
+        }
+    } catch (e) {
+        console.warn('S-Curve update error:', e);
+    }
 
-        window.currentProjectViewData = p;
+    // Disbursement
+    try {
         if (p.disbursement && p.disbursement.monthlyData && Object.keys(p.disbursement.monthlyData).length > 0) {
             const mKeys = Object.keys(p.disbursement.monthlyData);
             const monthOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
@@ -4028,44 +4102,15 @@ window.viewProjectDetails = function (projectId) {
         if (typeof window.renderDisbursementTab === 'function') {
             window.renderDisbursementTab(p);
         }
-
-        // Render Phase 2: Punch List, Before/After, and Substation Weather Station
-        if (typeof window.renderPunchListTab === 'function') {
-            window.renderPunchListTab(p);
-        }
-        if (typeof window.renderBeforeAfterTab === 'function') {
-            window.renderBeforeAfterTab(p);
-        }
-        if (typeof window.renderSubstationWeatherWidget === 'function') {
-            window.renderSubstationWeatherWidget(p);
-        }
-        if (typeof window.initProjectTowers === 'function') {
-            window.initProjectTowers(p);
-        }
+    } catch (e) {
+        console.warn('Disbursement render error:', e);
     }
 
-    // Switch the view manually since the dummy nav item is gone
-    document.querySelectorAll('.view-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    const detailView = document.getElementById('project-detail-view');
-    if (detailView) {
-        detailView.classList.add('active');
-    }
-    document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
-
-    // Critical for mobile UX: always scroll to top so user sees the header, back button, and tabs!
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) mainContent.scrollTop = 0;
-    const contentArea = document.querySelector('.content-area');
-    if (contentArea) contentArea.scrollTop = 0;
-
-    // Reset default tab to WBS if openProjectTab is available
-    if (typeof window.openProjectTab === 'function') {
-        const firstTabBtn = document.querySelector('.project-tabs .tablinks');
-        window.openProjectTab({ currentTarget: firstTabBtn }, 'tabWBS');
-    }
+    // Render Phase 2: Punch List, Before/After, Weather, Towers
+    try { if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(p); } catch (e) {}
+    try { if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(p); } catch (e) {}
+    try { if (typeof window.renderSubstationWeatherWidget === 'function') window.renderSubstationWeatherWidget(p); } catch (e) {}
+    try { if (typeof window.initProjectTowers === 'function') window.initProjectTowers(p); } catch (e) {}
 
     // Safely update calendar if function exists
     try {
@@ -4082,7 +4127,46 @@ window.viewProjectDetails = function (projectId) {
     } catch (calErr) {
         console.warn('Calendar sync deferred:', calErr);
     }
-}
+};
+
+// --- Cross-navigation from PSCTM Dashboard to Project Details ---
+window.openPsctmItemProjectDetail = function (rawName) {
+    if (!rawName) return;
+    const nameClean = String(rawName).trim();
+    const list = (window.projects && window.projects.length) ? window.projects : (typeof projects !== 'undefined' ? projects : []);
+    
+    // 1. Direct or partial match
+    let matched = list.find(p => p.name === nameClean || p.name?.includes(nameClean) || nameClean.includes(p.name));
+    
+    // 2. Keyword match (station name like "สมุทรสาคร", "กระทุ่มแบน", etc.)
+    if (!matched) {
+        const words = nameClean.split(/[\s,()/-]+/).filter(w => w.length >= 3);
+        for (const w of words) {
+            matched = list.find(p => p.name?.includes(w));
+            if (matched) break;
+        }
+    }
+    
+    if (matched && typeof window.viewProjectDetails === 'function') {
+        window.viewProjectDetails(matched.id);
+    } else {
+        // Fallback: switch to dashboard-view and search
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        const dv = document.getElementById('dashboard-view');
+        if (dv) dv.classList.add('active');
+        document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(n => {
+            n.classList.toggle('active', n.getAttribute('data-target') === 'dashboard-view');
+        });
+        if (typeof window.switchProjectView === 'function') {
+            window.switchProjectView('cards');
+        }
+        const searchInput = document.getElementById('searchProjectInput');
+        if (searchInput) {
+            searchInput.value = nameClean;
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    }
+};
 
 // --- Grouped Progress Gallery Logic ---
 window.currentGalleryFilterTaskId = 'all';
@@ -6022,14 +6106,20 @@ window.analyzeImageWithAI = async function () {
 
 // --- Home Navigation ---
 window.goHome = function () {
+    const target = window.lastViewBeforeDetail || 'dashboard-view';
     document.querySelectorAll('.view-section').forEach(section => {
         section.classList.remove('active');
     });
-    document.getElementById('dashboard-view').classList.add('active');
+    const targetEl = document.getElementById(target);
+    if (targetEl) {
+        targetEl.classList.add('active');
+    } else {
+        document.getElementById('dashboard-view')?.classList.add('active');
+    }
     document.querySelectorAll('.sidebar-nav li, .top-nav li').forEach(nav => nav.classList.remove('active'));
-    document.querySelectorAll('[data-target="dashboard-view"]').forEach(el => el.classList.add('active'));
-    if (typeof window.switchProjectView === 'function') {
-        window.switchProjectView('cards');
+    document.querySelectorAll(`[data-target="${target}"]`).forEach(el => el.classList.add('active'));
+    if (target === 'dashboard-view' && typeof window.switchProjectView === 'function') {
+        window.switchProjectView(window.currentProjectViewMode || 'cards');
     }
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const mainContent = document.querySelector('.main-content');
