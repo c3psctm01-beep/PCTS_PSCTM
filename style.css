@@ -5679,6 +5679,123 @@ body:has(#manual-view.active) .mascot-widget {
     border-radius: 12px;
 }
 
+/* --- Punch List Modals: Add & Resolve Item (Clean, Modern & Dark Theme Ready) --- */
+#punchAddModal .modal-content,
+#punchResolveModal .modal-content {
+    max-width: 620px;
+    width: 95%;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+}
+
+#punchAddForm .form-group,
+#punchResolveForm .form-group {
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 14px !important;
+    width: 100% !important;
+}
+
+#punchAddForm label,
+#punchResolveForm label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary, #1e293b);
+    margin-bottom: 6px !important;
+}
+
+#punchAddForm input[type="text"],
+#punchAddForm input[type="date"],
+#punchAddForm select,
+#punchAddForm textarea,
+#punchResolveForm input[type="text"],
+#punchResolveForm select,
+#punchResolveForm textarea {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px 14px !important;
+    border: 1.5px solid var(--border-color, #cbd5e1) !important;
+    border-radius: 9px !important;
+    font-family: inherit !important;
+    font-size: 13.5px !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+}
+
+#punchAddForm input:focus,
+#punchAddForm select:focus,
+#punchAddForm textarea:focus,
+#punchResolveForm input:focus,
+#punchResolveForm select:focus,
+#punchResolveForm textarea:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15) !important;
+}
+
+#punchAddForm .form-row,
+#punchResolveForm .form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+    margin-bottom: 0px !important;
+}
+
+#punchAddForm textarea,
+#punchResolveForm textarea {
+    min-height: 85px !important;
+    resize: vertical !important;
+    line-height: 1.5 !important;
+}
+
+/* Dark Theme Overrides for Punch List Modals */
+[data-theme="dark"] #punchAddModal .modal-content,
+[data-theme="dark"] #punchResolveModal .modal-content {
+    background: #141c2e !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] #punchAddForm label,
+[data-theme="dark"] #punchResolveForm label {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #punchAddForm input[type="text"],
+[data-theme="dark"] #punchAddForm input[type="date"],
+[data-theme="dark"] #punchAddForm select,
+[data-theme="dark"] #punchAddForm textarea,
+[data-theme="dark"] #punchResolveForm input[type="text"],
+[data-theme="dark"] #punchResolveForm select,
+[data-theme="dark"] #punchResolveForm textarea {
+    background: #0b1120 !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f8fafc !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] #punchAddForm input:focus,
+[data-theme="dark"] #punchAddForm select:focus,
+[data-theme="dark"] #punchAddForm textarea:focus,
+[data-theme="dark"] #punchResolveForm input:focus,
+[data-theme="dark"] #punchResolveForm select:focus,
+[data-theme="dark"] #punchResolveForm textarea:focus {
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25) !important;
+}
+
+[data-theme="dark"] #punchAddForm input::placeholder,
+[data-theme="dark"] #punchAddForm textarea::placeholder,
+[data-theme="dark"] #punchResolveForm textarea::placeholder {
+    color: #64748b !important;
+}
+
 /* --- 3. Before & After Slider Styles --- */
 .before-after-wrapper {
     overflow: hidden;

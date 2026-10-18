@@ -191,7 +191,18 @@
         const modal = document.getElementById('punchAddModal');
         if (!modal) return;
 
+        // 1. Reset ฟอร์มเป็นอันดับแรกก่อน เพื่อไม่ให้ล้างค่าที่ตั้งให้หลังจากนี้
+        document.getElementById('punchAddForm')?.reset();
+
         const p = window.currentProjectViewData;
+
+        // 2. ปลดล็อก input ทุกตัวให้อยู่ในสถานะพร้อมพิมพ์แน่นอน
+        document.querySelectorAll('#punchAddModal input, #punchAddModal select, #punchAddModal textarea').forEach(el => {
+            el.disabled = false;
+            el.readOnly = false;
+        });
+
+        // 3. กำหนดค่าเริ่มต้นผู้รับเหมาและกำหนดส่งงาน
         const contractorInput = document.getElementById('punchContractorInput');
         if (contractorInput && p) contractorInput.value = p.contractor || '';
 
@@ -202,14 +213,25 @@
             dueDateInput.value = nextWeek.toISOString().split('T')[0];
         }
 
-        document.getElementById('punchAddForm')?.reset();
+        // 4. ล้างค่ารูปภาพและพรีวิวภาพเดิม
         if (typeof window.clearPunchPhotoInput === 'function') {
             window.clearPunchPhotoInput('punchBeforePhotoInput', 'punchBeforePhotoPreview');
         } else {
+            const fileInp = document.getElementById('punchBeforePhotoInput');
+            if (fileInp) fileInp.value = '';
             const prev = document.getElementById('punchBeforePhotoPreview');
             if (prev) prev.innerHTML = '';
         }
+
         modal.style.display = 'flex';
+
+        // 5. โฟกัสเคอร์เซอร์ไปที่ช่องกรอกหัวข้อข้อบกพร่องทันที
+        setTimeout(() => {
+            const titleInput = document.getElementById('punchTitleInput');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        }, 150);
     };
 
     /**
@@ -224,21 +246,29 @@
      * บันทึกรายการ Punch List ใหม่
      */
     window.saveNewPunchItem = async function (event) {
-        if (event) event.preventDefault();
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const p = window.currentProjectViewData;
-        if (!p) return;
+        if (!p) {
+            alert('ไม่พบข้อมูลโครงการปัจจุบัน กรุณาเปิดดูรายละเอียดโครงการใหม่อีกครั้ง');
+            return false;
+        }
 
-        const title = document.getElementById('punchTitleInput')?.value.trim();
+        const titleInput = document.getElementById('punchTitleInput');
+        const title = titleInput?.value.trim();
         const location = document.getElementById('punchLocationInput')?.value.trim();
         const category = document.getElementById('punchCategorySelect')?.value || 'civil';
         const priority = document.getElementById('punchPrioritySelect')?.value || 'normal';
-        const description = document.getElementById('punchDescInput')?.value.trim();
-        const contractor = document.getElementById('punchContractorInput')?.value.trim();
+        const description = document.getElementById('punchDescInput')?.value.trim() || '';
+        const contractor = document.getElementById('punchContractorInput')?.value.trim() || '';
         const dueDate = document.getElementById('punchDueDateInput')?.value;
 
         if (!title) {
-            alert('กรุณาระบุหัวข้อข้อบกพร่อง/สิ่งที่ต้องแก้ไข');
-            return;
+            alert('กรุณาระบุหัวข้อข้อบกพร่อง / จุดที่ต้องแก้ไข');
+            titleInput?.focus();
+            return false;
         }
 
         // อ่านภาพถ่ายก่อนแก้ไข (Before Photo)
@@ -248,19 +278,22 @@
         const submitBtn = document.querySelector('#punchAddForm button[type="submit"]');
         const origText = submitBtn ? submitBtn.innerHTML : '';
         if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประมวลผลและบันทึก...';
             submitBtn.disabled = true;
         }
 
         try {
             if (photoInput && photoInput.files && photoInput.files.length > 0) {
                 const file = photoInput.files[0];
-                beforePhotoUrl = await window.processAndUploadPunchImage(file, p, title, 'ก่อนแก้ไข');
+                const uploadedUrl = await window.processAndUploadPunchImage(file, p, title, 'ก่อนแก้ไข');
+                if (uploadedUrl) {
+                    beforePhotoUrl = uploadedUrl;
+                }
             }
 
             if (!Array.isArray(p.punchList)) p.punchList = [];
 
-            p.punchList.push({
+            const newItem = {
                 id: Date.now(),
                 title,
                 location: location || 'ลานสถานีไฟฟ้า',
@@ -268,15 +301,19 @@
                 priority,
                 description,
                 contractor: contractor || p.contractor || '',
-                dueDate,
+                dueDate: dueDate || '',
                 status: 'pending',
                 createdDate: new Date().toISOString().split('T')[0],
                 beforePhoto: beforePhotoUrl,
                 afterPhoto: '',
                 resolvedDate: null
-            });
+            };
 
-            await window.saveProjects(p.id);
+            p.punchList.push(newItem);
+
+            if (typeof window.saveProjects === 'function') {
+                await window.saveProjects(p.id);
+            }
 
             window.closeAddPunchModal();
             window.renderPunchListTab(p);
@@ -297,6 +334,7 @@
                 submitBtn.disabled = false;
             }
         }
+        return false;
     };
 
     /**

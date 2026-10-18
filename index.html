@@ -3288,25 +3288,32 @@
 
     <!-- Punch List: Add Item Modal -->
     <div id="punchAddModal" class="modal" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content card" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <h2 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-triangle-exclamation"></i> บันทึกรายการตรวจรับข้อบกพร่อง (Punch List)
+        <div class="modal-content card" style="max-width: 620px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                <h2 style="margin: 0; font-size: 16.5px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px; font-weight: 700;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> บันทึกรายการตรวจรับข้อบกพร่อง (Punch List)
                 </h2>
-                <span class="close-modal" onclick="closeAddPunchModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+                <span class="close-modal" onclick="closeAddPunchModal()" style="font-size: 24px; cursor: pointer; color: #94a3b8;">&times;</span>
             </div>
-            <form id="punchAddForm" onsubmit="saveNewPunchItem(event)">
-                <div class="form-group">
-                    <label>หัวข้อข้อบกพร่อง / จุดที่ต้องแก้ไข *</label>
-                    <input type="text" id="punchTitleInput" placeholder="เช่น สีตู้สวิตช์บอร์ดถลอก, ทอร์กน็อตสายดินไม่แน่น" required>
+            <form id="punchAddForm" class="pea-form" onsubmit="event.preventDefault(); window.saveNewPunchItem(event); return false;">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="punchTitleInput">
+                        <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; font-size: 11px;"></i> หัวข้อข้อบกพร่อง / จุดที่ต้องแก้ไข <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="punchTitleInput" placeholder="เช่น สีตู้สวิตช์บอร์ดถลอก, ทอร์กน็อตสายดินไม่แน่น, ป้ายเตือนชำรุด" required autocomplete="off">
                 </div>
-                <div class="form-row">
+
+                <div class="form-row" style="margin-bottom: 14px;">
                     <div class="form-group">
-                        <label>ตำแหน่งในสถานีไฟฟ้า</label>
-                        <input type="text" id="punchLocationInput" placeholder="เช่น ลานหม้อแปลง T1, Bay 115 kV">
+                        <label for="punchLocationInput">
+                            <i class="fa-solid fa-location-dot" style="color: #8b5cf6;"></i> ตำแหน่งในสถานีไฟฟ้า
+                        </label>
+                        <input type="text" id="punchLocationInput" placeholder="เช่น ลานหม้อแปลง T1, Bay 115 kV, อาคารควบคุม" autocomplete="off">
                     </div>
                     <div class="form-group">
-                        <label>หมวดหมู่งาน</label>
+                        <label for="punchCategorySelect">
+                            <i class="fa-solid fa-layer-group" style="color: #8b5cf6;"></i> หมวดหมู่งาน
+                        </label>
                         <select id="punchCategorySelect">
                             <option value="civil">งานโยธาและโครงสร้าง</option>
                             <option value="electrical">งานติดตั้งอุปกรณ์ไฟฟ้า 115 kV</option>
@@ -3315,9 +3322,12 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
+
+                <div class="form-row" style="margin-bottom: 14px;">
                     <div class="form-group">
-                        <label>ระดับความเร่งด่วน</label>
+                        <label for="punchPrioritySelect">
+                            <i class="fa-solid fa-flag" style="color: #f59e0b;"></i> ระดับความเร่งด่วน
+                        </label>
                         <select id="punchPrioritySelect">
                             <option value="normal">ปานกลาง (Normal)</option>
                             <option value="high">เร่งด่วนมาก (Critical)</option>
@@ -3325,28 +3335,40 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>กำหนดแล้วเสร็จ</label>
+                        <label for="punchDueDateInput">
+                            <i class="fa-regular fa-calendar-check" style="color: #10b981;"></i> กำหนดแล้วเสร็จ <span style="color: #ef4444;">*</span>
+                        </label>
                         <input type="date" id="punchDueDateInput" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>ผู้รับผิดชอบดำเนินการแก้ไข (ผู้รับเหมา/ช่าง)</label>
-                    <input type="text" id="punchContractorInput" placeholder="ระบุชื่อผู้รับจ้าง หรือหัวหน้าชุดช่าง">
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="punchContractorInput">
+                        <i class="fa-solid fa-user-gear" style="color: #64748b;"></i> ผู้รับผิดชอบดำเนินการแก้ไข (ผู้รับเหมา/หัวหน้าชุดช่าง)
+                    </label>
+                    <input type="text" id="punchContractorInput" placeholder="ระบุชื่อผู้รับจ้าง หรือหัวหน้าชุดช่างผู้รับผิดชอบ" autocomplete="off">
                 </div>
-                <div class="form-group">
-                    <label>รายละเอียดและแนวทางแก้ไข</label>
-                    <textarea id="punchDescInput" rows="3" placeholder="ระบุอาการข้อบกพร่อง และวิธีแก้ไขที่กำหนด..."></textarea>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="punchDescInput">
+                        <i class="fa-solid fa-align-left" style="color: #64748b;"></i> รายละเอียดและแนวทางแก้ไข
+                    </label>
+                    <textarea id="punchDescInput" rows="3" placeholder="ระบุอาการข้อบกพร่อง และวิธีแก้ไขที่กำหนดตามมาตรฐาน กฟภ..."></textarea>
                 </div>
-                <div class="form-group">
-                    <label>แนบภาพถ่ายหน้างานก่อนแก้ไข (Before Photo พร้อมประทับลายน้ำ GPS)</label>
-                    <input type="file" id="punchBeforePhotoInput" accept="image/*" class="file-input" style="padding: 6px;">
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="punchBeforePhotoInput">
+                        <i class="fa-solid fa-camera" style="color: #8b5cf6;"></i> แนบภาพถ่ายหน้างานก่อนแก้ไข (Before Photo พร้อมประทับพิกัด GPS อัตโนมัติ)
+                    </label>
+                    <input type="file" id="punchBeforePhotoInput" accept="image/*" class="file-input" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;">
                     <div id="punchBeforePhotoPreview" style="margin-top: 8px;"></div>
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">
+
+                <div style="display: flex; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 11px; font-weight: 600; font-size: 14px; border-radius: 8px;">
                         <i class="fa-solid fa-floppy-disk"></i> บันทึกรายการ
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAddPunchModal()" style="padding: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddPunchModal()" style="padding: 11px 20px; font-size: 14px; border-radius: 8px;">
                         ยกเลิก
                     </button>
                 </div>
