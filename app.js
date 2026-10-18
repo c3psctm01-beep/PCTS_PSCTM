@@ -3,6 +3,7 @@ const defaultProjects = [
     {
         id: 1,
         name: "สถานีไฟฟ้าสมุทรสาคร 18 (ชั่วคราว)",
+        workType: "สถานีไฟฟ้าชั่วคราว",
         type: "ดำเนินการเอง",
         contractor: "กฟภ.",
         supervisor: "นายสมชาย ใจดี",
@@ -189,6 +190,7 @@ const defaultProjects = [
     {
         id: 2,
         name: "สถานีไฟฟ้ากาญจนบุรี 5 (ชั่วคราว)",
+        workType: "สถานีไฟฟ้าชั่วคราว",
         type: "จ้างเหมา",
         contractor: "บริษัท รับเหมาไฟฟ้า จำกัด",
         supervisor: "นายสมชาย ใจดี",
@@ -227,8 +229,80 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window.db = db;
 
-// --- GEMINI API KEY ---
-// ไม่ควรนำ API Key มาใส่ใน Source Code เนื่องจากไม่ปลอดภัย ให้ผู้ใช้กรอกผ่านหน้าตั้งค่าแทน
+// --- Work Type Definition & Helpers ---
+window.PROJECT_WORK_TYPES = [
+    'งานสถานีไฟฟ้าถาวร',
+    'สถานีไฟฟ้าชั่วคราว',
+    'งานก่อสร้างระบบสายส่ง 115 kV',
+    'งานติดตั้งอุปกรณ์ป้องกัน 115 kV'
+];
+
+window.inferProjectWorkType = function (p) {
+    if (!p) return 'งานสถานีไฟฟ้าถาวร';
+    if (p.workType && window.PROJECT_WORK_TYPES.includes(p.workType)) return p.workType;
+    const name = (p.name || '').toLowerCase();
+    if (name.includes('ชั่วคราว') || name.includes('(ชั่วคราว)')) {
+        return 'สถานีไฟฟ้าชั่วคราว';
+    }
+    if (name.includes('สายส่ง') || name.includes('transmission')) {
+        return 'งานก่อสร้างระบบสายส่ง 115 kV';
+    }
+    if (name.includes('อุปกรณ์ป้องกัน') || name.includes('lbs') || name.includes('relay') || name.includes('ป้องกัน')) {
+        return 'งานติดตั้งอุปกรณ์ป้องกัน 115 kV';
+    }
+    return 'งานสถานีไฟฟ้าถาวร';
+};
+
+window.getWorkTypeBadgeInfo = function (workType) {
+    const wt = (workType || '').trim();
+    switch (wt) {
+        case 'งานสถานีไฟฟ้าถาวร':
+            return {
+                label: 'งานสถานีไฟฟ้าถาวร',
+                badgeClass: 'worktype-substation-perm',
+                icon: 'fa-solid fa-bolt-lightning',
+                bg: 'rgba(116, 44, 129, 0.1)',
+                color: '#742C81',
+                border: 'rgba(116, 44, 129, 0.25)'
+            };
+        case 'สถานีไฟฟ้าชั่วคราว':
+            return {
+                label: 'สถานีไฟฟ้าชั่วคราว',
+                badgeClass: 'worktype-substation-temp',
+                icon: 'fa-solid fa-clock-rotate-left',
+                bg: 'rgba(217, 119, 6, 0.12)',
+                color: '#b45309',
+                border: 'rgba(217, 119, 6, 0.25)'
+            };
+        case 'งานก่อสร้างระบบสายส่ง 115 kV':
+            return {
+                label: 'งานก่อสร้างระบบสายส่ง 115 kV',
+                badgeClass: 'worktype-transmission-115',
+                icon: 'fa-solid fa-tower-broadcast',
+                bg: 'rgba(37, 99, 235, 0.1)',
+                color: '#1d4ed8',
+                border: 'rgba(37, 99, 235, 0.25)'
+            };
+        case 'งานติดตั้งอุปกรณ์ป้องกัน 115 kV':
+            return {
+                label: 'งานติดตั้งอุปกรณ์ป้องกัน 115 kV',
+                badgeClass: 'worktype-protection-115',
+                icon: 'fa-solid fa-shield-halved',
+                bg: 'rgba(16, 185, 129, 0.12)',
+                color: '#047857',
+                border: 'rgba(16, 185, 129, 0.25)'
+            };
+        default:
+            return {
+                label: wt || 'งานสถานีไฟฟ้าถาวร',
+                badgeClass: 'worktype-substation-perm',
+                icon: 'fa-solid fa-layer-group',
+                bg: 'rgba(100, 116, 139, 0.1)',
+                color: '#475569',
+                border: 'rgba(100, 116, 139, 0.25)'
+            };
+    }
+};
 
 let projects = [];
 
@@ -240,6 +314,7 @@ window.loadProjects = async function () {
         if (data && data.length > 0) {
             projects = data.map(dbProj => {
                 let pType = dbProj.type || 'จ้างเหมา';
+                let pWorkType = dbProj.work_type || '';
                 let pSupervisor = dbProj.supervisor || '';
                 let pCommittee = dbProj.committee || '';
                 let pCommittee1 = dbProj.committee1 || '';
@@ -249,6 +324,13 @@ window.loadProjects = async function () {
                 let pLongitude = (dbProj.longitude !== undefined && dbProj.longitude !== null && dbProj.longitude !== '') ? parseFloat(dbProj.longitude) : null;
                 let pDetails = dbProj.details || '';
 
+                if (pDetails.includes('[WORKTYPE:')) {
+                    const match = pDetails.match(/\[WORKTYPE:(.*?)\]/);
+                    if (match) {
+                        if (!pWorkType) pWorkType = match[1];
+                        pDetails = pDetails.replace(match[0], '');
+                    }
+                }
                 if (pDetails.includes('[TYPE:')) {
                     const match = pDetails.match(/\[TYPE:(.*?)\]/);
                     if (match) { if (!dbProj.type) pType = match[1]; pDetails = pDetails.replace(match[0], ''); }
@@ -386,6 +468,7 @@ window.loadProjects = async function () {
                     longitude: pLongitude,
                     details: pDetails,
                     projectYear: pProjectYear,
+                    workType: pWorkType || window.inferProjectWorkType(dbProj),
                     type: pType,
                     tasks: dbProj.tasks || [],
                     gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
@@ -1359,6 +1442,7 @@ window.saveProjects = async function (projectId = null) {
         const dbProjects = targetProjects.map(p => {
             // Strip any existing tag prefixes from details to avoid tag duplicates
             let cleanDetails = (p.details || '')
+                .replace(/\[WORKTYPE:.*?\]/g, '')
                 .replace(/\[TYPE:.*?\]/g, '')
                 .replace(/\[SUP:.*?\]/g, '')
                 .replace(/\[COM:.*?\]/g, '')
@@ -1390,11 +1474,13 @@ window.saveProjects = async function (projectId = null) {
                 try { baTag = `[BA:${encodeURIComponent(JSON.stringify(p.beforeAfter))}]`; } catch (_) {}
             }
 
-            const tagPrefix = `[TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}${eotTag}${punchTag}${baTag}`;
+            const pWorkType = p.workType || window.inferProjectWorkType(p) || 'งานสถานีไฟฟ้าถาวร';
+            const tagPrefix = `[WORKTYPE:${pWorkType}][TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}${eotTag}${punchTag}${baTag}`;
 
             return {
                 id: p.id,
                 name: p.name,
+                work_type: pWorkType,
                 type: p.type || 'จ้างเหมา',
                 supervisor: p.supervisor || '',
                 committee: p.committee || '',
@@ -1425,6 +1511,7 @@ window.saveProjects = async function (projectId = null) {
             if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('schema cache') || res.error.code === 'PGRST204')) {
                 // If columns not added in DB yet, strip new columns and save with legacy schema (which embeds tags in details)
                 const legacy = { ...dbProjects[0] };
+                delete legacy.work_type;
                 delete legacy.type; delete legacy.supervisor; delete legacy.committee;
                 delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                 delete legacy.latitude; delete legacy.longitude;
@@ -1437,6 +1524,7 @@ window.saveProjects = async function (projectId = null) {
             if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('schema cache') || res.error.code === 'PGRST204')) {
                 const legacyProjects = dbProjects.map(dp => {
                     const legacy = { ...dp };
+                    delete legacy.work_type;
                     delete legacy.type; delete legacy.supervisor; delete legacy.committee;
                     delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                     delete legacy.latitude; delete legacy.longitude;
@@ -2776,6 +2864,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.currentDashboardFilter = 'all';
     window.currentStatusFilter = 'all';
+    window.currentWorkTypeFilter = 'all';
+
+    window.changeDashboardWorkTypeFilter = function (val) {
+        window.currentWorkTypeFilter = val || 'all';
+        renderTables();
+    };
 
     window.filterByStatus = function (status) {
         window.currentStatusFilter = status;
@@ -2858,6 +2952,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             filteredProjects = filteredProjects.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
         }
 
+        // Filter projects by work type
+        if (window.currentWorkTypeFilter && window.currentWorkTypeFilter !== 'all') {
+            filteredProjects = filteredProjects.filter(p => (p.workType || window.inferProjectWorkType(p)) === window.currentWorkTypeFilter);
+        }
+
         // Filter projects by status (from stat cards)
         if (window.currentStatusFilter && window.currentStatusFilter !== 'all') {
             filteredProjects = filteredProjects.filter(p => p.status === window.currentStatusFilter);
@@ -2873,7 +2972,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const committee = (p.committee || '').toLowerCase();
                 const status = (p.status || '').toLowerCase();
                 const type = (p.type || '').toLowerCase();
-                return name.includes(q) || contractor.includes(q) || supervisor.includes(q) || committee.includes(q) || status.includes(q) || type.includes(q);
+                const workType = (p.workType || window.inferProjectWorkType(p) || '').toLowerCase();
+                return name.includes(q) || contractor.includes(q) || supervisor.includes(q) || committee.includes(q) || status.includes(q) || type.includes(q) || workType.includes(q);
             });
         }
 
@@ -2986,6 +3086,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }
 
+            const wtInfo = window.getWorkTypeBadgeInfo(p.workType || window.inferProjectWorkType(p));
+            const workTypeBadgeHtml = `
+                <span class="project-worktype-badge ${wtInfo.badgeClass}" title="ประเภทของงาน: ${wtInfo.label}">
+                    <i class="${wtInfo.icon}"></i> ${wtInfo.label}
+                </span>
+            `;
+
             // 1. Build & Append Card
             if (cardsGrid) {
                 const card = document.createElement('div');
@@ -2993,6 +3100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 card.innerHTML = `
                     <div class="project-card-header">
                         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            ${workTypeBadgeHtml}
                             <span class="project-type-badge ${typeClass}">
                                 <i class="${typeIcon}"></i> ${projectType}
                             </span>
@@ -3075,7 +3183,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tr.innerHTML = `
                     <td>
                         <strong>${p.name}</strong>
-                        ${multiYearBadgeHtml ? `<div style="margin-top: 4px;">${multiYearBadgeHtml}</div>` : ''}
+                        <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                            ${workTypeBadgeHtml}
+                            ${multiYearBadgeHtml}
+                        </div>
                     </td>
                     <td><span style="${tableTypeClass}">${projectType}</span></td>
                     <td>${p.contractor}</td>
@@ -3119,10 +3230,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const pYears = window.getProjectActiveYears(p);
                 const yearLabel = pYears.length > 1 ? `งานข้ามปี ${pYears[0]}-${pYears[pYears.length - 1]}` : `ปี ${pYears[0]}`;
                 const yearChip = `<span class="badge-multi-year ${pYears.length > 1 ? 'badge-multi-year-ongoing' : ''}" style="margin-top: 3px;"><i class="fa-solid fa-calendar-days"></i> ${yearLabel}</span>`;
+                const wtInfoAdmin = window.getWorkTypeBadgeInfo(p.workType || window.inferProjectWorkType(p));
+                const adminWorkTypeBadge = `<span class="project-worktype-badge ${wtInfoAdmin.badgeClass}" style="margin-top: 3px;"><i class="${wtInfoAdmin.icon}"></i> ${wtInfoAdmin.label}</span>`;
                 tr.innerHTML = `
                     <td>
                         <strong>${p.name}</strong>
-                        <div>${yearChip}</div>
+                        <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                            ${adminWorkTypeBadge}
+                            ${yearChip}
+                        </div>
                     </td>
                     <td><span style="${typeClass}">${projectType}</span></td>
                     <td>${p.contractor}</td>
@@ -3623,6 +3739,7 @@ window.updateSCurve = function (p) {
 window.viewProjectDetails = function (projectId) {
     const p = projects.find(proj => proj.id === projectId);
     if (p) {
+        window.currentProjectViewData = p;
         document.getElementById('detailProjectTitle').innerText = p.name;
         const statusColors = {
             'อยู่ระหว่างก่อสร้าง': { bg: 'rgba(39, 174, 96, 0.12)', color: '#27ae60' },
@@ -3641,7 +3758,10 @@ window.viewProjectDetails = function (projectId) {
             }
         }
 
+        const wtInfo = window.getWorkTypeBadgeInfo(p.workType || window.inferProjectWorkType(p));
         document.getElementById('detailProjectInfo').innerHTML = `
+            <span class="detail-info-item worktype-chip" style="background:${wtInfo.bg}; color:${wtInfo.color}; border: 1px solid ${wtInfo.border}; font-weight:600;"><i class="${wtInfo.icon}"></i> <span><strong>ประเภทงาน:</strong> ${wtInfo.label}</span></span>
+            <span class="detail-info-item"><i class="fa-solid fa-handshake" style="color: #64748b;"></i> <span><strong>รูปแบบสัญญา:</strong> ${p.type || 'จ้างเหมา'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-building" style="color: #64748b;"></i> <span><strong>ผู้รับเหมา:</strong> ${p.contractor || '-'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-user-tie" style="color: #64748b;"></i> <span><strong>ผู้ควบคุมงาน:</strong> ${p.supervisor || '-'}</span></span>
             <span class="detail-info-item"><i class="fa-solid fa-users" style="color: #64748b;"></i> <span><strong>กรรมการ:</strong> ${p.committee || '-'}</span></span>
@@ -4250,6 +4370,9 @@ window.openProjectModal = function (id = null) {
         if (project) {
             document.getElementById('projectId').value = project.id;
             document.getElementById('projectNameInput').value = project.name;
+            if (document.getElementById('projectWorkTypeInput')) {
+                document.getElementById('projectWorkTypeInput').value = project.workType || window.inferProjectWorkType(project) || 'งานสถานีไฟฟ้าถาวร';
+            }
             document.getElementById('projectTypeInput').value = project.type || 'จ้างเหมา';
             document.getElementById('projectContractorInput').value = project.contractor;
             document.getElementById('projectSupervisorInput').value = project.supervisor || '';
@@ -4282,6 +4405,9 @@ window.openProjectModal = function (id = null) {
     } else {
         title.innerText = 'เพิ่มโครงการใหม่';
         if (copyGroup) copyGroup.style.display = 'block';
+        if (document.getElementById('projectWorkTypeInput')) {
+            document.getElementById('projectWorkTypeInput').value = 'งานสถานีไฟฟ้าถาวร';
+        }
         if (document.getElementById('projectCommittee1Input')) document.getElementById('projectCommittee1Input').value = '';
         if (document.getElementById('projectCommittee2Input')) document.getElementById('projectCommittee2Input').value = '';
         if (document.getElementById('projectCommittee3Input')) document.getElementById('projectCommittee3Input').value = '';
@@ -4319,6 +4445,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
     e.preventDefault();
     const idVal = document.getElementById('projectId').value;
     const name = document.getElementById('projectNameInput').value;
+    const workType = document.getElementById('projectWorkTypeInput')?.value || 'งานสถานีไฟฟ้าถาวร';
     const type = document.getElementById('projectTypeInput').value;
     const contractor = document.getElementById('projectContractorInput').value;
     const supervisor = document.getElementById('projectSupervisorInput').value;
@@ -4348,6 +4475,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
         targetProject = projects.find(p => p.id === targetProjectId);
         if (targetProject) {
             targetProject.name = name;
+            targetProject.workType = workType;
             targetProject.type = type;
             targetProject.contractor = contractor;
             targetProject.supervisor = supervisor;
@@ -4385,6 +4513,7 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
         targetProject = {
             id: newId,
             name: name,
+            workType: workType,
             type: type,
             contractor: contractor,
             supervisor: supervisor,
@@ -4434,11 +4563,13 @@ document.getElementById('projectForm')?.addEventListener('submit', async functio
         window.renderDashboardYearOptions();
     }
 
-    // Re-render GIS map and project detail map if opened
+    // Re-render GIS map and project detail view if opened
     if (typeof window.renderGisMap === 'function') {
         window.renderGisMap();
     }
-    if (typeof window.renderProjectDetailMap === 'function' && window.currentProjectViewData?.id === targetProjectId) {
+    if (window.currentProjectViewData?.id === targetProjectId && typeof window.viewProjectDetails === 'function') {
+        window.viewProjectDetails(targetProjectId);
+    } else if (typeof window.renderProjectDetailMap === 'function' && window.currentProjectViewData?.id === targetProjectId) {
         window.renderProjectDetailMap(targetProject);
     }
 

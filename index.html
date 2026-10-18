@@ -301,6 +301,23 @@
                                 </div>
                             </div>
 
+                            <!-- Work Type Filter -->
+                            <div class="dashboard-year-filter" title="กรองตามประเภทของงาน">
+                                <label for="dashboardWorkTypeSelect" class="dashboard-year-label">
+                                    <i class="fa-solid fa-layer-group"></i> <span>ประเภทงาน:</span>
+                                </label>
+                                <div class="dashboard-year-select-wrap">
+                                    <select id="dashboardWorkTypeSelect" class="dashboard-year-select" onchange="changeDashboardWorkTypeFilter(this.value)">
+                                        <option value="all">ทุกประเภทงาน</option>
+                                        <option value="งานสถานีไฟฟ้าถาวร">งานสถานีไฟฟ้าถาวร</option>
+                                        <option value="สถานีไฟฟ้าชั่วคราว">สถานีไฟฟ้าชั่วคราว</option>
+                                        <option value="งานก่อสร้างระบบสายส่ง 115 kV">งานก่อสร้างระบบสายส่ง 115 kV</option>
+                                        <option value="งานติดตั้งอุปกรณ์ป้องกัน 115 kV">งานติดตั้งอุปกรณ์ป้องกัน 115 kV</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down year-select-icon"></i>
+                                </div>
+                            </div>
+
                             <div class="project-type-tabs">
                                 <button class="filter-tab-btn active" onclick="filterDashboard('all', event)"><i class="fa-solid fa-building"></i> ทั้งหมด</button>
                                 <button class="filter-tab-btn" onclick="filterDashboard('ดำเนินการเอง', event)"><i class="fa-solid fa-users-gear"></i> ดำเนินการเอง</button>
@@ -901,6 +918,7 @@
                             </div>
                         </div>
                         <div class="project-header-actions">
+                            <button class="btn role-editor" onclick="openProjectModal(window.currentProjectViewData?.id || null)" title="แก้ไขข้อมูลโครงการ / เปลี่ยนประเภทงาน" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขโครงการ</button>
                             <button class="btn role-editor" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-clipboard-check"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
                             <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
                             <button class="btn btn-secondary" onclick="openPhotoZipModal()" title="ดาวน์โหลดภาพถ่ายหน้างานพร้อมประทับลายน้ำเป็น ZIP รายงวด"><i class="fa-solid fa-file-zipper" style="color: var(--pea-purple);"></i> ดาวน์โหลดภาพ (ZIP)</button>
@@ -2252,12 +2270,23 @@
                     <label>ชื่อโครงการ</label>
                     <input type="text" id="projectNameInput" required>
                 </div>
-                <div class="form-group">
-                    <label>ประเภทโครงการ</label>
-                    <select id="projectTypeInput" required>
-                        <option value="ดำเนินการเอง">ดำเนินการเอง</option>
-                        <option value="จ้างเหมา" selected>จ้างเหมา</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1.2;">
+                        <label><i class="fa-solid fa-layer-group" style="color: var(--pea-purple);"></i> ประเภทของงาน</label>
+                        <select id="projectWorkTypeInput" required>
+                            <option value="งานสถานีไฟฟ้าถาวร">งานสถานีไฟฟ้าถาวร</option>
+                            <option value="สถานีไฟฟ้าชั่วคราว">สถานีไฟฟ้าชั่วคราว</option>
+                            <option value="งานก่อสร้างระบบสายส่ง 115 kV">งานก่อสร้างระบบสายส่ง 115 kV</option>
+                            <option value="งานติดตั้งอุปกรณ์ป้องกัน 115 kV">งานติดตั้งอุปกรณ์ป้องกัน 115 kV</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label><i class="fa-solid fa-handshake" style="color: #2980b9;"></i> รูปแบบสัญญา / ดำเนินงาน</label>
+                        <select id="projectTypeInput" required>
+                            <option value="ดำเนินการเอง">ดำเนินการเอง</option>
+                            <option value="จ้างเหมา" selected>จ้างเหมา</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>ผู้รับเหมา</label>

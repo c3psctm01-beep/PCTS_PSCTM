@@ -356,15 +356,20 @@
 
             // 2. ป๊อปอัปรายละเอียดเต็มเมื่อคลิกที่สถานี
             const googleNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            const pWorkType = p.workType || (typeof window.inferProjectWorkType === 'function' ? window.inferProjectWorkType(p) : 'งานสถานีไฟฟ้าถาวร');
+            const wtInfo = typeof window.getWorkTypeBadgeInfo === 'function' ? window.getWorkTypeBadgeInfo(pWorkType) : null;
             const popupContent = `
                 <div style="font-family: 'Sarabun', sans-serif; min-width: 260px; padding: 2px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
                         <span style="font-size: 10px; font-weight: bold; background: ${color}20; color: ${color}; padding: 2px 7px; border-radius: 4px;">
                             ${label}
                         </span>
-                        <span style="font-size: 11px; color: #64748b;">
-                            <i class="fa-solid fa-tag"></i> ${p.type || 'จ้างเหมา'}
-                        </span>
+                        <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                            ${wtInfo ? `<span style="font-size: 10px; font-weight: 600; background: ${wtInfo.bg}; color: ${wtInfo.color}; border: 1px solid ${wtInfo.border}; padding: 2px 6px; border-radius: 4px;"><i class="${wtInfo.icon}"></i> ${wtInfo.label}</span>` : ''}
+                            <span style="font-size: 11px; color: #64748b;">
+                                <i class="fa-solid fa-tag"></i> ${p.type || 'จ้างเหมา'}
+                            </span>
+                        </div>
                     </div>
                     <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #1e293b; font-family: 'Prompt', sans-serif;">
                         ${p.name}
