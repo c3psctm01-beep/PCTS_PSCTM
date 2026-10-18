@@ -77,9 +77,18 @@
         const width = canvas.width;
         const height = canvas.height;
 
-        const projectName = options.projectName || 'สถานีไฟฟ้า กฟภ.';
-        const taskName = options.taskName || 'บันทึกความก้าวหน้าโครงการ';
-        const empId = options.empId ? `รหัสพนักงาน: ${options.empId}` : (options.userEmail || 'ผู้ควบคุมงาน กฟภ.');
+        // ดึงข้อมูลตัวตนผู้ตรวจงาน (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
+        let empId = options.empId;
+        let uploaderName = options.uploaderName;
+        let uploaderPosition = options.uploaderPosition;
+
+        if (!empId || !uploaderName || !uploaderPosition) {
+            const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
+            if (!empId) empId = userInfo.employee_id || window.currentUserEmpId || (window.currentRole === 'admin' ? '500744' : '515883');
+            if (!uploaderName) uploaderName = userInfo.name || window.currentUserName || (window.currentRole === 'admin' ? 'ภูวดล สุขศรี' : 'จิรพล ภัทรเสรี');
+            if (!uploaderPosition) uploaderPosition = userInfo.position || window.currentUserPosition || (window.currentRole === 'admin' ? 'วิศวกร (Admin กบส.)' : 'ผู้ควบคุมงาน (Editor)');
+        }
+
         const timestampText = formatThaiTimestamp(new Date());
 
         let gpsText = 'GPS: ไม่พบสัญญาณพิกัดหน้างาน';
@@ -89,8 +98,8 @@
             gpsText = `GPS: ${latFixed}, ${lngFixed}`;
         }
 
-        // คำนวณความสูงของแถบลายน้ำตามสัดส่วนภาพ
-        const bannerHeight = Math.max(70, Math.round(height * 0.14));
+        // คำนวณความสูงของแถบลายน้ำตามสัดส่วนภาพ (3 บรรทัดชัดเจน)
+        const bannerHeight = Math.max(88, Math.round(height * 0.165));
         const bannerY = height - bannerHeight;
 
         ctx.save();
@@ -98,31 +107,31 @@
         // 1. วาด Gradient แถบพื้นหลังลายน้ำ (PEA Dark Purple -> Black)
         const gradient = ctx.createLinearGradient(0, bannerY, 0, height);
         gradient.addColorStop(0, 'rgba(25, 10, 35, 0.0)');
-        gradient.addColorStop(0.2, 'rgba(35, 15, 45, 0.88)');
-        gradient.addColorStop(1, 'rgba(15, 5, 20, 0.96)');
+        gradient.addColorStop(0.18, 'rgba(32, 12, 42, 0.90)');
+        gradient.addColorStop(1, 'rgba(12, 4, 18, 0.98)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, bannerY, width, bannerHeight);
 
-        // เส้นขอบบนสีม่วงประกายทอง (PEA Purple & Gold accent)
+        // เส้นขอบบนสีม่วงประกายทอง (PEA Gold accent)
         ctx.strokeStyle = '#F39C12'; // PEA Gold
-        ctx.lineWidth = Math.max(2, Math.round(width * 0.003));
+        ctx.lineWidth = Math.max(2, Math.round(width * 0.0035));
         ctx.beginPath();
-        ctx.moveTo(0, bannerY + (bannerHeight * 0.2));
-        ctx.lineTo(width, bannerY + (bannerHeight * 0.2));
+        ctx.moveTo(0, bannerY + (bannerHeight * 0.18));
+        ctx.lineTo(width, bannerY + (bannerHeight * 0.18));
         ctx.stroke();
 
         // คำนวณขนาดตัวอักษร
-        const baseFontSize = Math.max(11, Math.round(width * 0.024));
-        const smallFontSize = Math.max(9, Math.round(width * 0.019));
+        const baseFontSize = Math.max(11, Math.round(width * 0.023));
+        const smallFontSize = Math.max(9.5, Math.round(width * 0.0185));
         const paddingX = Math.max(14, Math.round(width * 0.025));
 
         ctx.textBaseline = 'middle';
 
         // 2. ป้ายสัญลักษณ์ PEA (Tag Badge ด้านซ้าย)
-        const badgeY = bannerY + (bannerHeight * 0.38);
+        const badgeY = bannerY + (bannerHeight * 0.36);
         ctx.fillStyle = '#742C81'; // PEA Purple
-        const badgeWidth = Math.max(50, Math.round(width * 0.12));
-        const badgeHeight = Math.max(16, Math.round(bannerHeight * 0.28));
+        const badgeWidth = Math.max(50, Math.round(width * 0.11));
+        const badgeHeight = Math.max(16, Math.round(bannerHeight * 0.24));
         const radius = 3;
 
         // วาดสี่เหลี่ยมมน
@@ -134,11 +143,12 @@
         ctx.font = `bold ${Math.round(baseFontSize * 0.9)}px 'Prompt', 'Sarabun', sans-serif`;
         ctx.fillText('⚡ PEA', paddingX + 6, badgeY);
 
-        // 3. ชื่อโครงการ
+        // 3. ชื่อโครงการ (ด้านซ้ายแถวที่ 1)
         ctx.fillStyle = '#FFFFFF';
         ctx.font = `bold ${baseFontSize}px 'Prompt', 'Sarabun', sans-serif`;
         const projectTextX = paddingX + badgeWidth + 8;
-        const maxProjectWidth = width - projectTextX - paddingX;
+        const halfWidth = Math.round(width * 0.54);
+        const maxProjectWidth = halfWidth - projectTextX;
         
         let displayProject = projectName;
         if (ctx.measureText(displayProject).width > maxProjectWidth) {
@@ -149,25 +159,45 @@
         }
         ctx.fillText(displayProject, projectTextX, badgeY);
 
-        // 4. แถวล่าง: ชื่องานย่อย, พิกัด GPS, วันที่-เวลา, และผู้รายงาน
-        const line2Y = bannerY + (bannerHeight * 0.68);
-        const line3Y = bannerY + (bannerHeight * 0.88);
+        // วันที่-เวลา (ด้านขวาแถวที่ 1)
+        ctx.font = `500 ${smallFontSize}px 'Sarabun', sans-serif`;
+        ctx.fillStyle = '#E2E8F0';
+        ctx.textAlign = 'right';
+        ctx.fillText(`🕒 ${timestampText}`, width - paddingX, badgeY);
 
+        // 4. แถวกลาง: ชื่องานย่อย (ซ้าย) vs ชื่อ-นามสกุล และ รหัสพนักงาน (ขวา)
+        const line2Y = bannerY + (bannerHeight * 0.64);
+        ctx.textAlign = 'left';
         ctx.font = `500 ${smallFontSize}px 'Sarabun', sans-serif`;
         ctx.fillStyle = '#E2E8F0';
 
-        // งานย่อย
-        ctx.fillText(`งาน: ${taskName}`, paddingX, line2Y);
+        let displayTask = `งาน: ${taskName}`;
+        if (ctx.measureText(displayTask).width > (halfWidth - paddingX)) {
+            while (ctx.measureText(displayTask + '...').width > (halfWidth - paddingX) && displayTask.length > 5) {
+                displayTask = displayTask.slice(0, -1);
+            }
+            displayTask += '...';
+        }
+        ctx.fillText(displayTask, paddingX, line2Y);
 
-        // พิกัด GPS (ตัวหนังสือสีเหลืองทองเพื่อให้อ่านง่าย)
-        ctx.fillStyle = '#FCD34D';
+        // ขวาแถว 2: ชื่อ-นามสกุล + รหัสพนักงาน
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `600 ${smallFontSize}px 'Sarabun', sans-serif`;
+        ctx.fillText(`👤 ${uploaderName} (รหัส: ${empId})`, width - paddingX, line2Y);
+
+        // 5. แถวล่าง: พิกัด GPS (ซ้าย) vs ตำแหน่ง/สังกัด (ขวา)
+        const line3Y = bannerY + (bannerHeight * 0.86);
+        ctx.textAlign = 'left';
+        ctx.font = `500 ${smallFontSize}px 'Sarabun', sans-serif`;
+        ctx.fillStyle = '#FCD34D'; // สีเหลืองทองเด่นชัด
         ctx.fillText(`📍 ${gpsText}`, paddingX, line3Y);
 
-        // ด้านขวา: วันที่ และ รหัสพนักงาน
-        ctx.fillStyle = '#CBD5E1';
+        // ขวาแถว 3: ตำแหน่ง/หน้าที่
         ctx.textAlign = 'right';
-        ctx.fillText(`🕒 ${timestampText}`, width - paddingX, line2Y);
-        ctx.fillText(`👤 ${empId}`, width - paddingX, line3Y);
+        ctx.fillStyle = '#FCD34D'; // สีเหลืองทองเด่นชัด
+        ctx.font = `600 ${smallFontSize}px 'Sarabun', sans-serif`;
+        ctx.fillText(`💼 ตำแหน่ง: ${uploaderPosition}`, width - paddingX, line3Y);
 
         ctx.restore();
     };

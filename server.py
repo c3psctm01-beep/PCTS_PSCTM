@@ -498,6 +498,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                 if 'email' in payload and payload['email']: target['email'] = payload['email'].strip().lower()
                 if 'employee_id' in payload: target['employee_id'] = payload['employee_id']
                 if 'name' in payload: target['name'] = payload['name']
+                if 'position' in payload: target['position'] = payload['position']
                 if 'role' in payload: target['role'] = payload['role']
                 if 'status' in payload: target['status'] = payload['status']
                 if 'permissions' in payload: target['permissions'] = payload['permissions']
@@ -521,6 +522,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
                     'email': email,
                     'employee_id': payload.get('employee_id', ''),
                     'name': payload.get('name', email.split('@')[0]),
+                    'position': payload.get('position', ''),
                     'role': role,
                     'status': payload.get('status', 'active'),
                     'permissions': perms,

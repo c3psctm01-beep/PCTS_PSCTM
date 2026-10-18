@@ -3,7 +3,8 @@
     "id": "6c9c9665-2820-40b6-95ab-cb65262ab428",
     "email": "puwadol0527@gmail.com",
     "employee_id": "500744",
-    "name": "ภูวดล (Admin)",
+    "name": "ภูวดล สุขศรี",
+    "position": "วิศวกร (Admin กบส.)",
     "role": "admin",
     "status": "active",
     "permissions": {
@@ -13,14 +14,15 @@
       "can_export_report": true,
       "can_manage_users": true
     },
-    "last_login": "2026-10-17 22:30:00",
+    "last_login": "2026-10-18 07:30:00",
     "created_at": "2026-01-01 08:00:00"
   },
   {
     "id": "013975c9-4ba9-4779-9182-a4c4c87a25a9",
     "email": "puwadol.suk@pea.co.th",
     "employee_id": "500744",
-    "name": "ภูวดล สุขศรี (กบส.)",
+    "name": "ภูวดล สุขศรี",
+    "position": "วิศวกร กบส.",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -37,7 +39,8 @@
     "id": "43c79b64-cb6d-47e9-b04c-77cab5ba35ae",
     "email": "jeerapol20@gmail.com",
     "employee_id": "515883",
-    "name": "จิรพล (Editor)",
+    "name": "จิรพล ภัทรเสรี",
+    "position": "วิศวกรควบคุมงาน (Editor)",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -54,7 +57,8 @@
     "id": "d24e5505-3d40-4886-b2f3-6bc4d86194fb",
     "email": "bangkamclub@gmail.com",
     "employee_id": "504952",
-    "name": "บางคำคลับ (Editor)",
+    "name": "สมศักดิ์ บางคำ",
+    "position": "ช่างเทคนิคสายงานก่อสร้าง",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -71,7 +75,8 @@
     "id": "518644f2-4ade-45a3-95b8-5744d2729ec6",
     "email": "ekachai.mor@pea.co.th",
     "employee_id": "496800",
-    "name": "เอกชัย (Editor กฟภ.)",
+    "name": "เอกชัย มอญดวงดี",
+    "position": "วิศวกร กฟภ.",
     "role": "viewer",
     "status": "active",
     "permissions": {
@@ -89,7 +94,8 @@
     "id": "f9cf223c-331a-4d59-97e2-c2c9082823ba",
     "email": "parakhon42@gmail.com",
     "employee_id": "515672",
-    "name": "ภราดร (Editor)",
+    "name": "ภราดร ยิ่งเจริญ",
+    "position": "วิศวกรโยธา",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -106,7 +112,8 @@
     "id": "fad38d33-e89f-4b02-83ee-a144f08d3250",
     "email": "notwatchara29@gmail.com",
     "employee_id": "504539",
-    "name": "วัชระ (Editor)",
+    "name": "วัชระ นวลศรี",
+    "position": "วิศวกรไฟฟ้า",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -123,7 +130,8 @@
     "id": "cefdfc5f-21ad-4772-9592-bd83200de22b",
     "email": "adminpark@gmail.com",
     "employee_id": "466858",
-    "name": "Adminpark",
+    "name": "ภาคภูมิ สุวรรณโชติ",
+    "position": "หัวหน้าแผนกก่อสร้าง",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -140,7 +148,8 @@
     "id": "4b4bd851-137d-414a-addd-80b96cd55805",
     "email": "poppy17705@gmail.com",
     "employee_id": "478805",
-    "name": "ป๊อปปี้ (Editor)",
+    "name": "ปิยะพงษ์ ศรีสุภาพ",
+    "position": "วิศวกรควบคุมงาน",
     "role": "editor",
     "status": "active",
     "permissions": {
@@ -157,7 +166,8 @@
     "id": "cea597ae-5477-498d-b9ed-36a3d7aaceea",
     "email": "suphasek3@gmail.com",
     "employee_id": "495353",
-    "name": "ศุภเสกข์ (Editor)",
+    "name": "ศุภเสกข์ วงศ์วิลาศ",
+    "position": "วิศวกรไฟฟ้าสื่อสาร",
     "role": "editor",
     "status": "active",
     "permissions": {

@@ -281,10 +281,13 @@
                 try {
                     let blob = null;
                     if (stampWatermark) {
+                        const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                         blob = await getWatermarkedBlob(item.url, {
                             projectName: p.name,
                             taskName: item.taskName,
-                            empId: window.currentUserEmpId || 'ผู้ควบคุมงาน กฟภ.',
+                            empId: item.uploaderEmpId || userInfo.employee_id || '500744',
+                            uploaderName: item.uploaderName || userInfo.name || '',
+                            uploaderPosition: item.uploaderPosition || userInfo.position || '',
                             coords: item.coords
                         });
                     } else {

@@ -466,9 +466,13 @@
                             if (typeof window.getCurrentGpsCoordinates === 'function') {
                                 coords = await window.getCurrentGpsCoordinates(3000);
                             }
+                            const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                             await window.applyGpsWatermark(canvas, {
                                 projectName: project.name,
                                 taskName: `[Punch List: ${phase}] ${title}`,
+                                empId: userInfo.employee_id,
+                                uploaderName: userInfo.name,
+                                uploaderPosition: userInfo.position,
                                 coords
                             });
                         } catch (_) { }
