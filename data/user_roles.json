@@ -69,20 +69,21 @@
   },
   {
     "id": "518644f2-4ade-45a3-95b8-5744d2729ec6",
-    "email": "Ekachai.Mor@pea.co.th",
+    "email": "ekachai.mor@pea.co.th",
     "employee_id": "496800",
     "name": "เอกชัย (Editor กฟภ.)",
-    "role": "editor",
+    "role": "viewer",
     "status": "active",
     "permissions": {
-      "can_upload_excel": true,
-      "can_edit_wbs": true,
-      "can_manage_punchlist": true,
+      "can_upload_excel": false,
+      "can_edit_wbs": false,
+      "can_manage_punchlist": false,
       "can_export_report": true,
       "can_manage_users": false
     },
     "last_login": "2026-10-17 18:20:00",
-    "created_at": "2026-02-10 08:00:00"
+    "created_at": "2026-02-10 08:00:00",
+    "updated_at": "2026-10-18 07:29:01"
   },
   {
     "id": "f9cf223c-331a-4d59-97e2-c2c9082823ba",

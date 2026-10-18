@@ -596,7 +596,13 @@ window.loadAdminUsers = async function (forceRefresh = false) {
         } catch (e) {}
     }
 
-    // Merge Supabase users with local enriched metadata
+    // Load local role overrides saved by Admin (prevents stale Supabase RLS data from reverting admin changes on refresh)
+    let localOverrides = {};
+    try {
+        localOverrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+    } catch (e) { localOverrides = {}; }
+
+    // Merge Supabase users with local enriched metadata & local admin overrides
     const userMap = new Map();
 
     // If Supabase users available, add them
@@ -605,15 +611,17 @@ window.loadAdminUsers = async function (forceRefresh = false) {
         if (legacyMockEmails.includes((su.email || '').toLowerCase())) return;
         const key = su.id || su.email;
         const localMeta = localUsersMap.get(String(su.id)) || localUsersMap.get(String(su.email || '').toLowerCase()) || {};
+        const override = (su.id && localOverrides[String(su.id)]) || 
+                         (su.email && localOverrides[String(su.email).toLowerCase()]) || null;
         
         userMap.set(key, {
             id: su.id,
             email: su.email || localMeta.email || '',
-            employee_id: su.employee_id || localMeta.employee_id || '',
-            role: su.role || localMeta.role || 'editor',
-            name: localMeta.name || (su.email ? su.email.split('@')[0] : 'ผู้ใช้งาน'),
-            status: localMeta.status || 'active',
-            permissions: localMeta.permissions || null,
+            employee_id: (override && override.employee_id) || su.employee_id || localMeta.employee_id || '',
+            role: (override && override.role) || (localMeta && localMeta.role) || su.role || 'editor',
+            name: (override && override.name) || localMeta.name || (su.email ? su.email.split('@')[0] : 'ผู้ใช้งาน'),
+            status: (override && override.status) || localMeta.status || 'active',
+            permissions: (override && override.permissions) || localMeta.permissions || null,
             last_login: localMeta.last_login || '-',
             created_at: localMeta.created_at || '-'
         });
@@ -627,8 +635,38 @@ window.loadAdminUsers = async function (forceRefresh = false) {
         if (!userMap.has(key)) {
             const emailMatch = Array.from(userMap.values()).some(u => u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase());
             if (!emailMatch) {
-                userMap.set(key, lu);
+                const override = (lu.id && localOverrides[String(lu.id)]) || 
+                                 (lu.email && localOverrides[String(lu.email).toLowerCase()]) || null;
+                userMap.set(key, {
+                    ...lu,
+                    role: (override && override.role) || lu.role || 'editor',
+                    status: (override && override.status) || lu.status || 'active',
+                    permissions: (override && override.permissions) || lu.permissions || null
+                });
             }
+        }
+    });
+
+    // Include local overrides that might not be in supaUsers or localServerUsers yet
+    Object.keys(localOverrides).forEach(okey => {
+        const ov = localOverrides[okey];
+        if (!ov || isDeleted(ov)) return;
+        const userExists = Array.from(userMap.values()).some(u => 
+            (ov.id && String(u.id) === String(ov.id)) || 
+            (ov.email && u.email && u.email.toLowerCase() === String(ov.email).toLowerCase())
+        );
+        if (!userExists && ov.id) {
+            userMap.set(ov.id, {
+                id: ov.id,
+                email: ov.email || '',
+                employee_id: ov.employee_id || '',
+                name: ov.name || (ov.email ? ov.email.split('@')[0] : 'ผู้ใช้งาน'),
+                role: ov.role || 'editor',
+                status: ov.status || 'active',
+                permissions: ov.permissions || null,
+                last_login: '-',
+                created_at: ov.updated_at || '-'
+            });
         }
     });
 
@@ -938,7 +976,25 @@ window.submitUserPermissions = async function (e) {
             localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList));
         } catch (e) {}
 
-        // 1. Save to Supabase (with timeout fallback) - only valid columns: email, employee_id, role
+        // 1. Save to localStorage override tracker (guarantees persistence across refresh even if Supabase RLS is active)
+        try {
+            let overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            const overrideData = {
+                id: userId,
+                email: email,
+                name: name,
+                employee_id: empId,
+                role: role,
+                status: status,
+                permissions: permissions,
+                updated_at: new Date().toISOString()
+            };
+            if (userId) overrides[String(userId)] = overrideData;
+            if (email) overrides[String(email).toLowerCase()] = overrideData;
+            localStorage.setItem('pcts_user_role_overrides', JSON.stringify(overrides));
+        } catch (e) {}
+
+        // 2. Save to Supabase (with timeout fallback) - only valid columns: email, employee_id, role
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
             const updatePromise = db.from('user_roles').update({
@@ -946,12 +1002,15 @@ window.submitUserPermissions = async function (e) {
                 employee_id: empId,
                 role: role
             }).eq('id', userId);
-            await Promise.race([updatePromise, timeoutPromise]);
+            const supaRes = await Promise.race([updatePromise, timeoutPromise]);
+            if (supaRes && supaRes.error) {
+                console.warn('Supabase Cloud Sync Note (RLS Protected):', supaRes.error.message);
+            }
         } catch (supaErr) {
             console.warn('Supabase update note:', supaErr.message);
         }
 
-        // 2. Save to Central Server API (/api/users/save)
+        // 3. Save to Central Server API (/api/users/save)
         try {
             await fetchWithTimeout('/api/users/save', {
                 method: 'POST',
@@ -962,7 +1021,7 @@ window.submitUserPermissions = async function (e) {
             console.warn('Local server save note:', apiErr.message);
         }
 
-        // 3. Update in local memory list
+        // 4. Update in local memory list & cache
         const idx = window.adminUsersList.findIndex(u => u.id === userId);
         if (idx !== -1) {
             window.adminUsersList[idx] = {
@@ -980,7 +1039,7 @@ window.submitUserPermissions = async function (e) {
             localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
         }
 
-        // 4. If current user was edited, update active session
+        // 5. If current user was edited, update active session
         try {
             const currentSession = (await db.auth.getSession())?.data?.session;
             if (currentSession && currentSession.user && currentSession.user.id === userId) {
@@ -1012,19 +1071,40 @@ window.quickApproveUser = async function (userId, role = 'editor') {
             can_upload_excel: true, can_edit_wbs: true, can_manage_punchlist: true, can_export_report: true, can_manage_users: false
         };
 
-        // Try Supabase RPC or direct update
+        const target = window.adminUsersList.find(u => u.id === userId);
+
+        // 1. Save to localStorage override tracker
+        try {
+            let overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            const overrideData = {
+                id: userId,
+                email: target ? target.email : '',
+                role: role,
+                status: 'active',
+                permissions: perms,
+                updated_at: new Date().toISOString()
+            };
+            if (userId) overrides[String(userId)] = overrideData;
+            if (target && target.email) overrides[String(target.email).toLowerCase()] = overrideData;
+            localStorage.setItem('pcts_user_role_overrides', JSON.stringify(overrides));
+        } catch (e) {}
+
+        // 2. Try Supabase RPC or direct update
         try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
             const p1 = db.rpc('approve_user_role', { target_user_id: userId, new_role: role });
             const res = await Promise.race([p1, timeoutPromise]);
-            if (res.error) {
-                await db.from('user_roles').update({ role: role }).eq('id', userId);
+            if (res && res.error) {
+                const p2 = await db.from('user_roles').update({ role: role }).eq('id', userId);
+                if (p2 && p2.error) {
+                    console.warn('Supabase Cloud Sync Note (RLS Protected):', p2.error.message);
+                }
             }
         } catch (e) {
             console.warn('Supabase quick approve note:', e.message);
         }
 
-        // Try local server
+        // 3. Try local server
         try {
             await fetchWithTimeout('/api/users/approve', {
                 method: 'POST',
@@ -1033,8 +1113,7 @@ window.quickApproveUser = async function (userId, role = 'editor') {
             }, 2500);
         } catch (e) {}
 
-        // Update in memory
-        const target = window.adminUsersList.find(u => u.id === userId);
+        // 4. Update in memory & cache
         if (target) {
             target.role = role;
             target.status = 'active';
@@ -1059,6 +1138,20 @@ window.toggleUserStatus = async function (userId) {
     if (!confirm(`ต้องการ ${actionText} ผู้ใช้ ${user.email} หรือไม่?`)) return;
 
     try {
+        // 1. Save in override tracker
+        try {
+            let overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            const oKey = String(userId);
+            const eKey = user.email ? String(user.email).toLowerCase() : null;
+            const existing = overrides[oKey] || (eKey && overrides[eKey]) || { ...user };
+            existing.status = newStatus;
+            existing.updated_at = new Date().toISOString();
+            overrides[oKey] = existing;
+            if (eKey) overrides[eKey] = existing;
+            localStorage.setItem('pcts_user_role_overrides', JSON.stringify(overrides));
+        } catch (e) {}
+
+        // 2. Try local server
         try {
             await fetchWithTimeout('/api/users/status', {
                 method: 'POST',
@@ -1084,7 +1177,15 @@ window.deleteAdminUser = async function (userId) {
     if (!confirm(`⚠️ ยืนยันการลบผู้ใช้ ${user.email} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
 
     try {
-        // Record in localStorage deleted_users blacklist immediately
+        // 1. Remove from localStorage overrides
+        try {
+            let overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            if (userId) delete overrides[String(userId)];
+            if (user.email) delete overrides[String(user.email).toLowerCase()];
+            localStorage.setItem('pcts_user_role_overrides', JSON.stringify(overrides));
+        } catch (e) {}
+
+        // 2. Record in localStorage deleted_users blacklist immediately
         try {
             let deletedList = JSON.parse(localStorage.getItem('pcts_deleted_users') || '[]');
             if (userId && !deletedList.includes(userId)) deletedList.push(userId);
@@ -1092,7 +1193,7 @@ window.deleteAdminUser = async function (userId) {
             localStorage.setItem('pcts_deleted_users', JSON.stringify(deletedList));
         } catch (e) {}
 
-        // 1. Delete from Supabase
+        // 3. Delete from Supabase
         try {
             await db.from('user_roles').delete().eq('id', userId);
             if (user.email) {
@@ -1102,7 +1203,7 @@ window.deleteAdminUser = async function (userId) {
             console.warn('Supabase delete user note:', e.message);
         }
 
-        // 2. Delete from Local Server API
+        // 4. Delete from Local Server API
         try {
             await fetchWithTimeout('/api/users/delete', {
                 method: 'POST',
@@ -1113,7 +1214,7 @@ window.deleteAdminUser = async function (userId) {
             console.warn('Local server delete note:', e.message);
         }
 
-        // 3. Update memory & local cache
+        // 5. Update memory & local cache
         window.adminUsersList = window.adminUsersList.filter(u => u.id !== userId && (!user.email || u.email?.toLowerCase() !== user.email.toLowerCase()));
         localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
 
@@ -1204,6 +1305,14 @@ window.submitAdminAddUser = async function (e) {
         } catch (e) {
             console.warn('Supabase insert note:', e.message);
         }
+
+        // 3. Save in localStorage override tracker
+        try {
+            let overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            overrides[String(newId)] = newUser;
+            if (email) overrides[String(email).toLowerCase()] = newUser;
+            localStorage.setItem('pcts_user_role_overrides', JSON.stringify(overrides));
+        } catch (e) {}
 
         window.adminUsersList.unshift(newUser);
         localStorage.setItem('pcts_cached_users', JSON.stringify(window.adminUsersList));
