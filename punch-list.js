@@ -78,6 +78,9 @@
             const stat = statusBadges[item.status || 'pending'] || statusBadges.pending;
             const originalIdx = punchList.indexOf(item);
 
+            const resolveNoteText = item.resolveNote || (item.description && item.description.match(/\[บันทึกแก้ไข\]:\s*([\s\S]*)$/)?.[1]?.trim()) || '';
+            const cleanDesc = (item.description || '-').replace(/\[บันทึกแก้ไข\]:[\s\S]*$/g, '').trim() || (item.description || '-');
+
             return `
                 <div class="punch-item-card ${item.status || 'pending'}">
                     <div class="punch-card-header">
@@ -96,7 +99,16 @@
                     <div class="punch-card-body">
                         <h3 class="punch-item-title">${item.title}</h3>
                         <div class="punch-item-location"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: ${item.location || 'บริเวณสถานีไฟฟ้า'}</div>
-                        <p class="punch-item-desc">${item.description || '-'}</p>
+                        <p class="punch-item-desc" style="white-space: pre-line; margin-bottom: 8px;">${cleanDesc}</p>
+
+                        ${resolveNoteText ? `
+                            <div style="background: rgba(16, 185, 129, 0.08); border-left: 3px solid #10b981; border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 12.5px; color: #065f46;">
+                                <strong style="display: flex; align-items: center; gap: 5px; margin-bottom: 2px; color: #047857;">
+                                    <i class="fa-solid fa-clipboard-check"></i> บันทึกผลการแก้ไข (Resolution Note):
+                                </strong>
+                                <span style="white-space: pre-line;">${resolveNoteText}</span>
+                            </div>
+                        ` : ''}
 
                         <!-- Before & After Photos -->
                         <div class="punch-photos-wrap">
@@ -288,7 +300,7 @@
     };
 
     /**
-     * เปิดหน้าต่างอัปเดตงานแก้ไขเสร็จ (แนบภาพ After)
+     * เปิดหน้าต่างอัปเดตงานแก้ไขเสร็จ (แนบภาพ After และกรอกบันทึกการแก้ไข)
      */
     window.openResolvePunchModal = function (index) {
         const p = window.currentProjectViewData;
@@ -302,22 +314,34 @@
 
         document.getElementById('punchResolveTitle').innerText = item.title;
         document.getElementById('punchResolveLocation').innerText = item.location || '-';
+
+        // 1. จัดการช่องพิมพ์บันทึกการดำเนินการแก้ไข (ดึงบันทึกเดิมขึ้นมาให้พิมพ์แก้ไขต่อได้)
+        const noteInput = document.getElementById('punchResolveNoteInput');
+        if (noteInput) {
+            const existingNote = item.resolveNote || (item.description && item.description.match(/\[บันทึกแก้ไข\]:\s*([\s\S]*)$/)?.[1]?.trim()) || '';
+            noteInput.value = existingNote;
+            noteInput.readOnly = false;
+            noteInput.disabled = false;
+        }
+
+        // 2. ล้าง file input และ preview ของรูปใหม่ที่ยังไม่ได้เลือก
         if (typeof window.clearPunchPhotoInput === 'function') {
             window.clearPunchPhotoInput('punchAfterPhotoInput', 'punchAfterPhotoPreview');
         } else {
+            const fileInp = document.getElementById('punchAfterPhotoInput');
+            if (fileInp) fileInp.value = '';
             const prev = document.getElementById('punchAfterPhotoPreview');
             if (prev) prev.innerHTML = '';
         }
-        document.getElementById('punchResolveNoteInput').value = '';
 
-        // แสดงภาพก่อนแก้ไข (Before) ให้ผู้ใช้ดูเปรียบเทียบ
+        // 3. แสดงรูปภาพ Before (ถ้ามี)
         const beforeContainer = document.getElementById('punchResolveBeforePhotoContainer');
         const beforeBox = document.getElementById('punchResolveBeforePhotoBox');
         if (beforeContainer && beforeBox) {
             if (item.beforePhoto) {
                 beforeBox.innerHTML = `
                     <div style="text-align: center;">
-                        <img src="${item.beforePhoto}" alt="Before" style="max-height: 150px; max-width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; object-fit: contain; border: 1px solid #cbd5e1;" onclick="window.viewPunchImage('${item.beforePhoto}', 'ก่อนแก้ไข: ${item.title}')">
+                        <img src="${item.beforePhoto}" alt="Before" style="max-height: 140px; max-width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; object-fit: contain; border: 1px solid #cbd5e1;" onclick="window.viewPunchImage('${item.beforePhoto}', 'ก่อนแก้ไข: ${item.title}')">
                         <div style="font-size: 11px; color: #64748b; margin-top: 4px;"><i class="fa-solid fa-magnifying-glass-plus"></i> คลิกเพื่อดูรูปก่อนแก้ไขขนาดเต็ม</div>
                     </div>
                 `;
@@ -328,7 +352,33 @@
             }
         }
 
+        // 4. แสดงภาพหลังแก้ไขเดิม (ถ้าเคยส่งมอบงานไปแล้ว) เพื่อไม่ให้ผู้ใช้ต้องอัปโหลดซ้ำหากต้องการแก้เฉพาะข้อความ
+        const currentAfterContainer = document.getElementById('punchResolveCurrentAfterContainer');
+        const currentAfterBox = document.getElementById('punchResolveCurrentAfterBox');
+        if (currentAfterContainer && currentAfterBox) {
+            if (item.afterPhoto) {
+                currentAfterBox.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px;">
+                        <img src="${item.afterPhoto}" alt="Current After" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #10b981; cursor: pointer; flex-shrink: 0;" onclick="window.viewPunchImage('${item.afterPhoto}', 'หลังแก้ไขปัจจุบัน: ${item.title}')" title="คลิกเพื่อดูรูปขยาย">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; font-weight: 600; color: #065f46;"><i class="fa-solid fa-circle-check"></i> มีภาพหลังแก้ไขที่บันทึกไว้เดิมแล้ว</div>
+                            <div style="font-size: 11px; color: #047857; margin-top: 3px;">หากไม่ต้องการเปลี่ยนภาพ สามารถใช้ภาพเดิมและพิมพ์บันทึกได้ทันที หรือเลือกไฟล์ใหม่ด้านล่างเพื่อแทนที่ภาพเดิม</div>
+                        </div>
+                    </div>
+                `;
+                currentAfterContainer.style.display = 'block';
+            } else {
+                currentAfterContainer.style.display = 'none';
+                currentAfterBox.innerHTML = '';
+            }
+        }
+
         modal.style.display = 'flex';
+
+        // โฟกัสไปที่ช่องพิมพ์ข้อความทันที
+        setTimeout(() => {
+            if (noteInput) noteInput.focus();
+        }, 150);
     };
 
     /**
@@ -340,45 +390,69 @@
     };
 
     /**
-     * บันทึกการแก้ไขเสร็จ (ส่งภาพ After)
+     * บันทึกการแก้ไขเสร็จ (ส่งภาพ After และบันทึกผลการแก้ไข)
      */
     window.saveResolvePunchItem = async function (event) {
-        if (event) event.preventDefault();
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const p = window.currentProjectViewData;
         const idx = window.currentResolvePunchIndex;
-        if (!p || !p.punchList || p.punchList[idx] === undefined) return;
+        if (!p || !p.punchList || p.punchList[idx] === undefined) {
+            alert('ไม่พบข้อมูลรายการข้อบกพร่องที่ต้องการบันทึก');
+            return false;
+        }
 
         const item = p.punchList[idx];
-        const note = document.getElementById('punchResolveNoteInput')?.value.trim();
+        const note = document.getElementById('punchResolveNoteInput')?.value.trim() || '';
         const photoInput = document.getElementById('punchAfterPhotoInput');
+
+        const hasNewPhoto = Boolean(photoInput && photoInput.files && photoInput.files.length > 0);
+        const hasExistingPhoto = Boolean(item.afterPhoto);
+
+        // ตรวจสอบว่ามีภาพถ่ายหลังแก้ไขอย่างน้อย 1 ภาพ (ภาพเดิมหรือเลือกใหม่)
+        if (!hasNewPhoto && !hasExistingPhoto) {
+            alert('กรุณาเลือกไฟล์แนบภาพถ่ายหลังแก้ไข (After Photo) เพื่อส่งมอบงาน');
+            photoInput?.focus();
+            return false;
+        }
 
         const submitBtn = document.querySelector('#punchResolveForm button[type="submit"]');
         const origText = submitBtn ? submitBtn.innerHTML : '';
         if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลด...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประมวลผลและบันทึก...';
             submitBtn.disabled = true;
         }
 
         try {
-            if (photoInput && photoInput.files && photoInput.files.length > 0) {
+            if (hasNewPhoto) {
                 const file = photoInput.files[0];
-                item.afterPhoto = await window.processAndUploadPunchImage(file, p, item.title, 'หลังแก้ไขเรียบร้อย');
+                const uploadedUrl = await window.processAndUploadPunchImage(file, p, item.title, 'หลังแก้ไขเรียบร้อย');
+                if (uploadedUrl) {
+                    item.afterPhoto = uploadedUrl;
+                }
             }
 
             item.status = 'resolved';
             item.resolvedDate = new Date().toISOString().split('T')[0];
+            item.resolveNote = note;
+
             if (note) {
-                item.description = (item.description ? item.description + '\n' : '') + `[บันทึกแก้ไข]: ${note}`;
+                let baseDesc = (item.description || '').replace(/\[บันทึกแก้ไข\]:[\s\S]*$/g, '').trim();
+                item.description = baseDesc ? `${baseDesc}\n[บันทึกแก้ไข]: ${note}` : `[บันทึกแก้ไข]: ${note}`;
             }
 
-            await window.saveProjects(p.id);
+            if (typeof window.saveProjects === 'function') {
+                await window.saveProjects(p.id);
+            }
 
             window.closeResolvePunchModal();
             window.renderPunchListTab(p);
 
             if (typeof Toastify === 'function') {
                 Toastify({
-                    text: `อัปเดตงานแก้ไข "${item.title}" เรียบร้อยแล้ว (สถานะ: รอตรวจซ้ำ)`,
+                    text: `บันทึกงานแก้ไข "${item.title}" เรียบร้อยแล้ว (สถานะ: แก้ไขแล้ว รอตรวจซ้ำ)`,
                     duration: 3500,
                     style: { background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '8px' }
                 }).showToast();
@@ -392,6 +466,7 @@
                 submitBtn.disabled = false;
             }
         }
+        return false;
     };
 
     /**
@@ -484,8 +559,8 @@
                 img.onload = async () => {
                     try {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1200;
-                        const MAX_HEIGHT = 1200;
+                        const MAX_WIDTH = 900;
+                        const MAX_HEIGHT = 900;
                         let width = img.width;
                         let height = img.height;
 
@@ -521,8 +596,8 @@
                             }
                         }
 
-                        // อัปโหลดเข้า Storage หรือ Fallback dataURL
-                        const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                        // อัปโหลดเข้า Storage หรือ Fallback dataURL (ขนาดกะทัดรัด ~35-45 KB ปลอดภัยต่อ payload & localStorage)
+                        const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.68);
                         if (!window.db || !window.db.storage) {
                             return resolve(fallbackDataUrl);
                         }
@@ -547,7 +622,7 @@
                                     console.warn('[PunchList] Storage upload exception, falling back to dataURL:', uploadErr);
                                     resolve(fallbackDataUrl);
                                 }
-                            }, 'image/jpeg', 0.75);
+                            }, 'image/jpeg', 0.70);
                         } catch (blobErr) {
                             console.warn('[PunchList] toBlob error, falling back to dataURL:', blobErr);
                             resolve(fallbackDataUrl);

@@ -140,7 +140,11 @@
 
         // วาดสี่เหลี่ยมมน
         ctx.beginPath();
-        ctx.roundRect(paddingX, badgeY - (badgeHeight / 2), badgeWidth, badgeHeight, radius);
+        if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(paddingX, badgeY - (badgeHeight / 2), badgeWidth, badgeHeight, radius);
+        } else {
+            ctx.rect(paddingX, badgeY - (badgeHeight / 2), badgeWidth, badgeHeight);
+        }
         ctx.fill();
 
         ctx.fillStyle = '#FFFFFF';

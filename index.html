@@ -3363,7 +3363,7 @@
                 </h2>
                 <span class="close-modal" onclick="closeResolvePunchModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
             </div>
-            <form id="punchResolveForm" onsubmit="saveResolvePunchItem(event)">
+            <form id="punchResolveForm" class="pea-form" onsubmit="event.preventDefault(); window.saveResolvePunchItem(event); return false;">
                 <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
                     <strong id="punchResolveTitle" style="color: #1e293b; font-size: 14px; display: block; margin-bottom: 4px;">-</strong>
                     <span style="font-size: 12px; color: #64748b;"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: <span id="punchResolveLocation">-</span></span>
@@ -3375,20 +3375,32 @@
                     </label>
                     <div id="punchResolveBeforePhotoBox"></div>
                 </div>
-                <div class="form-group">
-                    <label>แนบภาพถ่ายหลังแก้ไขเรียบร้อยแล้ว (After Photo พร้อมประทับลายน้ำ GPS) *</label>
-                    <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input" required style="padding: 6px;">
+
+                <!-- แสดงภาพหลังแก้ไขปัจจุบัน (ถ้ามีอยู่แล้ว) -->
+                <div id="punchResolveCurrentAfterContainer" style="display: none; margin-bottom: 14px;">
+                    <div id="punchResolveCurrentAfterBox"></div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="punchAfterPhotoInput" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 12.5px;">
+                        <i class="fa-solid fa-camera"></i> แนบภาพถ่ายหลังแก้ไข (After Photo พร้อมประทับพิกัด GPS อัตโนมัติ):
+                    </label>
+                    <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff;">
                     <div id="punchAfterPhotoPreview" style="margin-top: 8px;"></div>
                 </div>
-                <div class="form-group">
-                    <label>บันทึกการดำเนินการแก้ไข / หมายเหตุเพิ่มเติม</label>
-                    <textarea id="punchResolveNoteInput" rows="3" placeholder="ระบุวิธีการที่ได้แก้ไข เช่น ได้ทำการขัดสนิมและพ่นสีตู้ใหม่เรียบร้อยแล้ว"></textarea>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="punchResolveNoteInput" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 12.5px; color: var(--text-primary);">
+                        <i class="fa-solid fa-pen-to-square"></i> บันทึกการดำเนินการแก้ไข / หมายเหตุเพิ่มเติม:
+                    </label>
+                    <textarea id="punchResolveNoteInput" rows="3" style="width: 100%; min-height: 85px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 13.5px; color: var(--text-primary); background: #ffffff; resize: vertical; box-sizing: border-box; display: block; line-height: 1.5;" placeholder="ระบุวิธีการที่ได้แก้ไข เช่น ได้ทำการขัดสนิมและพ่นสีตู้ใหม่เรียบร้อยแล้ว"></textarea>
                 </div>
+
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="submit" class="btn" style="flex: 1; padding: 10px; background: #10b981; color: white;">
+                    <button type="submit" class="btn" style="flex: 1; padding: 10px; background: #10b981; color: white; font-weight: 600; border: none; border-radius: 8px; cursor: pointer;">
                         <i class="fa-solid fa-cloud-arrow-up"></i> ส่งมอบงานแก้ไข
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeResolvePunchModal()" style="padding: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeResolvePunchModal()" style="padding: 10px 18px; border-radius: 8px;">
                         ยกเลิก
                     </button>
                 </div>
