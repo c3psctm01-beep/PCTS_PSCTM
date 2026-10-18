@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * PCTS (PEA Construction Tracking System)
- * Module: tower-matrix.js - Transmission Line 115 kV Tower-by-Tower Matrix Engine
+ * Module: tower-matrix.js - Transmission Line 115 kV Pole-by-Pole Matrix Engine
  * ==============================================================================
  */
 
@@ -19,6 +19,15 @@
     window.initProjectTowers = function (project) {
         if (!project) return [];
         if (Array.isArray(project.towers) && project.towers.length > 0) {
+            // ปรับปรุงหมายเลขเสาเดิมที่เคยใช้ T นำหน้า ให้เป็น P นำหน้าทั้งหมดอัตโนมัติ
+            project.towers.forEach(t => {
+                if (t.towerNo && /^[Tt]\d+/.test(t.towerNo)) {
+                    t.towerNo = 'P' + t.towerNo.substring(1);
+                }
+                if (t.id && /^[Tt]\d+/.test(t.id)) {
+                    t.id = 'P' + t.id.substring(1);
+                }
+            });
             return project.towers;
         }
 
@@ -30,7 +39,7 @@
         const towers = [];
 
         for (let i = 1; i <= totalTowers; i++) {
-            const towerNo = `T${String(i).padStart(2, '0')}`;
+            const towerNo = `P${String(i).padStart(2, '0')}`;
             const typeIndex = (i - 1) % towerTypes.length;
             const type = (i === 1 || i === totalTowers) ? 'Terminal' : towerTypes[typeIndex];
 
@@ -135,7 +144,7 @@
             <div class="tower-toolbar card" style="margin-bottom: 15px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h3 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-tower-broadcast"></i> แดชบอร์ดความคืบหน้ารายต้นเสา สายส่ง 115 kV (Tower-by-Tower Matrix)
+                        <i class="fa-solid fa-tower-broadcast"></i> แดชบอร์ดความคืบหน้ารายต้นเสา สายส่ง 115 kV (Pole-by-Pole Matrix)
                     </h3>
                     <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
                         เจาะลึก 4 ขั้นตอนก่อสร้างรายต้น (ฐานราก ➔ ตั้งเสา ➔ พาดสาย ➔ ตรวจรับ) จัดการคอขวดและกรรมสิทธิ์ที่ดิน (ROW)
@@ -145,8 +154,8 @@
                     <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportTowerMatrixExcel()" title="ส่งออกตารางเป็นไฟล์ Excel (.xlsx)">
                         <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> ส่งออก Excel
                     </button>
-                    <button type="button" class="btn btn-primary btn-sm role-editor" onclick="window.openAddNewTowerModal()" title="เพิ่มข้อมูลต้นเสาใหม่">
-                        <i class="fa-solid fa-plus"></i> เพิ่มต้นเสา
+                    <button type="button" class="btn btn-primary btn-sm role-editor" onclick="window.openAddNewTowerModal()" title="เพิ่มข้อมูลต้นเสาใหม่ (Add Pole)">
+                        <i class="fa-solid fa-plus"></i> เพิ่มต้นเสา (Add Pole)
                     </button>
                 </div>
             </div>
@@ -241,7 +250,7 @@
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <div class="search-input-wrap" style="position: relative;">
                         <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 9px; font-size: 12px; color: #94a3b8;"></i>
-                        <input type="text" id="towerSearchInput" placeholder="ค้นหาเบอร์เสา เช่น T05..." 
+                        <input type="text" id="towerSearchInput" placeholder="ค้นหาเบอร์เสา เช่น P05..." 
                                value="${window.currentTowerSearch}" 
                                oninput="window.onTowerSearchChange(this.value)"
                                style="padding: 6px 10px 6px 30px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 170px;">
@@ -281,8 +290,8 @@
                 <table class="pea-table tower-matrix-table" style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
                     <thead>
                         <tr>
-                            <th style="width: 70px; text-align: center;">ต้นที่</th>
-                            <th style="width: 100px;">ประเภทเสา</th>
+                            <th style="width: 80px; text-align: center;">ต้นที่ (Pole No.)</th>
+                            <th style="width: 110px;">ประเภทเสา (Pole Type)</th>
                             <th style="width: 130px;">ช่วงสแปน / พิกัด</th>
                             <th style="width: 140px; text-align: center;">1. ฐานราก (Foundation)</th>
                             <th style="width: 140px; text-align: center;">2. ตั้งเสา (Erection)</th>
@@ -433,7 +442,7 @@
         const modal = document.getElementById('editTowerModal');
         if (!modal) return;
 
-        document.getElementById('editTowerModalTitle').textContent = `แก้ไขข้อมูลเสาสายส่ง: ${tower.towerNo}`;
+        document.getElementById('editTowerModalTitle').textContent = `แก้ไขข้อมูลต้นเสาสายส่ง (Pole): ${tower.towerNo}`;
         document.getElementById('towerNoInput').value = tower.towerNo || '';
         document.getElementById('towerTypeSelect').value = tower.type || 'Suspension';
         document.getElementById('towerSpanInput').value = tower.span || '';
@@ -462,8 +471,8 @@
         if (!modal) return;
 
         const nextNum = (p.towers && p.towers.length > 0) ? p.towers.length + 1 : 1;
-        document.getElementById('editTowerModalTitle').textContent = 'เพิ่มต้นเสาสายส่ง 115 kV ใหม่';
-        document.getElementById('towerNoInput').value = `T${String(nextNum).padStart(2, '0')}`;
+        document.getElementById('editTowerModalTitle').textContent = 'เพิ่มต้นเสาสายส่ง 115 kV ใหม่ (Add Pole)';
+        document.getElementById('towerNoInput').value = `P${String(nextNum).padStart(2, '0')}`;
         document.getElementById('towerTypeSelect').value = 'Suspension';
         document.getElementById('towerSpanInput').value = `กม. ${((nextNum - 1) * 0.35).toFixed(2)} - ${(nextNum * 0.35).toFixed(2)}`;
         document.getElementById('towerLatInput').value = p.latitude || '';
@@ -497,7 +506,10 @@
 
         if (!Array.isArray(p.towers)) p.towers = [];
 
-        const towerNo = document.getElementById('towerNoInput').value.trim();
+        let towerNo = document.getElementById('towerNoInput').value.trim();
+        if (/^[Tt]\d+/.test(towerNo)) {
+            towerNo = 'P' + towerNo.substring(1);
+        }
         const type = document.getElementById('towerTypeSelect').value;
         const span = document.getElementById('towerSpanInput').value.trim();
         const lat = parseFloat(document.getElementById('towerLatInput').value) || p.latitude;
@@ -617,7 +629,7 @@
     };
 
     /**
-     * ส่งออกข้อมูล Tower-by-Tower Matrix เป็นไฟล์ Excel (.xlsx) ผ่าน SheetJS
+     * ส่งออกข้อมูล Pole-by-Pole Matrix เป็นไฟล์ Excel (.xlsx) ผ่าน SheetJS
      */
     window.exportTowerMatrixExcel = function () {
         const p = window.currentProjectViewData;
@@ -636,11 +648,11 @@
         };
 
         const rows = [
-            ['รายงานความคืบหน้ารายต้นเสา สายส่ง 115 kV (Tower-by-Tower Matrix)'],
+            ['รายงานความคืบหน้ารายต้นเสา สายส่ง 115 kV (Pole-by-Pole Matrix)'],
             [`โครงการ: ${p.name}`],
             [`ผู้รับจ้าง: ${p.contractor || 'กฟภ.'} | วันที่ส่งออก: ${new Date().toLocaleDateString('th-TH')}`],
             [],
-            ['ลำดับ', 'เบอร์ต้นเสา', 'ประเภทเสา', 'ช่วงสแปน', 'ละติจูด (Lat)', 'ลองจิจูด (Lng)', '1. ฐานราก (Foundation)', '2. ตั้งเสา (Erection)', '3. พาดสาย (Stringing)', '4. ตรวจรับ (Testing)', 'ข้อสังเกต / คอขวด (ROW)']
+            ['ลำดับ', 'เบอร์ต้นเสา (Pole No.)', 'ประเภทเสา (Pole Type)', 'ช่วงสแปน', 'ละติจูด (Lat)', 'ลองจิจูด (Lng)', '1. ฐานราก (Foundation)', '2. ตั้งเสา (Erection)', '3. พาดสาย (Stringing)', '4. ตรวจรับ (Testing)', 'ข้อสังเกต / คอขวด (ROW)']
         ];
 
         p.towers.forEach((t, i) => {
@@ -661,14 +673,14 @@
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Tower_Matrix_115kV');
+        XLSX.utils.book_append_sheet(wb, ws, 'Pole_Matrix_115kV');
 
         const cleanProj = p.name.replace(/[\\/:*?"<>|]/g, '_').substring(0, 30);
-        XLSX.writeFile(wb, `PCTS_Tower_Matrix_${cleanProj}.xlsx`);
+        XLSX.writeFile(wb, `PCTS_Pole_Matrix_${cleanProj}.xlsx`);
 
         if (typeof Toastify === 'function') {
             Toastify({
-                text: 'ส่งออกไฟล์ Excel Tower-by-Tower Matrix สำเร็จแล้ว',
+                text: 'ส่งออกไฟล์ Excel Pole-by-Pole Matrix สำเร็จแล้ว',
                 duration: 3500,
                 style: { background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '8px' }
             }).showToast();

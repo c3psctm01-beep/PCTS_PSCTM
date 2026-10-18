@@ -947,7 +947,7 @@
                         <button class="tablinks" onclick="openProjectTab(event, 'tabGantt')"><i class="fa-solid fa-stream"></i> Gantt Chart</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabSCurve')"><i class="fa-solid fa-chart-line"></i> S-Curve</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabGallery')"><i class="fa-solid fa-images"></i> รูปภาพความก้าวหน้า</button>
-                        <button class="tablinks" onclick="openProjectTab(event, 'tabTowerMatrix')"><i class="fa-solid fa-tower-broadcast"></i> สายส่ง 115 kV (Matrix)</button>
+                        <button class="tablinks" onclick="openProjectTab(event, 'tabTowerMatrix')"><i class="fa-solid fa-tower-broadcast"></i> สายส่ง 115 kV (Pole Matrix)</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabCalendar')"><i class="fa-regular fa-calendar-days"></i> ปฏิทินปฏิบัติงาน</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabDisbursement')"><i class="fa-solid fa-money-bill-transfer"></i> เบิกจ่ายงบประมาณ</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabMap')"><i class="fa-solid fa-map-location-dot"></i> ตำแหน่งสถานี</button>
@@ -2027,7 +2027,7 @@
                                         <strong>11. ดาวน์โหลดภาพถ่ายหน้างานเป็น ZIP รายงวด (Batch Photo ZIP Downloader):</strong> รวบรวมและดาวน์โหลดภาพถ่ายหน้างานที่ประทับลายน้ำข้อมูล GPS พิกัด และวันเวลาอัตโนมัติ พร้อมส่งออกไฟล์สารบัญภาพ <code>Photo_Manifest.csv</code> ช่วยงานเบิกเงินงวดรวดเร็ว
                                     </div>
                                     <div class="manual-list-item">
-                                        <strong>12. ความก้าวหน้ารายต้นเสา สายส่ง 115 kV (Tower-by-Tower Matrix):</strong> ตารางสถานะรายต้นเสาจำแนก 4 หมวดงานหลัก (ฐานราก, ปักเสา, พาดสาย, ติดตั้งอุปกรณ์) ระบบติดตามคอขวดเขตระบบโครงข่าย (ROW Bottlenecks), หมุดระบุพิกัด GIS นำทาง และปุ่มส่งออก Excel
+                                        <strong>12. ความก้าวหน้ารายต้นเสา สายส่ง 115 kV (Pole-by-Pole Matrix):</strong> ตารางสถานะรายต้นเสาจำแนก 4 หมวดงานหลัก (ฐานราก, ปักเสา, พาดสาย, ติดตั้งอุปกรณ์) ระบบติดตามคอขวดเขตระบบโครงข่าย (ROW Bottlenecks), หมุดระบุพิกัด GIS นำทาง และปุ่มส่งออก Excel
                                     </div>
                                 </div>
                             </div>
@@ -2061,20 +2061,20 @@
                                 </ul>
                             </div>
 
-                            <!-- 3.3 Tower-by-Tower Matrix for 115 kV Lines -->
+                            <!-- 3.3 Pole-by-Pole Matrix for 115 kV Lines -->
                             <div class="manual-section-box mt-3">
-                                <h3><i class="fa-solid fa-tower-broadcast" style="color: #2980b9;"></i> 12. แดชบอร์ดรายต้นเสาสายส่ง 115 kV (Tower-by-Tower Matrix & ROW)</h3>
-                                <p>เข้าใช้งานผ่านเมนูหรือแท็บ <strong>"Tower Matrix"</strong> สำหรับโครงการสายส่ง 115 kV:</p>
+                                <h3><i class="fa-solid fa-tower-broadcast" style="color: #2980b9;"></i> 12. แดชบอร์ดรายต้นเสาสายส่ง 115 kV (Pole-by-Pole Matrix & ROW)</h3>
+                                <p>เข้าใช้งานผ่านเมนูหรือแท็บ <strong>"Pole Matrix"</strong> สำหรับโครงการสายส่ง 115 kV:</p>
                                 <ul class="manual-bullet-list">
                                     <li><strong>4 หมวดงานหลักรายต้นเสา:</strong>
                                         <br>&bull; <code>งานฐานราก (Foundation):</code> งานขุดดิน, ผูกเหล็ก, เทคอนกรีตฐานรากต้นเสา
-                                        <br>&bull; <code>งานปักเสา (Erection):</code> งานประกอบและยกปักเสาโครงเหล็ก (Steel Lattice Tower) หรือเสาคอนกรีตอัดแรง
+                                        <br>&bull; <code>งานปักเสา (Erection):</code> งานประกอบและยกปักเสาโครงเหล็ก (Steel Lattice Pole/Tower) หรือเสาคอนกรีตอัดแรง
                                         <br>&bull; <code>งานพาดสาย (Stringing):</code> งานพาดสายนำกระแส (Conductor) และสายดินล่อฟ้าใยแก้ว (OPGW)
                                         <br>&bull; <code>งานอุปกรณ์ (Equipment):</code> งานติดตั้งชุดลูกถ้วยฉนวน, ป้ายเตือนอันตราย, และอุปกรณ์ประกอบหัวเสา
                                     </li>
                                     <li><strong>แถบสรุปภาพรวมโครงการ (KPI Ribbon):</strong> แสดงสถานะความสำเร็จของ 4 หมวดงานเป็นร้อยละสะสม และแสดงสัญลักษณ์สถานะ 3 ระดับ: <span class="badge badge-success">เสร็จสมบูรณ์ (Completed)</span>, <span class="badge badge-warning">กำลังดำเนินการ (In Progress)</span>, <span class="badge badge-danger">ยังไม่เริ่ม (Not Started)</span></li>
                                     <li><strong>ระบบเตือนคอขวดเขตระบบโครงข่าย (ROW Bottleneck Alerts):</strong> ไฮไลต์แถวต้นเสาที่มีปัญหาอุปสรรคเขตระบบโครงข่าย (Right of Way) เช่น รออนุญาตก่อสร้างร่วมกับกรมทางหลวง, ติดพื้นที่ ส.ป.ก., ป่าไม้, หรือปัญหาเวนคืนที่ดิน พร้อมแนวทางแก้ไข</li>
-                                    <li><strong>นำทางพิกัด GIS & ส่งออก Excel:</strong> คลิกพิกัดละติจูด/ลองจิจูดของต้นเสาเพื่อเปิดแผนที่ดาวเทียม Google Maps หรือคลิกปุ่ม <code>ส่งออก Excel (Tower Matrix)</code> เพื่อดาวน์โหลดรายงานสถานะรายต้นเสาไปใช้งานต่อทันที</li>
+                                    <li><strong>นำทางพิกัด GIS & ส่งออก Excel:</strong> คลิกพิกัดละติจูด/ลองจิจูดของต้นเสาเพื่อเปิดแผนที่ดาวเทียม Google Maps หรือคลิกปุ่ม <code>ส่งออก Excel (Pole Matrix)</code> เพื่อดาวน์โหลดรายงานสถานะรายต้นเสาไปใช้งานต่อทันที</li>
                                 </ul>
                             </div>
 
@@ -3368,6 +3368,13 @@
                     <strong id="punchResolveTitle" style="color: #1e293b; font-size: 14px; display: block; margin-bottom: 4px;">-</strong>
                     <span style="font-size: 12px; color: #64748b;"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: <span id="punchResolveLocation">-</span></span>
                 </div>
+                <!-- แสดงภาพก่อนแก้ไข (Before) ให้ผู้ใช้เปรียบเทียบ -->
+                <div id="punchResolveBeforePhotoContainer" style="display: none; margin-bottom: 14px; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 10px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #7e22ce; display: block; margin-bottom: 6px;">
+                        <i class="fa-solid fa-camera"></i> ภาพก่อนแก้ไข (Before):
+                    </label>
+                    <div id="punchResolveBeforePhotoBox"></div>
+                </div>
                 <div class="form-group">
                     <label>แนบภาพถ่ายหลังแก้ไขเรียบร้อยแล้ว (After Photo พร้อมประทับลายน้ำ GPS) *</label>
                     <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input" required style="padding: 6px;">
@@ -3761,7 +3768,7 @@
         <div class="modal-content card" style="max-width: 620px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <h2 id="editTowerModalTitle" style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-tower-broadcast"></i> แก้ไขข้อมูลเสาสายส่ง 115 kV
+                    <i class="fa-solid fa-tower-broadcast"></i> แก้ไขข้อมูลต้นเสาสายส่ง 115 kV (Pole Info)
                 </h2>
                 <span class="close-modal" onclick="closeEditTowerModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
             </div>
@@ -3769,11 +3776,11 @@
             <form onsubmit="saveTowerFormData(event)">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">หมายเลขต้นเสา (Tower No.):</label>
-                        <input type="text" id="towerNoInput" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;" placeholder="เช่น T01, T02">
+                        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">หมายเลขต้นเสา (Pole No.):</label>
+                        <input type="text" id="towerNoInput" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;" placeholder="เช่น P01, P02">
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">ประเภทเสา (Tower Type):</label>
+                        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">ประเภทเสา (Pole Type):</label>
                         <select id="towerTypeSelect" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px;">
                             <option value="Suspension">Suspension (เสาแขวน/ทางตรง)</option>
                             <option value="Tension">Tension (เสาดึง/ยึดโยง)</option>

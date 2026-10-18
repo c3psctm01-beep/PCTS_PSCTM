@@ -77,6 +77,10 @@
         const width = canvas.width;
         const height = canvas.height;
 
+        // ดึงข้อมูลโครงการและงาน
+        const projectName = options.projectName || window.currentProjectViewData?.name || 'โครงการก่อสร้าง กฟภ.';
+        const taskName = options.taskName || 'บันทึกภาพความก้าวหน้า';
+
         // ดึงข้อมูลตัวตนผู้ตรวจงาน (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
         let empId = options.empId;
         let uploaderName = options.uploaderName;

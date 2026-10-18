@@ -191,7 +191,12 @@
         }
 
         document.getElementById('punchAddForm')?.reset();
-        document.getElementById('punchBeforePhotoPreview').innerHTML = '';
+        if (typeof window.clearPunchPhotoInput === 'function') {
+            window.clearPunchPhotoInput('punchBeforePhotoInput', 'punchBeforePhotoPreview');
+        } else {
+            const prev = document.getElementById('punchBeforePhotoPreview');
+            if (prev) prev.innerHTML = '';
+        }
         modal.style.display = 'flex';
     };
 
@@ -297,8 +302,31 @@
 
         document.getElementById('punchResolveTitle').innerText = item.title;
         document.getElementById('punchResolveLocation').innerText = item.location || '-';
-        document.getElementById('punchAfterPhotoPreview').innerHTML = '';
+        if (typeof window.clearPunchPhotoInput === 'function') {
+            window.clearPunchPhotoInput('punchAfterPhotoInput', 'punchAfterPhotoPreview');
+        } else {
+            const prev = document.getElementById('punchAfterPhotoPreview');
+            if (prev) prev.innerHTML = '';
+        }
         document.getElementById('punchResolveNoteInput').value = '';
+
+        // แสดงภาพก่อนแก้ไข (Before) ให้ผู้ใช้ดูเปรียบเทียบ
+        const beforeContainer = document.getElementById('punchResolveBeforePhotoContainer');
+        const beforeBox = document.getElementById('punchResolveBeforePhotoBox');
+        if (beforeContainer && beforeBox) {
+            if (item.beforePhoto) {
+                beforeBox.innerHTML = `
+                    <div style="text-align: center;">
+                        <img src="${item.beforePhoto}" alt="Before" style="max-height: 150px; max-width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; object-fit: contain; border: 1px solid #cbd5e1;" onclick="window.viewPunchImage('${item.beforePhoto}', 'ก่อนแก้ไข: ${item.title}')">
+                        <div style="font-size: 11px; color: #64748b; margin-top: 4px;"><i class="fa-solid fa-magnifying-glass-plus"></i> คลิกเพื่อดูรูปก่อนแก้ไขขนาดเต็ม</div>
+                    </div>
+                `;
+                beforeContainer.style.display = 'block';
+            } else {
+                beforeContainer.style.display = 'none';
+                beforeBox.innerHTML = '';
+            }
+        }
 
         modal.style.display = 'flex';
     };
@@ -438,76 +466,155 @@
      */
     window.processAndUploadPunchImage = function (file, project, title, phase) {
         return new Promise((resolve) => {
+            if (!file) return resolve('');
+
             const reader = new FileReader();
+            reader.onerror = (err) => {
+                console.error('[PunchList] FileReader error:', err);
+                resolve('');
+            };
+
             reader.onload = (e) => {
                 const img = new Image();
+                img.onerror = (err) => {
+                    console.error('[PunchList] Image decode error:', err);
+                    resolve(e.target?.result || '');
+                };
+
                 img.onload = async () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1000;
-                    const MAX_HEIGHT = 1000;
-                    let width = img.width;
-                    let height = img.height;
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        const MAX_HEIGHT = 1200;
+                        let width = img.width;
+                        let height = img.height;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height = Math.round(height * (MAX_WIDTH / width)); width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width = Math.round(width * (MAX_HEIGHT / height)); height = MAX_HEIGHT; }
+                        }
 
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
 
-                    // ประทับลายน้ำถ้ามีฟังก์ชัน
-                    if (typeof window.applyGpsWatermark === 'function') {
-                        try {
-                            let coords = null;
-                            if (typeof window.getCurrentGpsCoordinates === 'function') {
-                                coords = await window.getCurrentGpsCoordinates(3000);
+                        // ประทับลายน้ำ GPS อัตโนมัติถ้ามีฟังก์ชัน
+                        if (typeof window.applyGpsWatermark === 'function') {
+                            try {
+                                let coords = null;
+                                if (typeof window.getCurrentGpsCoordinates === 'function') {
+                                    coords = await window.getCurrentGpsCoordinates(3000);
+                                }
+                                const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
+                                await window.applyGpsWatermark(canvas, {
+                                    projectName: project ? project.name : '',
+                                    taskName: `[Punch List: ${phase}] ${title}`,
+                                    empId: userInfo.employee_id,
+                                    uploaderName: userInfo.name,
+                                    uploaderPosition: userInfo.position,
+                                    coords
+                                });
+                            } catch (watermarkErr) {
+                                console.warn('[PunchList] Watermark apply skipped or error:', watermarkErr);
                             }
-                            const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
-                            await window.applyGpsWatermark(canvas, {
-                                projectName: project.name,
-                                taskName: `[Punch List: ${phase}] ${title}`,
-                                empId: userInfo.employee_id,
-                                uploaderName: userInfo.name,
-                                uploaderPosition: userInfo.position,
-                                coords
-                            });
-                        } catch (_) { }
-                    }
+                        }
 
-                    // อัปโหลดเข้า Storage หรือ Fallback dataURL
-                    canvas.toBlob(async (blob) => {
-                        const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                        // อัปโหลดเข้า Storage หรือ Fallback dataURL
+                        const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.75);
                         if (!window.db || !window.db.storage) {
                             return resolve(fallbackDataUrl);
                         }
 
                         try {
-                            const fileName = `punch_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
-                            const folderDate = new Date().toISOString().split('T')[0];
-                            const filePath = `punch/${folderDate}/${fileName}`;
+                            canvas.toBlob(async (blob) => {
+                                if (!blob) return resolve(fallbackDataUrl);
+                                try {
+                                    const fileName = `punch_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                                    const folderDate = new Date().toISOString().split('T')[0];
+                                    const filePath = `punch/${folderDate}/${fileName}`;
 
-                            const { data, error } = await window.db.storage.from('project-images').upload(filePath, blob, { contentType: 'image/jpeg' });
-                            if (error) {
-                                console.warn('[PunchList] Storage upload failed, falling back to compressed dataURL:', error.message);
-                                return resolve(fallbackDataUrl);
-                            }
+                                    const { data, error } = await window.db.storage.from('project-images').upload(filePath, blob, { contentType: 'image/jpeg' });
+                                    if (error) {
+                                        console.warn('[PunchList] Storage upload failed, falling back to dataURL:', error.message);
+                                        return resolve(fallbackDataUrl);
+                                    }
 
-                            const { data: { publicUrl } } = window.db.storage.from('project-images').getPublicUrl(filePath);
-                            resolve(publicUrl || fallbackDataUrl);
-                        } catch (uploadErr) {
-                            console.warn('[PunchList] Storage upload exception, falling back to compressed dataURL:', uploadErr);
+                                    const { data: { publicUrl } } = window.db.storage.from('project-images').getPublicUrl(filePath);
+                                    resolve(publicUrl || fallbackDataUrl);
+                                } catch (uploadErr) {
+                                    console.warn('[PunchList] Storage upload exception, falling back to dataURL:', uploadErr);
+                                    resolve(fallbackDataUrl);
+                                }
+                            }, 'image/jpeg', 0.75);
+                        } catch (blobErr) {
+                            console.warn('[PunchList] toBlob error, falling back to dataURL:', blobErr);
                             resolve(fallbackDataUrl);
                         }
-                    }, 'image/jpeg', 0.65);
+                    } catch (procErr) {
+                        console.error('[PunchList] Image processing error:', procErr);
+                        resolve(e.target?.result || '');
+                    }
                 };
+
                 img.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+    };
+
+    /**
+     * ตั้งค่าพรีวิวรูปภาพก่อนบันทึก พร้อมปุ่มลบรูป
+     */
+    window.setupPunchPhotoPreview = function (inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        if (!input || !preview) return;
+
+        // ป้องกันผูก event ซ้ำ
+        if (input.dataset.previewBound === 'true') return;
+        input.dataset.previewBound = 'true';
+
+        input.addEventListener('change', function () {
+            if (!this.files || this.files.length === 0) {
+                preview.innerHTML = '';
+                return;
+            }
+            const file = this.files[0];
+            const fileSizeKb = Math.round(file.size / 1024);
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                preview.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px;">
+                        <img src="${e.target.result}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; flex-shrink: 0;" onclick="window.viewPunchImage('${e.target.result}', 'ภาพพรีวิว')" title="คลิกเพื่อดูรูปขยาย">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                                ขนาด: ${fileSizeKb > 1024 ? (fileSizeKb / 1024).toFixed(1) + ' MB' : fileSizeKb + ' KB'}
+                                <span style="color: #10b981; margin-left: 6px; font-weight: 500;"><i class="fa-solid fa-camera"></i> พร้อมประทับพิกัด GPS อัตโนมัติ</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="window.clearPunchPhotoInput('${inputId}', '${previewId}')" style="color: #ef4444; border-color: #fecaca; background: #fff5f5; flex-shrink: 0;" title="ยกเลิกรูปนี้">
+                            <i class="fa-solid fa-trash-can"></i> ลบรูป
+                        </button>
+                    </div>
+                `;
             };
             reader.readAsDataURL(file);
         });
+    };
+
+    /**
+     * ล้างข้อมูลไฟล์ภาพและกล่องพรีวิว
+     */
+    window.clearPunchPhotoInput = function (inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        if (input) input.value = '';
+        if (preview) preview.innerHTML = '';
     };
 
     /**
@@ -523,5 +630,17 @@
             modal.style.display = 'flex';
         }
     };
+
+    // ผูก Event Listener เมื่อ DOM โหลดเสร็จ
+    function initPunchEventListeners() {
+        window.setupPunchPhotoPreview('punchBeforePhotoInput', 'punchBeforePhotoPreview');
+        window.setupPunchPhotoPreview('punchAfterPhotoInput', 'punchAfterPhotoPreview');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPunchEventListeners);
+    } else {
+        initPunchEventListeners();
+    }
 
 })();
