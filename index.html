@@ -3288,22 +3288,22 @@
 
     <!-- Punch List: Add Item Modal -->
     <div id="punchAddModal" class="modal" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content card" style="max-width: 620px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+        <div class="modal-content card" style="max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                 <h2 style="margin: 0; font-size: 16.5px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px; font-weight: 700;">
                     <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> บันทึกรายการตรวจรับข้อบกพร่อง (Punch List)
                 </h2>
-                <span class="close-modal" onclick="closeAddPunchModal()" style="font-size: 24px; cursor: pointer; color: #94a3b8;">&times;</span>
+                <span class="close-modal" onclick="closeAddPunchModal()">&times;</span>
             </div>
             <form id="punchAddForm" class="pea-form" onsubmit="event.preventDefault(); window.saveNewPunchItem(event); return false;">
-                <div class="form-group" style="margin-bottom: 14px;">
+                <div class="form-group">
                     <label for="punchTitleInput">
                         <i class="fa-solid fa-circle-exclamation" style="color: #ef4444; font-size: 11px;"></i> หัวข้อข้อบกพร่อง / จุดที่ต้องแก้ไข <span style="color: #ef4444;">*</span>
                     </label>
                     <input type="text" id="punchTitleInput" placeholder="เช่น สีตู้สวิตช์บอร์ดถลอก, ทอร์กน็อตสายดินไม่แน่น, ป้ายเตือนชำรุด" required autocomplete="off">
                 </div>
 
-                <div class="form-row" style="margin-bottom: 14px;">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="punchLocationInput">
                             <i class="fa-solid fa-location-dot" style="color: #8b5cf6;"></i> ตำแหน่งในสถานีไฟฟ้า
@@ -3323,7 +3323,7 @@
                     </div>
                 </div>
 
-                <div class="form-row" style="margin-bottom: 14px;">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="punchPrioritySelect">
                             <i class="fa-solid fa-flag" style="color: #f59e0b;"></i> ระดับความเร่งด่วน
@@ -3342,25 +3342,25 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 14px;">
+                <div class="form-group">
                     <label for="punchContractorInput">
                         <i class="fa-solid fa-user-gear" style="color: #64748b;"></i> ผู้รับผิดชอบดำเนินการแก้ไข (ผู้รับเหมา/หัวหน้าชุดช่าง)
                     </label>
                     <input type="text" id="punchContractorInput" placeholder="ระบุชื่อผู้รับจ้าง หรือหัวหน้าชุดช่างผู้รับผิดชอบ" autocomplete="off">
                 </div>
 
-                <div class="form-group" style="margin-bottom: 14px;">
+                <div class="form-group">
                     <label for="punchDescInput">
                         <i class="fa-solid fa-align-left" style="color: #64748b;"></i> รายละเอียดและแนวทางแก้ไข
                     </label>
                     <textarea id="punchDescInput" rows="3" placeholder="ระบุอาการข้อบกพร่อง และวิธีแก้ไขที่กำหนดตามมาตรฐาน กฟภ..."></textarea>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 14px;">
+                <div class="form-group">
                     <label for="punchBeforePhotoInput">
                         <i class="fa-solid fa-camera" style="color: #8b5cf6;"></i> แนบภาพถ่ายหน้างานก่อนแก้ไข (Before Photo พร้อมประทับพิกัด GPS อัตโนมัติ)
                     </label>
-                    <input type="file" id="punchBeforePhotoInput" accept="image/*" class="file-input" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <input type="file" id="punchBeforePhotoInput" accept="image/*" class="file-input">
                     <div id="punchBeforePhotoPreview" style="margin-top: 8px;"></div>
                 </div>
 
@@ -3378,12 +3378,12 @@
 
     <!-- Punch List: Resolve Item Modal -->
     <div id="punchResolveModal" class="modal" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content card" style="max-width: 520px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
+        <div class="modal-content card" style="max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <h2 style="margin: 0; font-size: 16px; color: #10b981; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-circle-check"></i> บันทึกงานแก้ไขเสร็จ (ส่งมอบงานหลังแก้ไข)
                 </h2>
-                <span class="close-modal" onclick="closeResolvePunchModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
+                <span class="close-modal" onclick="closeResolvePunchModal()">&times;</span>
             </div>
             <form id="punchResolveForm" class="pea-form" onsubmit="event.preventDefault(); window.saveResolvePunchItem(event); return false;">
                 <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
@@ -3403,19 +3403,19 @@
                     <div id="punchResolveCurrentAfterBox"></div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 14px;">
-                    <label for="punchAfterPhotoInput" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 12.5px;">
-                        <i class="fa-solid fa-camera"></i> แนบภาพถ่ายหลังแก้ไข (After Photo พร้อมประทับพิกัด GPS อัตโนมัติ):
+                <div class="form-group">
+                    <label for="punchAfterPhotoInput">
+                        <i class="fa-solid fa-camera" style="color: #10b981;"></i> แนบภาพถ่ายหลังแก้ไข (After Photo พร้อมประทับพิกัด GPS อัตโนมัติ):
                     </label>
-                    <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff;">
+                    <input type="file" id="punchAfterPhotoInput" accept="image/*" class="file-input">
                     <div id="punchAfterPhotoPreview" style="margin-top: 8px;"></div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label for="punchResolveNoteInput" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 12.5px; color: var(--text-primary);">
-                        <i class="fa-solid fa-pen-to-square"></i> บันทึกการดำเนินการแก้ไข / หมายเหตุเพิ่มเติม:
+                <div class="form-group">
+                    <label for="punchResolveNoteInput">
+                        <i class="fa-solid fa-pen-to-square" style="color: #10b981;"></i> บันทึกการดำเนินการแก้ไข / หมายเหตุเพิ่มเติม:
                     </label>
-                    <textarea id="punchResolveNoteInput" rows="3" style="width: 100%; min-height: 85px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 13.5px; color: var(--text-primary); background: #ffffff; resize: vertical; box-sizing: border-box; display: block; line-height: 1.5;" placeholder="ระบุวิธีการที่ได้แก้ไข เช่น ได้ทำการขัดสนิมและพ่นสีตู้ใหม่เรียบร้อยแล้ว"></textarea>
+                    <textarea id="punchResolveNoteInput" rows="3" placeholder="ระบุวิธีการที่ได้แก้ไข เช่น ได้ทำการขัดสนิมและพ่นสีตู้ใหม่เรียบร้อยแล้ว"></textarea>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
