@@ -3940,17 +3940,99 @@ window.viewProjectDetails = function (projectId) {
         ? window.getWorkTypeBadgeInfo(p.workType || (typeof window.inferProjectWorkType === 'function' ? window.inferProjectWorkType(p) : ''))
         : { bg: '#f1f5f9', color: '#64748b', border: '#e2e8f0', icon: 'fa-solid fa-briefcase', label: p.workType || 'งานก่อสร้าง' };
 
+    // 1. Badges next to title: Status pill, Work Type badge, Contract Type badge
+    const badgesEl = document.getElementById('detailProjectBadges');
+    if (badgesEl) {
+        const contractType = p.type || 'จ้างเหมา';
+        const typeBadgeStyle = contractType === 'ดำเนินการเอง'
+            ? 'background: rgba(41, 128, 185, 0.12); color: #2980b9; border: 1px solid rgba(41, 128, 185, 0.3);'
+            : 'background: rgba(230, 126, 34, 0.12); color: #e67e22; border: 1px solid rgba(230, 126, 34, 0.3);';
+
+        badgesEl.innerHTML = `
+            <span class="header-badge status-pill" style="background:${sColor.bg}; color:${sColor.color}; border: 1px solid ${sColor.color}40;">
+                <span class="status-dot-pulse" style="background:${sColor.color};"></span>
+                <span>${p.status}</span>
+            </span>
+            <span class="header-badge worktype-pill" style="background:${wtInfo.bg}; color:${wtInfo.color}; border: 1px solid ${wtInfo.border};">
+                <i class="${wtInfo.icon}"></i>
+                <span>${wtInfo.label}</span>
+            </span>
+            <span class="header-badge contract-type-pill" style="${typeBadgeStyle}">
+                <i class="fa-solid fa-file-contract"></i>
+                <span>${contractType}</span>
+            </span>
+        `;
+    }
+
+    // 2. Structured 4-Column Metadata Grid
+    const metaGridEl = document.getElementById('detailProjectMetaGrid');
+    if (metaGridEl) {
+        const committeeFormatted = p.committee ? p.committee.replace(/,/g, ', ') : '-';
+        const durationFormatted = p.duration || (p.startDate && p.endDate ? `${p.startDate} ถึง ${p.endDate}` : '-');
+
+        metaGridEl.innerHTML = `
+            <div class="meta-card">
+                <div class="meta-card-label">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>ผู้ควบคุมงาน</span>
+                </div>
+                <div class="meta-card-value" title="${p.supervisor || '-'}">
+                    ${p.supervisor || '-'}
+                </div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-card-label">
+                    <i class="fa-solid fa-building"></i>
+                    <span>ผู้รับเหมา</span>
+                </div>
+                <div class="meta-card-value" title="${p.contractor || '-'}">
+                    ${p.contractor || '-'}
+                </div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-card-label">
+                    <i class="fa-solid fa-users"></i>
+                    <span>คณะกรรมการตรวจรับ</span>
+                </div>
+                <div class="meta-card-value" title="${committeeFormatted}">
+                    ${committeeFormatted}
+                </div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-card-label">
+                    <i class="fa-regular fa-calendar-days"></i>
+                    <span>ระยะเวลาดำเนินงาน</span>
+                </div>
+                <div class="meta-card-value" title="${durationFormatted}">
+                    ${durationFormatted}
+                </div>
+            </div>
+        `;
+    }
+
+    // 3. Contract & EOT Countdown Ribbon
+    const contractBannerEl = document.getElementById('detailProjectContractBanner');
+    if (contractBannerEl) {
+        if (contractBadgeHtml) {
+            contractBannerEl.innerHTML = contractBadgeHtml;
+            contractBannerEl.style.display = 'block';
+        } else {
+            contractBannerEl.innerHTML = '';
+            contractBannerEl.style.display = 'none';
+        }
+    }
+
+    // Keep hidden fallback populated
     const infoEl = document.getElementById('detailProjectInfo');
     if (infoEl) {
         infoEl.innerHTML = `
-            <span class="detail-info-item worktype-chip" style="background:${wtInfo.bg}; color:${wtInfo.color}; border: 1px solid ${wtInfo.border}; font-weight:600;"><i class="${wtInfo.icon}"></i> <span><strong>ประเภทงาน:</strong> ${wtInfo.label}</span></span>
-            <span class="detail-info-item"><i class="fa-solid fa-handshake" style="color: #64748b;"></i> <span><strong>รูปแบบสัญญา:</strong> ${p.type || 'จ้างเหมา'}</span></span>
-            <span class="detail-info-item"><i class="fa-solid fa-building" style="color: #64748b;"></i> <span><strong>ผู้รับเหมา:</strong> ${p.contractor || '-'}</span></span>
-            <span class="detail-info-item"><i class="fa-solid fa-user-tie" style="color: #64748b;"></i> <span><strong>ผู้ควบคุมงาน:</strong> ${p.supervisor || '-'}</span></span>
-            <span class="detail-info-item"><i class="fa-solid fa-users" style="color: #64748b;"></i> <span><strong>กรรมการ:</strong> ${p.committee || '-'}</span></span>
-            <span class="detail-info-item"><i class="fa-regular fa-calendar" style="color: #64748b;"></i> <span><strong>ระยะเวลา:</strong> ${p.duration || '-'}</span></span>
-            <span class="detail-info-item status-chip" style="background:${sColor.bg}; color:${sColor.color}; border-color:${sColor.color}30; font-weight:600;"><i class="fa-solid fa-circle-dot"></i> <span>${p.status}</span></span>
-            ${contractBadgeHtml}
+            <span class="detail-info-item worktype-chip">${wtInfo.label}</span>
+            <span class="detail-info-item">${p.type || 'จ้างเหมา'}</span>
+            <span class="detail-info-item">${p.contractor || '-'}</span>
+            <span class="detail-info-item">${p.supervisor || '-'}</span>
+            <span class="detail-info-item">${p.committee || '-'}</span>
+            <span class="detail-info-item">${p.duration || '-'}</span>
+            <span class="detail-info-item status-chip">${p.status}</span>
         `;
     }
 

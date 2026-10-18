@@ -906,23 +906,39 @@
                 <!-- Project Detail & S-Curve View -->
                 <section id="project-detail-view" class="view-section">
                     <div class="project-header card">
-                        <div class="project-header-info-wrap">
-                            <button class="btn-home" onclick="goHome()" title="กลับหน้าแรก">
-                                <i class="fa-solid fa-arrow-left"></i>
-                            </button>
-                            <div class="project-header-text">
-                                <h1 class="page-title" id="detailProjectTitle">โครงการก่อสร้างสถานีไฟฟ้าย่อย</h1>
-                                <div id="detailProjectInfo" class="detail-project-meta-wrap">
-                                    ผู้รับเหมา: บริษัท ตัวอย่าง จำกัด | ระยะเวลา: 1 ม.ค. 2569 - 31 ธ.ค. 2569
+                        <!-- Top Bar: Back button, Title, Badges, and Action Buttons -->
+                        <div class="project-header-top-row">
+                            <div class="project-header-left">
+                                <button class="btn-home" onclick="goHome()" title="กลับหน้าแรก">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </button>
+                                <div class="project-title-area">
+                                    <h1 class="page-title" id="detailProjectTitle">โครงการก่อสร้างสถานีไฟฟ้าย่อย</h1>
+                                    <div id="detailProjectBadges" class="project-header-badges">
+                                        <!-- Injected via JS: Status pill, Work Type badge, Contract Format badge -->
+                                    </div>
                                 </div>
                             </div>
+                            <div class="project-header-actions">
+                                <button class="btn role-editor" onclick="openProjectModal(window.currentProjectViewData?.id || null)" title="แก้ไขข้อมูลโครงการ / เปลี่ยนประเภทงาน" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขโครงการ</button>
+                                <button class="btn role-editor" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-clipboard-check"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
+                                <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
+                                <button class="btn btn-secondary" onclick="openPhotoZipModal()" title="ดาวน์โหลดภาพถ่ายหน้างานพร้อมประทับลายน้ำเป็น ZIP รายงวด"><i class="fa-solid fa-file-zipper" style="color: var(--pea-purple);"></i> ดาวน์โหลดภาพ (ZIP)</button>
+                            </div>
                         </div>
-                        <div class="project-header-actions">
-                            <button class="btn role-editor" onclick="openProjectModal(window.currentProjectViewData?.id || null)" title="แก้ไขข้อมูลโครงการ / เปลี่ยนประเภทงาน" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขโครงการ</button>
-                            <button class="btn role-editor" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-clipboard-check"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
-                            <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
-                            <button class="btn btn-secondary" onclick="openPhotoZipModal()" title="ดาวน์โหลดภาพถ่ายหน้างานพร้อมประทับลายน้ำเป็น ZIP รายงวด"><i class="fa-solid fa-file-zipper" style="color: var(--pea-purple);"></i> ดาวน์โหลดภาพ (ZIP)</button>
+
+                        <!-- Structured 4-Column Metadata Grid -->
+                        <div id="detailProjectMetaGrid" class="project-header-meta-grid">
+                            <!-- Injected via JS -->
                         </div>
+
+                        <!-- Contract & EOT Countdown Ribbon -->
+                        <div id="detailProjectContractBanner" class="project-header-contract-banner">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <!-- Hidden fallback for any legacy code querying detailProjectInfo -->
+                        <div id="detailProjectInfo" class="detail-project-meta-wrap" style="display: none;"></div>
                     </div>
 
                     <!-- Tabs Navigation -->

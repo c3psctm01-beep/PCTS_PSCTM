@@ -151,12 +151,12 @@
         }
 
         const badgeHtml = `
-            <div class="contract-countdown-badge ${badgeClass}" onclick="window.openEotModal(${project.id})" title="คลิกเพื่อจัดการ EOT และคำนวณค่าปรับสัญญา">
+            <div class="contract-countdown-badge ${badgeClass}" onclick="window.openEotModal('${project.id}')" title="คลิกเพื่อจัดการ EOT และคำนวณค่าปรับสัญญา">
                 <i class="fa-solid ${daysRemaining < 0 ? (isCriticalPenalty ? 'fa-circle-radiation' : 'fa-triangle-exclamation') : (daysRemaining <= 30 ? 'fa-hourglass-half' : 'fa-calendar-check')}"></i>
                 <span class="countdown-text">${statusText}</span>
                 ${eotTagHtml}
                 ${penaltyTagHtml}
-                <button type="button" class="btn-eot-quick" onclick="event.stopPropagation(); window.openEotModal(${project.id});" title="จัดการ EOT และคำนวณค่าปรับ">
+                <button type="button" class="btn-eot-quick" onclick="event.stopPropagation(); window.openEotModal('${project.id}');" title="จัดการ EOT และคำนวณค่าปรับ">
                     <i class="fa-solid fa-calculator"></i> EOT & ค่าปรับ
                 </button>
             </div>
