@@ -5796,6 +5796,43 @@ body:has(#manual-view.active) .mascot-widget {
     color: #64748b !important;
 }
 
+/* Punch List photo picker: normal in-flow, visible control (NOT the absolute overlay .file-input) */
+#punchAddForm input.punch-file-input,
+#punchResolveForm input.punch-file-input {
+    position: static !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    padding: 8px !important;
+    border: 1.5px dashed #a78bfa !important;
+    border-radius: 9px !important;
+    background: #faf5ff !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+}
+
+#punchAddForm input.punch-file-input::file-selector-button,
+#punchResolveForm input.punch-file-input::file-selector-button {
+    margin-right: 12px;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #742C81, #5B2166);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+[data-theme="dark"] #punchAddForm input.punch-file-input,
+[data-theme="dark"] #punchResolveForm input.punch-file-input {
+    background: #0b1120 !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    color: #cbd5e1 !important;
+}
+
 /* --- 3. Before & After Slider Styles --- */
 .before-after-wrapper {
     overflow: hidden;

@@ -312,7 +312,14 @@
             p.punchList.push(newItem);
 
             if (typeof window.saveProjects === 'function') {
-                await window.saveProjects(p.id);
+                const cloudSaved = await window.saveProjects(p.id);
+                if (cloudSaved === false && typeof Toastify === 'function') {
+                    Toastify({
+                        text: 'บันทึกในเครื่องแล้ว แต่ซิงค์ขึ้นระบบกลางไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่',
+                        duration: 5000,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                }
             }
 
             window.closeAddPunchModal();
