@@ -1984,13 +1984,24 @@
                             </div>
 
                             <div class="manual-chapter-header">
-                                <h2><i class="fa-solid fa-chart-line" style="color: var(--pea-purple);"></i> บทที่ 3: การติดตามผลงานโครงการ (WBS, S-Curve, Gantt)</h2>
-                                <p>การวิเคราะห์ความก้าวหน้าโครงการก่อสร้างสถานีไฟฟ้าอย่างละเอียด</p>
+                                <h2><i class="fa-solid fa-chart-line" style="color: var(--pea-purple);"></i> บทที่ 3: การติดตามผลงานโครงการ (WBS, S-Curve, เสาสายส่ง 115 kV, Defect)</h2>
+                                <p>การวิเคราะห์ความก้าวหน้าโครงการก่อสร้างสถานีไฟฟ้าและสายส่ง 115 kV อย่างละเอียด</p>
                             </div>
 
+                            <!-- 3.0 Modern Project Detail Header -->
                             <div class="manual-section-box">
+                                <h3><i class="fa-solid fa-layer-group" style="color: var(--pea-purple);"></i> 3.0 ส่วนหัวโครงการโฉมใหม่ (Modern Project Header & Countdown Ribbon)</h3>
+                                <p>เมื่อคลิกปุ่ม <strong>"ดูรายละเอียด"</strong> บนการ์ดหรือตารางโครงการ จะเข้าสู่หน้าจอติดตามโครงการที่มีส่วนหัวแบบ Modern Glassmorphism:</p>
+                                <ul class="manual-bullet-list">
+                                    <li><strong>แถบสถานะสัญญา (Countdown Ribbon):</strong> แสดงป้ายสถานะโครงการ (ปกติ / ล่าช้า / ล่าช้าวิกฤต) พร้อมนับถอยหลังอายุสัญญาแบบวันต่อวัน (เช่น <code>เหลือเวลาอีก 45 วัน</code> หรือ <code>สิ้นสุดสัญญาแล้ว เกินกำหนด 12 วัน</code>) และ Badge สรุปการขยายสัญญา <code>EOT +XX วัน</code></li>
+                                    <li><strong>การ์ดข้อมูลสัญญา 4 คอลัมน์ (Meta Grid):</strong> แสดงวงเงินงบประมาณ, เลขที่สัญญา, วันเริ่มต้น-สิ้นสุดสัญญา, และอัตราค่าปรับต่อวันตามระเบียบ กฟภ. อย่างชัดเจน</li>
+                                    <li><strong>แถบปุ่มปฏิบัติการด่วน (Top Quick Actions):</strong> ปุ่มลัดสำหรับคำนวณค่าปรับ/EOT, ดาวน์โหลดรูปภาพ ZIP รายงวด, พิมพ์รายงาน PDF, และปุ่มย้อนกลับสู่แดชบอร์ดหลัก</li>
+                                </ul>
+                            </div>
+
+                            <div class="manual-section-box mt-3">
                                 <h3><i class="fa-solid fa-folder-open" style="color: var(--pea-purple);"></i> แท็บข้อมูลในหน้ารายละเอียดโครงการ (12 โมดูลสำคัญ ครอบคลุมงานสถานีและสายส่ง 115 kV)</h3>
-                                <p>เมื่อคลิกปุ่ม <strong>"ดูรายละเอียด"</strong> บนการ์ดหรือตารางโครงการ จะเข้าสู่หน้าจอติดตามความก้าวหน้ารายสถานีและสายส่ง 115 kV ที่ครอบคลุม 12 โมดูลหลัก:</p>
+                                <p>หน้าจอติดตามความก้าวหน้ารายสถานีและสายส่ง 115 kV ครอบคลุม 12 โมดูลหลัก:</p>
                                 
                                 <div class="manual-steps-list">
                                     <div class="manual-list-item">
@@ -2063,18 +2074,31 @@
 
                             <!-- 3.3 Pole-by-Pole Matrix for 115 kV Lines -->
                             <div class="manual-section-box mt-3">
-                                <h3><i class="fa-solid fa-tower-broadcast" style="color: #2980b9;"></i> 12. แดชบอร์ดรายต้นเสาสายส่ง 115 kV (Pole-by-Pole Matrix & ROW)</h3>
-                                <p>เข้าใช้งานผ่านเมนูหรือแท็บ <strong>"Pole Matrix"</strong> สำหรับโครงการสายส่ง 115 kV:</p>
+                                <h3><i class="fa-solid fa-tower-broadcast" style="color: #2980b9;"></i> 3.3 แดชบอร์ดความก้าวหน้ารายต้นเสา สายส่ง 115 kV (Pole-by-Pole Matrix)</h3>
+                                <p>เข้าใช้งานผ่านเมนูหรือแท็บ <strong>"สายส่ง 115 kV (Pole Matrix)"</strong> ออกแบบเฉพาะสำหรับงานก่อสร้างสายส่งไฟฟ้าแรงสูง 115 kV:</p>
                                 <ul class="manual-bullet-list">
+                                    <li><strong>มาตรฐานรหัสต้นเสา (Pole Numbering):</strong> ใช้รหัส <code>P01</code> &ndash; <code>P24</code> ตามระเบียบ กฟภ. พร้อมระบบแปลงรหัสเก่า T เป็น P อัตโนมัติ</li>
                                     <li><strong>4 หมวดงานหลักรายต้นเสา:</strong>
                                         <br>&bull; <code>งานฐานราก (Foundation):</code> งานขุดดิน, ผูกเหล็ก, เทคอนกรีตฐานรากต้นเสา
-                                        <br>&bull; <code>งานปักเสา (Erection):</code> งานประกอบและยกปักเสาโครงเหล็ก (Steel Lattice Pole/Tower) หรือเสาคอนกรีตอัดแรง
+                                        <br>&bull; <code>งานปักเสา (Erection):</code> งานประกอบและยกปักเสาโครงเหล็ก (Steel Lattice Pole) หรือเสาคอนกรีตอัดแรง
                                         <br>&bull; <code>งานพาดสาย (Stringing):</code> งานพาดสายนำกระแส (Conductor) และสายดินล่อฟ้าใยแก้ว (OPGW)
                                         <br>&bull; <code>งานอุปกรณ์ (Equipment):</code> งานติดตั้งชุดลูกถ้วยฉนวน, ป้ายเตือนอันตราย, และอุปกรณ์ประกอบหัวเสา
                                     </li>
-                                    <li><strong>แถบสรุปภาพรวมโครงการ (KPI Ribbon):</strong> แสดงสถานะความสำเร็จของ 4 หมวดงานเป็นร้อยละสะสม และแสดงสัญลักษณ์สถานะ 3 ระดับ: <span class="badge badge-success">เสร็จสมบูรณ์ (Completed)</span>, <span class="badge badge-warning">กำลังดำเนินการ (In Progress)</span>, <span class="badge badge-danger">ยังไม่เริ่ม (Not Started)</span></li>
-                                    <li><strong>ระบบเตือนคอขวดเขตระบบโครงข่าย (ROW Bottleneck Alerts):</strong> ไฮไลต์แถวต้นเสาที่มีปัญหาอุปสรรคเขตระบบโครงข่าย (Right of Way) เช่น รออนุญาตก่อสร้างร่วมกับกรมทางหลวง, ติดพื้นที่ ส.ป.ก., ป่าไม้, หรือปัญหาเวนคืนที่ดิน พร้อมแนวทางแก้ไข</li>
-                                    <li><strong>นำทางพิกัด GIS & ส่งออก Excel:</strong> คลิกพิกัดละติจูด/ลองจิจูดของต้นเสาเพื่อเปิดแผนที่ดาวเทียม Google Maps หรือคลิกปุ่ม <code>ส่งออก Excel (Pole Matrix)</code> เพื่อดาวน์โหลดรายงานสถานะรายต้นเสาไปใช้งานต่อทันที</li>
+                                    <li><strong>แถบสรุปภาพรวมโครงการ (KPI Ribbon):</strong> แสดงสถานะความสำเร็จของ 4 หมวดงานเป็นร้อยละสะสม และสลับสถานะรวดเร็ว (Cycle Status: <code>ยังไม่เริ่ม</code> &rarr; <code>กำลังทำ</code> &rarr; <code>แล้วเสร็จ</code> &rarr; <code>ติดปัญหา</code>)</li>
+                                    <li><strong>ระบบเตือนคอขวดเขตระบบโครงข่าย (ROW Bottleneck Alerts):</strong> แถบ Spotlight แจ้งเตือนเสาที่ติดปัญหาเขตระบบโครงข่าย (Right of Way) เช่น แนวสายสื่อสาร Hot-Line, เจรจาชาวบ้าน, หรือแนวท่อใต้ดิน</li>
+                                    <li><strong>นำทางพิกัด GIS & ส่งออก Excel:</strong> คลิกพิกัดละติจูด/ลองจิจูดของต้นเสาเพื่อเปิดแผนที่ดาวเทียม Google Maps หรือคลิกปุ่ม <code>ส่งออก Excel (Pole Matrix)</code> เพื่อดาวน์โหลดรายงานสถานะรายต้นเสา (.xlsx) ไปใช้งานต่อทันที</li>
+                                </ul>
+                            </div>
+
+                            <!-- 3.4 Punch List & Defect Management -->
+                            <div class="manual-section-box mt-3">
+                                <h3><i class="fa-solid fa-clipboard-check" style="color: #e74c3c;"></i> 3.4 ระบบบริหารจัดการรายการตรวจรับและข้อบกพร่อง (Punch List & Defect Management)</h3>
+                                <p>เข้าใช้งานผ่านแท็บ <strong>"รายการตรวจรับ (Punch List)"</strong> เพื่อควบคุมคุณภาพงานก่อสร้างและส่งมอบงานตามมาตรฐาน กฟภ.:</p>
+                                <ul class="manual-bullet-list">
+                                    <li><strong>การบันทึกข้อบกพร่องใหม่ (Add Punch Item):</strong> ช่างคุมงาน/ผู้ตรวจรับระบุชื่องานก่อสร้าง หมวดหมู่ WBS กำหนดระดับความเร่งด่วน (Critical, High, Medium, Low) วันที่ครบกำหนดแก้ไข และอัปโหลดภาพถ่ายหลักฐานก่อนแก้ไข (Before Photo) พร้อมประทับตราลายน้ำ GPS อัตโนมัติ</li>
+                                    <li><strong>การดำเนินการแก้ไขและรายงานผล (Resolve Note & After Photo):</strong> ผู้รับเหมา/ผู้รับผิดชอบเมื่อแก้ไขเสร็จสิ้น เข้าสู่ระบบเพื่อพิมพ์บันทึกรายละเอียดการแก้ไข (Resolution Notes) และแนบภาพถ่ายยืนยันหลังการแก้ไข (After Photo)</li>
+                                    <li><strong>เปรียบเทียบภาพ ก่อน-หลัง (Before / After Comparison):</strong> แสดงภาพคู่ก่อนและหลังแก้ไขแบบประกบข้าง เพื่อให้คณะกรรมการตรวจรับตรวจสอบความเรียบร้อยได้อย่างชัดเจน</li>
+                                    <li><strong>กระบวนการตรวจรับและอนุมัติ (Committee Approval / Reopen):</strong> คณะกรรมการตรวจการจ้างสามารถกดอนุมัติปิดรายการ (Approved / Closed) เมื่อผ่านเกณฑ์ หรือส่งกลับให้แก้ไขซ้ำ (Reopened) พร้อมระบุเหตุผลหากยังไม่ได้มาตรฐาน</li>
                                 </ul>
                             </div>
 
@@ -2124,10 +2148,17 @@
                             </div>
 
                             <div class="manual-section-box mt-3">
-                                <h3><i class="fa-solid fa-stamp" style="color: #27ae60;"></i> 2. ระบบประทับลายน้ำ GPS บนภาพถ่าย (Anti-Tamper Watermark)</h3>
+                                <h3><i class="fa-solid fa-stamp" style="color: #27ae60;"></i> 2. ระบบประทับลายน้ำ GPS ป้องกันการปลอมแปลง (Watermark Engine v4.0)</h3>
                                 <p>
-                                    ระบบจะดึงพิกัด GPS ละติจูด-ลองจิจูดจากอุปกรณ์ วันที่ เวลา และสังกัด กฟภ. มาประทับลงบนมุมล่างของภาพถ่ายโดยอัตโนมัติ เพื่อยืนยันว่าเป็นภาพถ่ายจริงที่บันทึกจากสถานที่ก่อสร้างสถานีไฟฟ้า
+                                    เมื่ออัปโหลดรูปภาพผ่านระบบรายงานความก้าวหน้า หรือระบบ Punch List ระบบจะประมวลผลผ่าน <strong>Watermark Engine v4.0</strong> โดยอัตโนมัติ:
                                 </p>
+                                <ul class="manual-bullet-list">
+                                    <li><strong>ตราสัญลักษณ์และสังกัด กฟภ.:</strong> ป้าย Badge ตราสัญลักษณ์ กฟภ. สีม่วง-ทอง และชื่อสถานีไฟฟ้า/โครงการที่รับผิดชอบ</li>
+                                    <li><strong>วัน-เวลาทางการไทย:</strong> ประทับวัน เดือน ปี พ.ศ. และเวลาถึงระดับวินาที (เช่น <code>18 ต.ค. 2569 เวลา 10:45:20 น.</code>)</li>
+                                    <li><strong>ชื่อ-รหัสพนักงาน:</strong> ดึงตัวตนผู้ปฏิบัติงานและตำแหน่งจากระบบยืนยันตัวตน กฟภ. โดยตรง</li>
+                                    <li><strong>พิกัดดาวเทียม GPS ละเอียดสูง:</strong> ละติจูด-ลองจิจูดทศนิยม 6 ตำแหน่ง พร้อมตรวจสอบรัศมีโครงการ</li>
+                                    <li><strong>การบีบอัดภาพอัจฉริยะ (Smart Compression):</strong> ย่อภาพขนาดมาตรฐาน 900x900 px คุณภาพสูง ขนาดไฟล์เพียง 35–45 KB ช่วยประหยัดพื้นที่และส่งข้อมูลหน้างานได้รวดเร็วแม้สัญญาณอินเทอร์เน็ตจำกัด</li>
+                                </ul>
                             </div>
 
                             <div class="manual-section-box mt-3">
