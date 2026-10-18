@@ -417,7 +417,7 @@ window.loadProjects = async function () {
                 let pEot = Array.isArray(dbProj.eot) ? dbProj.eot : [];
                 if (pEot.length === 0 && pDetails.includes('[EOT:')) {
                     try {
-                        const mEot = pDetails.match(/\[EOT:(.*?)\]/);
+                        const mEot = pDetails.match(/\[EOT:([\s\S]*?)\]/);
                         if (mEot && mEot[1]) {
                             pEot = JSON.parse(decodeURIComponent(mEot[1]));
                             pDetails = pDetails.replace(mEot[0], '');
@@ -429,7 +429,7 @@ window.loadProjects = async function () {
                 let pPunchList = Array.isArray(dbProj.punch_list) ? dbProj.punch_list : [];
                 if (pPunchList.length === 0 && pDetails.includes('[PUNCH:')) {
                     try {
-                        const mPunch = pDetails.match(/\[PUNCH:(.*?)\]/);
+                        const mPunch = pDetails.match(/\[PUNCH:([\s\S]*?)\]/);
                         if (mPunch && mPunch[1]) {
                             pPunchList = JSON.parse(decodeURIComponent(mPunch[1]));
                             pDetails = pDetails.replace(mPunch[0], '');
@@ -441,7 +441,7 @@ window.loadProjects = async function () {
                 let pBeforeAfter = Array.isArray(dbProj.before_after) ? dbProj.before_after : [];
                 if (pBeforeAfter.length === 0 && pDetails.includes('[BA:')) {
                     try {
-                        const mBA = pDetails.match(/\[BA:(.*?)\]/);
+                        const mBA = pDetails.match(/\[BA:([\s\S]*?)\]/);
                         if (mBA && mBA[1]) {
                             pBeforeAfter = JSON.parse(decodeURIComponent(mBA[1]));
                             pDetails = pDetails.replace(mBA[0], '');
@@ -1466,9 +1466,9 @@ window.saveProjects = async function (projectId = null) {
                 .replace(/\[LAT:.*?\]/g, '')
                 .replace(/\[LNG:.*?\]/g, '')
                 .replace(/\[YEAR:.*?\]/g, '')
-                .replace(/\[EOT:.*?\]/g, '')
-                .replace(/\[PUNCH:.*?\]/g, '')
-                .replace(/\[BA:.*?\]/g, '')
+                .replace(/\[EOT:[\s\S]*?\]/g, '')
+                .replace(/\[PUNCH:[\s\S]*?\]/g, '')
+                .replace(/\[BA:[\s\S]*?\]/g, '')
                 .trim();
 
             const latStr = (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude)) ? p.latitude : '';

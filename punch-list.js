@@ -647,9 +647,20 @@
                             return resolve(fallbackDataUrl);
                         }
 
+                        let isResolved = false;
+                        const safeResolve = (val) => {
+                            if (!isResolved) {
+                                isResolved = true;
+                                resolve(val || fallbackDataUrl);
+                            }
+                        };
+                        const safetyTimer = setTimeout(() => {
+                            safeResolve(fallbackDataUrl);
+                        }, 3500);
+
                         try {
                             canvas.toBlob(async (blob) => {
-                                if (!blob) return resolve(fallbackDataUrl);
+                                if (!blob) return safeResolve(fallbackDataUrl);
                                 try {
                                     const fileName = `punch_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
                                     const folderDate = new Date().toISOString().split('T')[0];
@@ -658,19 +669,20 @@
                                     const { data, error } = await window.db.storage.from('project-images').upload(filePath, blob, { contentType: 'image/jpeg' });
                                     if (error) {
                                         console.warn('[PunchList] Storage upload failed, falling back to dataURL:', error.message);
-                                        return resolve(fallbackDataUrl);
+                                        return safeResolve(fallbackDataUrl);
                                     }
 
                                     const { data: { publicUrl } } = window.db.storage.from('project-images').getPublicUrl(filePath);
-                                    resolve(publicUrl || fallbackDataUrl);
+                                    clearTimeout(safetyTimer);
+                                    safeResolve(publicUrl || fallbackDataUrl);
                                 } catch (uploadErr) {
                                     console.warn('[PunchList] Storage upload exception, falling back to dataURL:', uploadErr);
-                                    resolve(fallbackDataUrl);
+                                    safeResolve(fallbackDataUrl);
                                 }
                             }, 'image/jpeg', 0.70);
                         } catch (blobErr) {
                             console.warn('[PunchList] toBlob error, falling back to dataURL:', blobErr);
-                            resolve(fallbackDataUrl);
+                            safeResolve(fallbackDataUrl);
                         }
                     } catch (procErr) {
                         console.error('[PunchList] Image processing error:', procErr);
