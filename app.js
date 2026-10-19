@@ -2075,6 +2075,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ดึงข้อความในวงเล็บที่อยู่หลังชื่อ นามสกุล มาเป็นตำแหน่ง/หน้าที่ เช่น "นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))" -> "หผ.จส.กรย.(ก3)"
+    window.extractPositionFromName = function (nameStr) {
+        if (!nameStr || typeof nameStr !== 'string') return '';
+        const trimmed = nameStr.trim();
+        const match = trimmed.match(/\s*\((.+)\)\s*$/);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+        return '';
+    };
+
     window.getCurrentUserInfo = function () {
         let u = window.currentUser || {};
         
@@ -2124,12 +2135,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         let name = u.name || u.full_name || u.display_name || window.currentUserName || savedProfile?.name || matchedUser?.name || '';
         let position = u.position || window.currentUserPosition || savedProfile?.position || matchedUser?.position || '';
 
+        // ถ้าชื่อมีข้อความในวงเล็บต่อท้าย (เช่น "นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))") ให้นำข้อความในวงเล็บมาเป็นตำแหน่ง / หน้าที่
+        const parenPos = window.extractPositionFromName(name) || window.extractPositionFromName(u.name) || window.extractPositionFromName(window.currentUserName);
+        if (parenPos) {
+            position = parenPos;
+        }
+
         // ถ้ายังไม่มีชื่อแต่มีอีเมลล็อกอิน ให้สร้างชื่อที่เป็นมิตรจากอีเมลผู้ใช้งาน (ไม่สวมชื่อบุคคลอื่น)
         if (!name && email) {
             if (email === 'puwadol0527@gmail.com' || email === 'admin@pea.co.th') {
-                name = 'ภูวดล สุขศรี';
+                name = 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))';
                 if (!empId) empId = '500744';
-                if (!position) position = 'วิศวกร (Admin กบส.)';
+                position = 'หผ.จส.กรย.(ก3)';
             } else {
                 const prefix = email.split('@')[0];
                 const parts = prefix.split(/[._-]/).filter(Boolean);
@@ -2182,10 +2199,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             nameInput.value = info.name || '';
             nameInput.dataset.autoSynced = 'true';
         }
-        if (posInput && (force || !posInput.value || posInput.dataset.autoSynced !== 'false')) {
-            posInput.value = info.position || '';
-            posInput.dataset.autoSynced = 'true';
+        
+        // ตรวจสอบตำแหน่งจากข้อความในวงเล็บหลังชื่อ
+        const parenPos = window.extractPositionFromName(nameInput?.value || info.name);
+        if (posInput) {
+            if (parenPos && (force || !posInput.value || posInput.dataset.autoSynced !== 'false' || posInput.value.includes('Admin กบส.') || posInput.value.includes('วิศวกรควบคุมงาน') || posInput.value === 'ผู้ตรวจงาน กฟภ.')) {
+                posInput.value = parenPos;
+                posInput.dataset.autoSynced = 'true';
+            } else if (force || !posInput.value || posInput.dataset.autoSynced !== 'false') {
+                posInput.value = info.position || '';
+                posInput.dataset.autoSynced = 'true';
+            }
         }
+
         if (badge) {
             const role = info.role || 'editor';
             if (role === 'admin') {
@@ -2244,7 +2270,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 input.dataset.boundListener = 'true';
                 input.addEventListener('input', () => {
                     input.dataset.autoSynced = 'false';
-                    if (id === 'uploaderFullName' && namePreview) namePreview.textContent = input.value || info.name || 'ผู้ตรวจงาน กฟภ.';
+                    if (id === 'uploaderFullName') {
+                        if (namePreview) namePreview.textContent = input.value || info.name || 'ผู้ตรวจงาน กฟภ.';
+                        const pPos = window.extractPositionFromName(input.value);
+                        if (pPos) {
+                            const pInput = document.getElementById('uploaderPosition');
+                            if (pInput && (pInput.dataset.autoSynced !== 'false' || !pInput.value || pInput.value.includes('Admin กบส.') || pInput.value.includes('วิศวกรควบคุมงาน') || pInput.value === 'ผู้ตรวจงาน กฟภ.')) {
+                                pInput.value = pPos;
+                                pInput.dataset.autoSynced = 'true';
+                                if (posPreview) posPreview.textContent = pPos;
+                            }
+                        }
+                    }
                     if (id === 'uploaderEmpId' && empPreview) empPreview.textContent = input.value || '-';
                     if (id === 'uploaderPosition' && posPreview) posPreview.textContent = input.value || '-';
                     persistUserCustomInspector();
@@ -2647,6 +2684,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.currentUserEmpId = user.employee_id || '';
                 window.currentUserName = user.name || '';
                 window.currentUserPosition = user.position || '';
+                const pPos = (typeof window.extractPositionFromName === 'function') ? window.extractPositionFromName(user.name) : '';
+                if (pPos) {
+                    window.currentUserPosition = pPos;
+                    user.position = pPos;
+                }
                 window.currentUserEmail = user.email || '';
                 window.currentUserPermissions = user.permissions || {};
                 window.authenticatedRole = user.role;
@@ -2764,9 +2806,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // หากยังไม่มีชื่อ ให้สร้างชื่อที่เป็นมิตรจากอีเมลของตนเอง ไม่สวมชื่อผู้อื่น
                     if (!resolvedName && email) {
                         if (email === 'puwadol0527@gmail.com' || email === 'admin@pea.co.th') {
-                            resolvedName = 'ภูวดล สุขศรี';
+                            resolvedName = 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))';
                             if (!resolvedEmpId) resolvedEmpId = '500744';
-                            if (!resolvedPos) resolvedPos = 'วิศวกร (Admin กบส.)';
+                            resolvedPos = 'หผ.จส.กรย.(ก3)';
                         } else {
                             const prefix = email.split('@')[0];
                             const parts = prefix.split(/[._-]/).filter(Boolean);
@@ -2780,8 +2822,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
 
-                    const userRole = userRoleData.role.toLowerCase();
-                    if (!resolvedPos) {
+                    // ดึงตำแหน่งจากข้อความในวงเล็บที่อยู่หลังชื่อ นามสกุล
+                    const parenPos = window.extractPositionFromName(resolvedName);
+                    if (parenPos) {
+                        resolvedPos = parenPos;
+                    } else if (!resolvedPos) {
+                        const userRole = userRoleData.role.toLowerCase();
                         resolvedPos = (userRole === 'admin') ? 'วิศวกร (Admin กบส.)' : 'วิศวกรควบคุมงาน (Editor)';
                     }
 
