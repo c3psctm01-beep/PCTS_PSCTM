@@ -1862,14 +1862,18 @@
                                     </div>
 
                                     <!-- Hidden File Inputs -->
-                                    <input type="file" id="cameraDirectInput" accept="image/*" capture="environment" style="display: none;">
-                                    <input type="file" id="galleryMultiInput" accept="image/*" multiple style="display: none;">
-                                    <input type="file" class="file-input" multiple accept="image/*" style="display: none;">
+                                    <input type="file" id="cameraDirectInput" accept="image/*" capture="environment" style="display: none;" onchange="if(window.handlePhotoSelection) window.handlePhotoSelection(this.files);">
+                                    <input type="file" id="galleryMultiInput" accept="image/*" multiple style="display: none;" onchange="if(window.handlePhotoSelection) window.handlePhotoSelection(this.files);">
+                                    <input type="file" class="file-input" multiple accept="image/*" style="display: none;" onchange="if(window.handlePhotoSelection) window.handlePhotoSelection(this.files);">
 
                                     <!-- Drag & drop box สำหรับคอมพิวเตอร์ -->
-                                    <div class="file-upload-box" onclick="document.getElementById('galleryMultiInput').click()" style="padding: 18px 12px; margin-bottom: 12px; cursor: pointer; border-radius: 10px;">
-                                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; margin-bottom: 6px;"></i>
-                                        <p style="margin: 0; font-size: 12px;">หรือแตะที่นี่เพื่อเลือกรูปภาพเพิ่มเติม (สามารถเลือกหลายภาพได้)</p>
+                                    <div class="file-upload-box" onclick="document.getElementById('galleryMultiInput').click()" 
+                                         ondragover="event.preventDefault(); this.style.borderColor='var(--pea-purple)'; this.style.backgroundColor='rgba(116, 44, 129, 0.05)';"
+                                         ondragleave="this.style.borderColor=''; this.style.backgroundColor='';"
+                                         ondrop="event.preventDefault(); this.style.borderColor=''; this.style.backgroundColor=''; if(event.dataTransfer && event.dataTransfer.files && window.handlePhotoSelection) window.handlePhotoSelection(event.dataTransfer.files);"
+                                         style="padding: 18px 12px; margin-bottom: 12px; cursor: pointer; border-radius: 10px; transition: all 0.2s ease;">
+                                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; margin-bottom: 6px; color: var(--pea-purple);"></i>
+                                        <p style="margin: 0; font-size: 12px; font-weight: 500;">หรือแตะ/ลากวางรูปภาพที่นี่ (สามารถเลือกได้หลายภาพพร้อมกัน)</p>
                                     </div>
 
                                     <!-- ส่วนแสดงรูปภาพที่เลือกพร้อมลบรายภาพ -->

@@ -4233,6 +4233,10 @@ body:has(#manual-view.active) .mascot-widget {
     display: none !important;
 }
 
+body:has(#editor-view.active) .mascot-widget {
+    bottom: 95px !important;
+}
+
 .manual-a4-container {
     max-width: 860px;
     margin: 0 auto;

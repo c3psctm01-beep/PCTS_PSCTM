@@ -471,7 +471,25 @@ window.loadProjects = async function () {
                     workType: pWorkType || window.inferProjectWorkType(dbProj),
                     type: pType,
                     tasks: dbProj.tasks || [],
-                    gallery: (dbProj.gallery && dbProj.gallery.length > 0) ? dbProj.gallery : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []),
+                    gallery: (() => {
+                        let gal = (dbProj.gallery && Array.isArray(dbProj.gallery) && dbProj.gallery.length > 0)
+                            ? dbProj.gallery
+                            : (defaultProjects.find(dp => dp.id === dbProj.id)?.gallery || []);
+                        try {
+                            const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+                            const cp = cached.find(c => c.id === dbProj.id);
+                            if (cp && Array.isArray(cp.gallery) && cp.gallery.length > 0) {
+                                const existingUrls = new Set(gal.map(g => g.url));
+                                cp.gallery.forEach(cg => {
+                                    if (cg && cg.url && !existingUrls.has(cg.url)) {
+                                        gal.push(cg);
+                                        existingUrls.add(cg.url);
+                                    }
+                                });
+                            }
+                        } catch (_) {}
+                        return gal;
+                    })(),
                     eot: pEot,
                     punchList: pPunchList,
                     beforeAfter: pBeforeAfter,
@@ -3885,19 +3903,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handlePhotoSelection = function (files) {
         if (!files || files.length === 0) return;
+        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
+
+        const fileList = Array.from(files);
+
         const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
         const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
         const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
         const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
 
-        Array.from(files).forEach((file) => {
-            if (!file.type || !file.type.startsWith('image/')) return;
+        fileList.forEach((file) => {
+            const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|gif|bmp|heic|svg)$/i.test(file.name || '') || (!file.type && file.size > 0);
+            if (!isImg) return;
             const reader = new FileReader();
             reader.onload = (e) => {
+                const dataUrl = e.target?.result;
+                if (!dataUrl) return;
+
                 const photoObj = {
                     id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
                     file: file,
-                    dataUrl: e.target.result,
+                    dataUrl: dataUrl,
                     uploaderEmpId: uploaderEmpId,
                     uploaderName: uploaderName,
                     uploaderPosition: uploaderPosition
@@ -3905,12 +3931,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.mobileReportPhotos.push(photoObj);
                 window.renderPhotoQueuePreviews();
             };
+            reader.onerror = (err) => {
+                console.warn('FileReader error for photo selection:', err);
+            };
             reader.readAsDataURL(file);
         });
+
+        // Delay input reset so async FileReader can obtain native stream handles
+        setTimeout(() => {
+            const camInput = document.getElementById('cameraDirectInput');
+            const galInput = document.getElementById('galleryMultiInput');
+            const legInput = document.querySelector('#editorForm .file-input');
+            if (camInput) camInput.value = '';
+            if (galInput) galInput.value = '';
+            if (legInput) legInput.value = '';
+        }, 1500);
     };
 
     window.removePhotoFromQueue = function (index) {
-        if (index >= 0 && index < window.mobileReportPhotos.length) {
+        if (Array.isArray(window.mobileReportPhotos) && index >= 0 && index < window.mobileReportPhotos.length) {
             window.mobileReportPhotos.splice(index, 1);
             window.renderPhotoQueuePreviews();
         }
@@ -3933,9 +3972,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const countBadge = document.getElementById('photoQueueCount');
         if (!previewArea) return;
 
+        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
         const count = window.mobileReportPhotos.length;
         if (countBadge) countBadge.textContent = count;
-        if (queueSection) queueSection.style.display = count > 0 ? 'block' : 'none';
+        if (queueSection) {
+            queueSection.style.display = count > 0 ? 'block' : 'none';
+        }
 
         previewArea.innerHTML = '';
         window.mobileReportPhotos.forEach((item, idx) => {
@@ -3947,8 +3989,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button type="button" class="photo-queue-del-btn" onclick="removePhotoFromQueue(${idx})" title="ลบภาพนี้">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
-                <div class="photo-queue-wm-tag">
-                    <i class="fa-solid fa-stamp"></i> PEA ลายน้ำมาตรฐาน
+                <div class="photo-queue-wm-tag" title="ผู้ตรวจ: ${item.uploaderName} (${item.uploaderEmpId})">
+                    <i class="fa-solid fa-stamp"></i> PEA: ${item.uploaderName}
                 </div>
             `;
             previewArea.appendChild(card);
@@ -3959,7 +4001,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cameraDirectInput')?.addEventListener('change', function () {
         if (this.files && this.files.length > 0) {
             window.handlePhotoSelection(this.files);
-            this.value = ''; // Reset so the user can immediately take another photo
         }
     });
 
@@ -3967,7 +4008,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('galleryMultiInput')?.addEventListener('change', function () {
         if (this.files && this.files.length > 0) {
             window.handlePhotoSelection(this.files);
-            this.value = '';
         }
     });
 
@@ -3975,7 +4015,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('#editorForm .file-input')?.addEventListener('change', function () {
         if (this.files && this.files.length > 0) {
             window.handlePhotoSelection(this.files);
-            this.value = '';
         }
     });
 
@@ -5783,59 +5822,71 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
 
                 const processUpdate = async () => {
                     p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    // Always cache locally to prevent data loss under any network condition
                     try {
-                        const success = await saveProjects(p.id);
-                        if (success !== false) {
-                            window.renderTables();
-                            alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
-                            // NOTIFICATION
-                            addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
+                        localStorage.setItem('pcts_projects_cache', JSON.stringify(projects));
+                        localStorage.setItem('pcts_projects', JSON.stringify(projects));
+                    } catch (lsErr) {
+                        console.warn('localStorage save warning:', lsErr);
+                    }
 
-                            if (typeof window.clearPhotoQueue === 'function') {
-                                window.clearPhotoQueue();
-                            } else {
-                                const prevArea = document.getElementById('imagePreviewArea');
-                                if (prevArea) prevArea.innerHTML = '';
-                            }
-
-                            document.getElementById('editorForm').reset();
-                            if (typeof window.setEditorDatePreset === 'function') {
-                                window.setEditorDatePreset('today');
-                            }
-
-                            const edInput = document.getElementById('taskActualInput');
-                            if (edInput) {
-                                edInput.dataset.currentActual = '';
-                                edInput.placeholder = 'เช่น 50.00';
-                            }
-                            const edBadge = document.getElementById('editorCurrentProgressBadge');
-                            if (edBadge) edBadge.style.display = 'none';
-                            const edWarn = document.getElementById('editorProgressWarn');
-                            if (edWarn) edWarn.style.display = 'none';
-                            const meterBox = document.getElementById('progressMeterBox');
-                            if (meterBox) meterBox.style.display = 'none';
-                        } else {
-                            p.gallery.pop(); // Revert the last push if save failed
+                    // Keep currentProjectViewData synchronized if user is in details view
+                    if (window.currentProjectViewData && window.currentProjectViewData.id === p.id) {
+                        window.currentProjectViewData.gallery = p.gallery;
+                        window.currentProjectViewData.tasks = p.tasks;
+                        if (typeof window.renderGalleryTab === 'function') {
+                            window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
                         }
-                    } catch (e) {
-                        console.error(e);
-                        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + e.message);
-                        p.gallery.pop(); // Revert the last push
+                        if (typeof window.initProjectCalendar === 'function') {
+                            window.initProjectCalendar();
+                        }
+                    }
+
+                    try {
+                        await saveProjects(p.id);
+                    } catch (saveErr) {
+                        console.warn('Cloud sync note in editor submit:', saveErr);
                     } finally {
                         submitBtn.innerHTML = originalBtnText;
                         submitBtn.disabled = false;
                     }
+
+                    window.renderTables();
+                    alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
+                    addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
+
+                    if (typeof window.clearPhotoQueue === 'function') {
+                        window.clearPhotoQueue();
+                    } else {
+                        const prevArea = document.getElementById('imagePreviewArea');
+                        if (prevArea) prevArea.innerHTML = '';
+                    }
+
+                    document.getElementById('editorForm').reset();
+                    if (typeof window.setEditorDatePreset === 'function') {
+                        window.setEditorDatePreset('today');
+                    }
+
+                    const edInput = document.getElementById('taskActualInput');
+                    if (edInput) {
+                        edInput.dataset.currentActual = '';
+                        edInput.placeholder = 'เช่น 50.00';
+                    }
+                    const edBadge = document.getElementById('editorCurrentProgressBadge');
+                    if (edBadge) edBadge.style.display = 'none';
+                    const edWarn = document.getElementById('editorProgressWarn');
+                    if (edWarn) edWarn.style.display = 'none';
+                    const meterBox = document.getElementById('progressMeterBox');
+                    if (meterBox) meterBox.style.display = 'none';
                 };
 
                 // รองรับรูปภาพจากคิวบนมือถือ (window.mobileReportPhotos) และ fallback input file
                 const photosToProcess = (window.mobileReportPhotos && window.mobileReportPhotos.length > 0)
-                    ? window.mobileReportPhotos.map(item => item.file)
-                    : (fileInput?.files && fileInput.files.length > 0 ? Array.from(fileInput.files) : []);
+                    ? [...window.mobileReportPhotos]
+                    : (fileInput?.files && fileInput.files.length > 0 ? Array.from(fileInput.files).map(f => ({ file: f, dataUrl: '' })) : []);
 
                 if (photosToProcess.length > 0) {
-                    let filesProcessed = 0;
-                    const getCanvasBlob = (canvas) => new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.65));
-
                     // ดึงข้อมูลตัวตนผู้ตรวจงาน / ผู้อัปโหลดภาพ (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
                     const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                     const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
@@ -5845,97 +5896,116 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                     // ตรวจสอบการเปิดใช้งานลายน้ำ (ไม่ระบุ GPS)
                     const isWatermarkEnabled = document.getElementById('enableGpsWatermark') ? document.getElementById('enableGpsWatermark').checked : true;
 
-                    photosToProcess.forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const img = new Image();
-                            img.onload = async () => {
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 900;
-                                const MAX_HEIGHT = 900;
-                                let width = img.width;
-                                let height = img.height;
-                                if (width > height) {
-                                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                                } else {
-                                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                                }
-                                canvas.width = width;
-                                canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
+                    for (const item of photosToProcess) {
+                        try {
+                            let sourceDataUrl = item.dataUrl;
+                            if (!sourceDataUrl && item.file) {
+                                sourceDataUrl = await new Promise((resolve) => {
+                                    const r = new FileReader();
+                                    r.onload = e => resolve(e.target?.result || '');
+                                    r.onerror = () => resolve('');
+                                    r.readAsDataURL(item.file);
+                                });
+                            }
+                            if (!sourceDataUrl) continue;
 
-                                // ประทับลายน้ำ กฟภ. วันที่ เวลา และ ข้อมูลผู้ตรวจงาน (ไม่ระบุ GPS เพื่อความยืดหยุ่น)
-                                if (isWatermarkEnabled && typeof window.applyGpsWatermark === 'function') {
-                                    try {
-                                        await window.applyGpsWatermark(canvas, {
-                                            projectName: p.name,
-                                            taskName: t.name,
-                                            reportDate: reportDate,
-                                            empId: uploaderEmpId,
-                                            uploaderName: uploaderName,
-                                            uploaderPosition: uploaderPosition
-                                        });
-                                    } catch (wmErr) {
-                                        console.warn('[Watermark] เกิดข้อผิดพลาดในการประทับลายน้ำ:', wmErr);
-                                    }
-                                }
+                            // Load image into canvas
+                            const img = await new Promise((resolve) => {
+                                const im = new Image();
+                                im.onload = () => resolve(im);
+                                im.onerror = () => resolve(null);
+                                im.src = sourceDataUrl;
+                            });
+                            if (!img) continue;
 
-                                const blob = await getCanvasBlob(canvas);
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 900;
+                            const MAX_HEIGHT = 900;
+                            let width = img.width || 800;
+                            let height = img.height || 600;
+                            if (width > height) {
+                                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                            } else {
+                                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                            }
+                            canvas.width = Math.round(width);
+                            canvas.height = Math.round(height);
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                                const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
-                                const folderDate = new Date().toISOString().split('T')[0];
-                                const filePath = `${folderDate}/${fileName}`;
-
-                                let finalPhotoUrl = '';
+                            // ประทับลายน้ำ กฟภ. วันที่ เวลา และ ข้อมูลผู้ตรวจงาน (ไม่ระบุ GPS เพื่อความยืดหยุ่น)
+                            if (isWatermarkEnabled && typeof window.applyGpsWatermark === 'function') {
                                 try {
-                                    const { data: uploadData, error: uploadError } = await db
-                                        .storage
-                                        .from('project-images')
-                                        .upload(filePath, blob, { contentType: 'image/jpeg' });
-
-                                    if (uploadError) {
-                                        console.warn('[Storage] Upload failed, falling back to compressed dataURL:', uploadError.message);
-                                        finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.65);
-                                    } else {
-                                        const { data: { publicUrl } } = db
-                                            .storage
-                                            .from('project-images')
-                                            .getPublicUrl(filePath);
-                                        finalPhotoUrl = publicUrl || canvas.toDataURL('image/jpeg', 0.65);
-                                    }
-                                } catch (storageEx) {
-                                    console.warn('[Storage] Upload exception, falling back to compressed dataURL:', storageEx);
-                                    finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.65);
-                                }
-
-                                if (finalPhotoUrl) {
-                                    const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
-                                    const baseDesc = desc || `อัปเดตงาน: ${t.name}`;
-                                    const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
-
-                                    p.gallery.push({
-                                        url: finalPhotoUrl,
-                                        date: reportDate,
-                                        desc: fullDesc,
-                                        taskId: t.id,
+                                    await window.applyGpsWatermark(canvas, {
+                                        projectName: p.name,
                                         taskName: t.name,
-                                        uploaderEmpId: uploaderEmpId,
+                                        reportDate: reportDate,
+                                        empId: uploaderEmpId,
                                         uploaderName: uploaderName,
-                                        uploaderPosition: uploaderPosition,
-                                        uploaderRole: window.currentRole || 'editor'
+                                        uploaderPosition: uploaderPosition
                                     });
+                                } catch (wmErr) {
+                                    console.warn('[Watermark] Notice:', wmErr);
                                 }
+                            }
 
-                                filesProcessed++;
-                                if (filesProcessed === photosToProcess.length) {
-                                    processUpdate();
+                            const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                            let finalPhotoUrl = fallbackDataUrl;
+
+                            // อัปโหลดเข้า Supabase Storage พร้อมตัวจับเวลา Timeout 3.5 วินาที
+                            try {
+                                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.65));
+                                if (blob && window.db && window.db.storage) {
+                                    const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                                    const folderDate = new Date().toISOString().split('T')[0];
+                                    const filePath = `${folderDate}/${fileName}`;
+
+                                    const uploadPromise = (async () => {
+                                        try {
+                                            const { error: uploadError } = await window.db.storage
+                                                .from('project-images')
+                                                .upload(filePath, blob, { contentType: 'image/jpeg' });
+                                            if (uploadError) return null;
+                                            const { data: { publicUrl } } = window.db.storage
+                                                .from('project-images')
+                                                .getPublicUrl(filePath);
+                                            return publicUrl;
+                                        } catch (_) {
+                                            return null;
+                                        }
+                                    })();
+
+                                    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3500));
+                                    const storageUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                                    if (storageUrl) {
+                                        finalPhotoUrl = storageUrl;
+                                    }
                                 }
-                            };
-                            img.src = event.target.result;
-                        };
-                        reader.readAsDataURL(file);
-                    });
+                            } catch (stErr) {
+                                console.warn('[Storage] Used fallback dataURL:', stErr);
+                            }
+
+                            const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
+                            const baseDesc = desc || `อัปเดตงาน: ${t.name}`;
+                            const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
+
+                            p.gallery.push({
+                                url: finalPhotoUrl,
+                                date: reportDate,
+                                desc: fullDesc,
+                                taskId: t.id,
+                                taskName: t.name,
+                                uploaderEmpId: uploaderEmpId,
+                                uploaderName: uploaderName,
+                                uploaderPosition: uploaderPosition,
+                                uploaderRole: window.currentRole || 'editor'
+                            });
+                        } catch (itemErr) {
+                            console.error('Error processing photo item:', itemErr);
+                        }
+                    }
+
+                    await processUpdate();
                 } else {
                     const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                     const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
@@ -5959,7 +6029,7 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
                             uploaderRole: window.currentRole || 'editor'
                         });
                     }
-                    processUpdate();
+                    await processUpdate();
                 }
             }
         }
@@ -6323,6 +6393,14 @@ window.openProjectTab = function (evt, tabName) {
         setTimeout(() => {
             if (typeof window.renderBeforeAfterTab === 'function') {
                 window.renderBeforeAfterTab(window.currentProjectViewData);
+            }
+        }, 30);
+    }
+
+    if (tabName === 'tabGallery') {
+        setTimeout(() => {
+            if (typeof window.renderGalleryTab === 'function') {
+                window.renderGalleryTab(window.currentProjectViewData, window.currentGalleryFilterTaskId || 'all');
             }
         }, 30);
     }
