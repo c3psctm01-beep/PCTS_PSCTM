@@ -9,39 +9,12 @@
     'use strict';
 
     /**
-     * ดึงพิกัด GPS ปัจจุบันผ่าน Geolocation API
+     * ดึงพิกัด GPS ปัจจุบันผ่าน Geolocation API (ปิดการระบุพิกัดในลายน้ำตามนโยบายระบบ)
      * @returns {Promise<{lat: number, lng: number, accuracy: number}|null>}
      */
-    window.getCurrentGpsCoordinates = function (timeoutMs = 5000) {
-        return new Promise((resolve) => {
-            if (!navigator.geolocation) {
-                console.warn('[Watermark] Geolocation API ไม่รองรับในเบราว์เซอร์นี้');
-                return resolve(null);
-            }
-
-            const options = {
-                enableHighAccuracy: true,
-                timeout: timeoutMs,
-                maximumAge: 10000
-            };
-
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const coords = {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy
-                    };
-                    console.log('[Watermark] ได้รับพิกัด GPS:', coords);
-                    resolve(coords);
-                },
-                (err) => {
-                    console.warn('[Watermark] ดึงพิกัด GPS ไม่สำเร็จ (' + err.code + '): ' + err.message);
-                    resolve(null);
-                },
-                options
-            );
-        });
+    window.getCurrentGpsCoordinates = function (timeoutMs = 0) {
+        // ไม่ระบุพิกัด GPS บนภาพถ่าย เนื่องจากผู้ควบคุมงานอาจอัปโหลดจากนอกสถานที่หรือสำนักงาน
+        return Promise.resolve(null);
     };
 
     /**
@@ -62,13 +35,14 @@
 
     /**
      * ประทับลายน้ำ (Watermark) ทางการ กฟภ. ลงบน Canvas ภาพถ่าย
+     * (ไม่ระบุพิกัด GPS เพื่อความยืดหยุ่นในการอัปโหลดภาพนอกสถานที่)
      * @param {HTMLCanvasElement} canvas - Canvas ที่มีภาพวาดอยู่แล้ว
      * @param {Object} options - ข้อมูลประกอบลายน้ำ
      * @param {string} options.projectName - ชื่อโครงการ/สถานีไฟฟ้า
      * @param {string} options.taskName - ชื่องานย่อย
      * @param {string} options.reportDate - วันที่รายงาน
      * @param {string} options.empId - รหัสพนักงานผู้ตรวจงาน
-     * @param {Object|null} options.coords - { lat, lng }
+     * @param {string} options.footerOrg - ข้อความสังกัด/หน่วยงานด้านล่างซ้าย
      */
     window.applyGpsWatermark = async function (canvas, options = {}) {
         if (!canvas) return;
@@ -88,19 +62,15 @@
 
         if (!empId || !uploaderName || !uploaderPosition) {
             const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
-            if (!empId) empId = userInfo.employee_id || window.currentUserEmpId || (window.currentRole === 'admin' ? '500744' : '515883');
-            if (!uploaderName) uploaderName = userInfo.name || window.currentUserName || (window.currentRole === 'admin' ? 'ภูวดล สุขศรี' : 'จิรพล ภัทรเสรี');
-            if (!uploaderPosition) uploaderPosition = userInfo.position || window.currentUserPosition || (window.currentRole === 'admin' ? 'วิศวกร (Admin กบส.)' : 'ผู้ควบคุมงาน (Editor)');
+            if (!empId) empId = userInfo.employee_id || window.currentUserEmpId || '';
+            if (!uploaderName) uploaderName = userInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
+            if (!uploaderPosition) uploaderPosition = userInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
         }
 
         const timestampText = formatThaiTimestamp(new Date());
 
-        let gpsText = 'GPS: ไม่พบสัญญาณพิกัดหน้างาน';
-        if (options.coords && options.coords.lat && options.coords.lng) {
-            const latFixed = options.coords.lat.toFixed(6);
-            const lngFixed = options.coords.lng.toFixed(6);
-            gpsText = `GPS: ${latFixed}, ${lngFixed}`;
-        }
+        // ข้อความสังกัด/หน่วยงานด้านล่างซ้าย (ไม่ระบุพิกัด GPS เพื่อความยืดหยุ่นในการอัปโหลดภาพนอกสถานที่)
+        const footerLeftText = options.footerOrg || '🏛️ การไฟฟ้าส่วนภูมิภาค (PEA) • งานก่อสร้างสถานีไฟฟ้า';
 
         // คำนวณความสูงของแถบลายน้ำตามสัดส่วนภาพ (3 บรรทัดชัดเจน)
         const bannerHeight = Math.max(88, Math.round(height * 0.165));
@@ -194,12 +164,12 @@
         ctx.font = `600 ${smallFontSize}px 'Sarabun', sans-serif`;
         ctx.fillText(`👤 ${uploaderName} (รหัส: ${empId})`, width - paddingX, line2Y);
 
-        // 5. แถวล่าง: พิกัด GPS (ซ้าย) vs ตำแหน่ง/สังกัด (ขวา)
+        // 5. แถวล่าง: สังกัด/องค์กร กฟภ. (ซ้าย) vs ตำแหน่ง/หน้าที่ (ขวา)
         const line3Y = bannerY + (bannerHeight * 0.86);
         ctx.textAlign = 'left';
         ctx.font = `500 ${smallFontSize}px 'Sarabun', sans-serif`;
         ctx.fillStyle = '#FCD34D'; // สีเหลืองทองเด่นชัด
-        ctx.fillText(`📍 ${gpsText}`, paddingX, line3Y);
+        ctx.fillText(footerLeftText, paddingX, line3Y);
 
         // ขวาแถว 3: ตำแหน่ง/หน้าที่
         ctx.textAlign = 'right';

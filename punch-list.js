@@ -620,13 +620,9 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // ประทับลายน้ำ GPS อัตโนมัติถ้ามีฟังก์ชัน
+                        // ประทับลายน้ำ กฟภ. อัตโนมัติ (ไม่ระบุ GPS)
                         if (typeof window.applyGpsWatermark === 'function') {
                             try {
-                                let coords = null;
-                                if (typeof window.getCurrentGpsCoordinates === 'function') {
-                                    coords = await window.getCurrentGpsCoordinates(3000);
-                                }
                                 const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                                 await window.applyGpsWatermark(canvas, {
                                     projectName: project ? project.name : '',
@@ -634,7 +630,7 @@
                                     empId: userInfo.employee_id,
                                     uploaderName: userInfo.name,
                                     uploaderPosition: userInfo.position,
-                                    coords
+                                    footerOrg: '🏛️ การไฟฟ้าส่วนภูมิภาค (PEA) • Punch List'
                                 });
                             } catch (watermarkErr) {
                                 console.warn('[PunchList] Watermark apply skipped or error:', watermarkErr);

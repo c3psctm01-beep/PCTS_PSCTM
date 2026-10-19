@@ -920,6 +920,7 @@
                                 </div>
                             </div>
                             <div class="project-header-actions">
+                                <button class="btn role-editor" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;" onclick="openEditorForCurrentProject()" title="รายงานความก้าวหน้าโครงการนี้"><i class="fa-solid fa-camera"></i> รายงานความก้าวหน้า</button>
                                 <button class="btn role-editor" onclick="openProjectModal(window.currentProjectViewData?.id || null)" title="แก้ไขข้อมูลโครงการ / เปลี่ยนประเภทงาน" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขโครงการ</button>
                                 <button class="btn role-editor" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); color: white;" onclick="openWorkReportModal()"><i class="fa-solid fa-clipboard-check"></i> รายงานผลการปฏิบัติงาน (PDF)</button>
                                 <button class="btn" style="background-color: #34495e; color: white;" onclick="openPrintModal()"><i class="fa-solid fa-print"></i> พิมพ์รายงาน (PDF)</button>
@@ -1628,112 +1629,286 @@
                     </div>
                 </section>
 
-                <!-- Editor View -->
+                <!-- Editor View (Mobile-Optimized Progress Reporting System) -->
                 <section id="editor-view" class="view-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                        <h1 class="page-title" style="margin-bottom: 0;">รายงานความก้าวหน้าประจำวัน (Editor)</h1>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-primary" onclick="openWorkReportModal()" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%);">
-                                <i class="fa-solid fa-file-invoice"></i> รายงานผลงานประจำวัน/ช่วงเวลา (PDF)
+                        <div>
+                            <h1 class="page-title" style="margin-bottom: 2px;">
+                                <i class="fa-solid fa-mobile-screen-button" style="color: var(--pea-purple); margin-right: 6px;"></i> รายงานความก้าวหน้าประจำวัน (Editor)
+                            </h1>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">
+                                บันทึก % ผลงาน ถ่ายภาพหน้างานต่อเนื่อง พร้อมประทับตราทางการ กฟภ. (ไม่ระบุ GPS สำหรับความยืดหยุ่น)
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" onclick="openWorkReportModal()" style="background: linear-gradient(135deg, #742C81 0%, #5a1e66 100%); font-size: 12px; padding: 7px 12px;">
+                                <i class="fa-solid fa-file-invoice"></i> รายงานผลงาน PDF
                             </button>
-                            <button class="btn btn-secondary" onclick="document.getElementById('aiModal').style.display='flex'" style="background-color: var(--pea-purple); color: white;">
-                                <i class="fa-solid fa-robot"></i> ใช้ AI ประเมินจากภาพ CCTV
+                            <button class="btn btn-secondary" onclick="document.getElementById('aiModal').style.display='flex'" style="background-color: var(--pea-purple); color: white; font-size: 12px; padding: 7px 12px;">
+                                <i class="fa-solid fa-robot"></i> AI ประเมิน CCTV
                             </button>
                         </div>
                     </div>
-                    <div class="card mt-4">
-                        <form id="editorForm" class="pea-form">
-                            <div class="form-group">
-                                <label>เลือกโครงการ</label>
-                                <select id="editorProjectSelect" required>
-                                    <!-- Options injected via JS -->
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>เลือกแผนงานย่อย (Task)</label>
-                                <select id="editorTaskSelect" required>
-                                    <option value="" disabled selected>-- กรุณาเลือกโครงการก่อน --</option>
-                                </select>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>วันที่รายงาน</label>
-                                    <input type="date" id="reportDate" required>
+
+                    <div class="mobile-report-card">
+                        <!-- Banner Header -->
+                        <div class="mobile-report-banner">
+                            <div class="mobile-report-banner-left">
+                                <div class="mobile-report-banner-icon">
+                                    <i class="fa-solid fa-camera"></i>
                                 </div>
-                                <div class="form-group">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                        <label style="margin-bottom: 0;">ผลงานจริงสะสมเฉพาะงานนี้ (%)</label>
-                                        <span id="editorCurrentProgressBadge" class="badge-task-current" style="display: none;">
-                                            <i class="fa-solid fa-clock-rotate-left"></i> เดิม: <strong id="editorCurrentVal">0%</strong>
-                                        </span>
-                                    </div>
-                                    <input type="number" step="0.01" min="0" max="100" id="taskActualInput" placeholder="เช่น 50.00">
-                                    <div id="editorProgressWarn" class="progress-warn-alert" style="display: none;">
-                                        <i class="fa-solid fa-triangle-exclamation"></i>
-                                        <span><strong>คำเตือน:</strong> ค่าที่ระบุน้อยกว่าความก้าวหน้าเดิม (<span id="editorWarnPrevVal">0%</span>)</span>
-                                    </div>
+                                <div>
+                                    <h2 class="mobile-report-banner-title">ระบบรายงานหน้างานผ่านมือถือ</h2>
+                                    <p class="mobile-report-banner-subtitle">PEA Smart Field Progress & Camera Watermark Engine</p>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label>รายละเอียดงานที่ทำ</label>
-                                <textarea rows="4" placeholder="ระบุรายละเอียดงาน, ปัญหาอุปสรรค..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>อัปโหลดรูปภาพหน้างาน (รองรับการถ่ายภาพจากมือถือ)</label>
+                            <span class="mobile-report-banner-badge">
+                                <i class="fa-solid fa-bolt"></i> ลายน้ำมาตรฐาน กฟภ.
+                            </span>
+                        </div>
+
+                        <!-- Form Content -->
+                        <div style="padding: 18px 20px;">
+                            <form id="editorForm" class="pea-form">
                                 
-                                <!-- ข้อมูลผู้ตรวจงาน / ผู้อัปโหลดภาพ -->
-                                <div class="uploader-identity-card" id="uploaderIdentityBox" style="margin-bottom: 14px; background: linear-gradient(135deg, rgba(116, 44, 129, 0.04) 0%, rgba(243, 156, 18, 0.05) 100%); border: 1px solid rgba(116, 44, 129, 0.2); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed rgba(116, 44, 129, 0.18); padding-bottom: 8px;">
-                                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--pea-purple); font-size: 13.5px;">
-                                            <i class="fa-solid fa-id-card-clip" style="font-size: 16px; color: #F39C12;"></i>
-                                            <span>ข้อมูลผู้ตรวจงาน / ผู้อัปโหลดภาพ (ขึ้นบนลายน้ำและระบบ)</span>
+                                <!-- ข้อมูลผู้ตรวจงาน / ผู้อัปโหลดภาพ (แบบสรุปกระชับ พร้อมปุ่มแก้ไข) -->
+                                <div class="inspector-summary-pill" id="uploaderIdentityBox">
+                                    <div class="inspector-info-wrap">
+                                        <div class="inspector-avatar-badge">
+                                            <i class="fa-solid fa-user-shield"></i>
                                         </div>
-                                        <span class="user-role-badge" id="uploaderRoleBadge" style="font-size: 11px; padding: 3px 8px;">
-                                            <i class="fa-solid fa-user-check"></i> ผู้ตรวจงาน
-                                        </span>
+                                        <div>
+                                            <div class="inspector-text-main">
+                                                ผู้ตรวจงาน: <span id="inspectorNamePreview" style="color: var(--pea-purple); font-weight: 700;">กำลังโหลด...</span>
+                                                <span class="user-role-badge" id="uploaderRoleBadge" style="font-size: 10px; padding: 2px 7px; margin-left: 6px;">
+                                                    <i class="fa-solid fa-user-check"></i> ผู้ตรวจงาน
+                                                </span>
+                                            </div>
+                                            <div class="inspector-text-sub">
+                                                รหัส: <strong id="inspectorEmpIdPreview">-</strong> | ตำแหน่ง: <span id="inspectorPosPreview">-</span>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button type="button" class="btn-toggle-edit" id="btnToggleInspectorEdit" onclick="toggleInspectorEdit()">
+                                        <i class="fa-solid fa-pen-to-square"></i> <span id="toggleEditText">แก้ไขข้อมูล</span>
+                                    </button>
+                                </div>
+
+                                <!-- Collapsible Inspector Inputs (ซ่อนเพื่อประหยัดพื้นที่บนมือถือ เปิดได้เมื่อต้องการแก้ไข) -->
+                                <div id="uploaderInputsWrapper" style="display: none; margin-bottom: 16px; background: rgba(116, 44, 129, 0.03); border: 1px dashed rgba(116, 44, 129, 0.2); border-radius: 12px; padding: 14px;">
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
                                         <div>
                                             <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
                                                 <i class="fa-solid fa-hashtag" style="color: var(--pea-purple);"></i> รหัสพนักงาน *
                                             </label>
-                                            <input type="text" id="uploaderEmpId" name="uploaderEmpId" placeholder="เช่น 500744" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
+                                            <input type="text" id="uploaderEmpId" name="uploaderEmpId" placeholder="เช่น 500xxx หรือ 515xxx" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
                                         </div>
                                         <div>
                                             <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
                                                 <i class="fa-solid fa-user" style="color: var(--pea-purple);"></i> ชื่อ - นามสกุล *
                                             </label>
-                                            <input type="text" id="uploaderFullName" name="uploaderFullName" placeholder="เช่น นายภูวดล สุขศรี" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
+                                            <input type="text" id="uploaderFullName" name="uploaderFullName" placeholder="ชื่อ-นามสกุล ผู้ตรวจงาน" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
                                         </div>
                                         <div>
                                             <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
                                                 <i class="fa-solid fa-briefcase" style="color: #F39C12;"></i> ตำแหน่ง / หน้าที่ *
                                             </label>
-                                            <input type="text" id="uploaderPosition" name="uploaderPosition" placeholder="เช่น วิศวกร (Admin กบส.)" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
+                                            <input type="text" id="uploaderPosition" name="uploaderPosition" placeholder="เช่น วิศวกรควบคุมงาน (กฟภ.)" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 12.5px; background: var(--bg-card); color: var(--text-primary); font-weight: 600;">
                                         </div>
                                     </div>
                                     <div style="margin-top: 8px; font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 6px;">
                                         <i class="fa-solid fa-circle-info" style="color: var(--pea-purple);"></i>
-                                        <span>ระบบดึงข้อมูลผู้ใช้อัตโนมัติ ท่านสามารถแก้ไขชื่อ/ตำแหน่งได้ตามจริงเพื่อประทับบนภาพถ่าย</span>
+                                        <span>ข้อมูลนี้จะถูกประทับลงบนลายน้ำภาพถ่ายอัตโนมัติ</span>
                                     </div>
                                 </div>
 
-                                <div class="file-upload-box">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <p>คลิกเพื่อเลือกรูปภาพ หรือ ถ่ายรูปจากกล้องมือถือ</p>
-                                    <input type="file" multiple accept="image/*" class="file-input">
+                                <!-- Step 1: โครงการ และ แผนงานย่อย (WBS) -->
+                                <div class="mobile-step-card">
+                                    <div class="mobile-step-header">
+                                        <div class="mobile-step-num">1</div>
+                                        <h3 class="mobile-step-title">เลือกโครงการและแผนงาน</h3>
+                                        <span class="mobile-step-desc">Project & WBS Task</span>
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                            <i class="fa-solid fa-building" style="color: var(--pea-purple);"></i> โครงการก่อสร้าง *
+                                        </label>
+                                        <select id="editorProjectSelect" required style="font-size: 13.5px; padding: 10px 12px; border-radius: 8px; font-weight: 600;">
+                                            <!-- Options injected via JS -->
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                            <span><i class="fa-solid fa-list-check" style="color: var(--pea-purple);"></i> แผนงานย่อย (Task) *</span>
+                                            <span id="editorTaskCountBadge" style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">0 รายการ</span>
+                                        </label>
+                                        <!-- ช่องค้นหาแผนงานย่อยสำหรับมือถือ -->
+                                        <div class="task-search-box">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                            <input type="text" id="editorTaskSearch" placeholder="ค้นหาแผนงานย่อย (เช่น ฐานราก, เสา, หม้อแปลง, สายส่ง)..." oninput="filterEditorTasks(this.value)">
+                                        </div>
+                                        <select id="editorTaskSelect" required style="font-size: 13.5px; padding: 10px 12px; border-radius: 8px; font-weight: 600;">
+                                            <option value="" disabled selected>-- กรุณาเลือกโครงการก่อน --</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="image-preview" id="imagePreviewArea"></div>
-                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; background: rgba(116, 44, 129, 0.05); padding: 8px 12px; border-radius: 6px; border: 1px dashed rgba(116, 44, 129, 0.2);">
-                                    <input type="checkbox" id="enableGpsWatermark" checked style="accent-color: var(--pea-purple); width: 16px; height: 16px; cursor: pointer;">
-                                    <label for="enableGpsWatermark" style="cursor: pointer; font-size: 12px; color: #334155; margin-bottom: 0; font-weight: 500;">
-                                        <i class="fa-solid fa-stamp" style="color: var(--pea-purple);"></i> ประทับลายน้ำ กฟภ. (รหัสพนักงาน ชื่อ-นามสกุล ตำแหน่ง วันที่ เวลา และพิกัด GPS) บนภาพถ่ายอัตโนมัติ
-                                    </label>
+
+                                <!-- Step 2: วันที่รายงาน และ ผลงานจริงสะสม (%) -->
+                                <div class="mobile-step-card">
+                                    <div class="mobile-step-header">
+                                        <div class="mobile-step-num">2</div>
+                                        <h3 class="mobile-step-title">วันที่รายงาน และ ผลงานสะสม (%)</h3>
+                                        <span class="mobile-step-desc">Progress & Date</span>
+                                    </div>
+
+                                    <div class="form-row" style="margin-bottom: 10px;">
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <label style="font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                                <i class="fa-solid fa-calendar-day" style="color: var(--pea-purple);"></i> วันที่รายงาน *
+                                            </label>
+                                            <input type="date" id="reportDate" required style="font-size: 13px; padding: 9px 12px; border-radius: 8px;">
+                                            <div class="date-preset-group">
+                                                <button type="button" class="date-chip-btn active" id="btnDatePresetToday" onclick="setEditorDatePreset('today')">📅 วันนี้</button>
+                                                <button type="button" class="date-chip-btn" id="btnDatePresetYesterday" onclick="setEditorDatePreset('yesterday')">⏮️ เมื่อวาน</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 10px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                <label style="margin-bottom: 0; font-size: 12px; font-weight: 600;">
+                                                    <i class="fa-solid fa-chart-line" style="color: #27ae60;"></i> ผลงานจริงสะสม (%) *
+                                                </label>
+                                                <span id="editorCurrentProgressBadge" class="badge-task-current" style="display: none; font-size: 11px;">
+                                                    เดิม: <strong id="editorCurrentVal">0%</strong>
+                                                </span>
+                                            </div>
+                                            <input type="number" step="0.01" min="0" max="100" id="taskActualInput" inputmode="decimal" placeholder="เช่น 50.00" style="font-size: 14px; font-weight: 700; padding: 10px 12px; border-radius: 8px; color: var(--pea-purple);">
+                                            
+                                            <!-- ปุ่มลัดปรับ % เพิ่มขึ้นอย่างรวดเร็วสำหรับมือถือ -->
+                                            <div class="quick-inc-chips">
+                                                <span style="font-size: 10.5px; color: var(--text-secondary); align-self: center; margin-right: 2px;">ลัด:</span>
+                                                <button type="button" class="chip-inc" onclick="addProgressActual(1)">+1%</button>
+                                                <button type="button" class="chip-inc" onclick="addProgressActual(2)">+2%</button>
+                                                <button type="button" class="chip-inc" onclick="addProgressActual(5)">+5%</button>
+                                                <button type="button" class="chip-inc" onclick="addProgressActual(10)">+10%</button>
+                                                <button type="button" class="chip-inc" onclick="addProgressActual(20)">+20%</button>
+                                                <button type="button" class="chip-inc chip-inc-full" onclick="setProgressActual(100)">💯 100%</button>
+                                            </div>
+
+                                            <div id="editorProgressWarn" class="progress-warn-alert" style="display: none; margin-top: 8px;">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                <span><strong>คำเตือน:</strong> ค่าที่ระบุน้อยกว่าความก้าวหน้าเดิม (<span id="editorWarnPrevVal">0%</span>)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- แถบจำลองความก้าวหน้าแบบเรียลไทม์ (เดิม vs ใหม่) -->
+                                    <div class="progress-comparison-meter" id="progressMeterBox" style="display: none;">
+                                        <div class="meter-labels">
+                                            <span>เดิม: <strong id="meterOldText">0%</strong></span>
+                                            <span style="color: var(--pea-purple);">ใหม่: <strong id="meterNewText">0%</strong></span>
+                                        </div>
+                                        <div class="meter-bar-track">
+                                            <div class="meter-bar-old" id="meterBarOld" style="width: 0%;"></div>
+                                            <div class="meter-bar-new" id="meterBarNew" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>
-                                ส่งรายงาน</button>
-                        </form>
+
+                                <!-- Step 3: รายละเอียดงาน และ ข้อความด่วน -->
+                                <div class="mobile-step-card">
+                                    <div class="mobile-step-header">
+                                        <div class="mobile-step-num">3</div>
+                                        <h3 class="mobile-step-title">รายละเอียดการปฏิบัติงาน</h3>
+                                        <span class="mobile-step-desc">Work Details & Notes</span>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <textarea id="editorTaskDesc" rows="3" placeholder="ระบุรายละเอียดงานที่ปฏิบัติ, อุปสรรคหน้างาน, หรือปัญหาที่พบ..." style="width: 100%; border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.4;"></textarea>
+                                        
+                                        <!-- ปุ่มข้อความสำเร็จรูปหน้างานสำหรับมือถือ -->
+                                        <div class="quick-notes-container">
+                                            <span class="quick-notes-label"><i class="fa-solid fa-wand-magic-sparkles"></i> ข้อความด่วน:</span>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('✅ ปฏิบัติงานตามแผนงานปกติ')">✅ ตามแผนงาน</button>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('🚜 อยู่ระหว่างการดำเนินงานติดตั้งอุปกรณ์')">🚜 กำลังติดตั้ง</button>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('🔍 ทดสอบและตรวจสอบคุณภาพงานเรียบร้อย')">🔍 ทดสอบระบบ</button>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('🌧️ ฝนตกหนัก เป็นอุปสรรคต่อการปฏิบัติงาน')">🌧️ ฝนตกหน้างาน</button>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('📦 อยู่ระหว่างรอรับมอบอุปกรณ์เพิ่มเติม')">📦 รออุปกรณ์</button>
+                                            <button type="button" class="note-chip" onclick="appendEditorNote('💯 งานแล้วเสร็จสมบูรณ์ 100% เรียบร้อย')">💯 เสร็จสมบูรณ์</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: ถ่ายภาพหน้างาน / เลือกรูปภาพ (Multi-Photo Camera Engine) -->
+                                <div class="mobile-step-card">
+                                    <div class="mobile-step-header">
+                                        <div class="mobile-step-num">4</div>
+                                        <h3 class="mobile-step-title">ถ่ายภาพ / อัปโหลดภาพถ่าย</h3>
+                                        <span class="mobile-step-desc">Photo Watermark</span>
+                                    </div>
+
+                                    <!-- ปุ่มถ่ายรูปจากกล้องตรง vs เลือกจากคลังภาพ -->
+                                    <div class="mobile-photo-actions">
+                                        <button type="button" class="btn-photo-action btn-camera-action" onclick="document.getElementById('cameraDirectInput').click()">
+                                            <i class="fa-solid fa-camera" style="font-size: 18px;"></i>
+                                            <span>ถ่ายรูปจากกล้องมือถือ</span>
+                                        </button>
+                                        <button type="button" class="btn-photo-action btn-gallery-action" onclick="document.getElementById('galleryMultiInput').click()">
+                                            <i class="fa-solid fa-images" style="font-size: 18px;"></i>
+                                            <span>เลือกจากคลังภาพ</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden File Inputs -->
+                                    <input type="file" id="cameraDirectInput" accept="image/*" capture="environment" style="display: none;">
+                                    <input type="file" id="galleryMultiInput" accept="image/*" multiple style="display: none;">
+                                    <input type="file" class="file-input" multiple accept="image/*" style="display: none;">
+
+                                    <!-- Drag & drop box สำหรับคอมพิวเตอร์ -->
+                                    <div class="file-upload-box" onclick="document.getElementById('galleryMultiInput').click()" style="padding: 18px 12px; margin-bottom: 12px; cursor: pointer; border-radius: 10px;">
+                                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 26px; margin-bottom: 6px;"></i>
+                                        <p style="margin: 0; font-size: 12px;">หรือแตะที่นี่เพื่อเลือกรูปภาพเพิ่มเติม (สามารถเลือกหลายภาพได้)</p>
+                                    </div>
+
+                                    <!-- ส่วนแสดงรูปภาพที่เลือกพร้อมลบรายภาพ -->
+                                    <div id="photoQueueSection" style="display: none; margin-bottom: 12px;">
+                                        <div class="photo-queue-header">
+                                            <span><i class="fa-solid fa-images" style="color: var(--pea-purple);"></i> รูปภาพที่พร้อมส่ง (<span id="photoQueueCount">0</span> รูป):</span>
+                                            <button type="button" onclick="clearPhotoQueue()" style="background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                                <i class="fa-solid fa-trash-can"></i> ล้างรูปทั้งหมด
+                                            </button>
+                                        </div>
+                                        <div class="photo-queue-grid" id="imagePreviewArea">
+                                            <!-- Dynamically injected preview cards -->
+                                        </div>
+                                    </div>
+
+                                    <!-- ตัวเลือกลายน้ำมาตรฐาน กฟภ. (ไม่ระบุ GPS) -->
+                                    <div style="background: rgba(116, 44, 129, 0.05); padding: 10px 14px; border-radius: 8px; border: 1px dashed rgba(116, 44, 129, 0.25);">
+                                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                                            <input type="checkbox" id="enableGpsWatermark" checked style="accent-color: var(--pea-purple); width: 17px; height: 17px; cursor: pointer; margin-top: 2px;">
+                                            <div>
+                                                <label for="enableGpsWatermark" style="cursor: pointer; font-size: 12px; color: var(--text-primary); margin-bottom: 2px; font-weight: 600; display: block;">
+                                                    <i class="fa-solid fa-stamp" style="color: var(--pea-purple);"></i> ประทับลายน้ำมาตรฐาน กฟภ. (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง, วันที่ และเวลา)
+                                                </label>
+                                                <span style="font-size: 11px; color: #64748b; line-height: 1.3; display: block;">
+                                                    * ระบบไม่ระบุพิกัด GPS บนภาพ เพื่อความสะดวกกรณีผู้ควบคุมงานนำภาพมาอัปโหลดนอกไซต์งาน
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ปุ่มส่งรายงาน (รองรับ Sticky dock บนจอมือถือ) -->
+                                <div class="editor-submit-wrapper mobile-sticky-dock">
+                                    <button type="submit" class="btn-submit-report" id="btnEditorSubmit">
+                                        <i class="fa-solid fa-paper-plane"></i> บันทึกและส่งรายงานความก้าวหน้า
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </section>
 
@@ -2136,27 +2311,33 @@
                             </div>
 
                             <div class="manual-section-box">
-                                <h3><i class="fa-solid fa-pen-nib" style="color: var(--pea-purple);"></i> 1. การบันทึกผลงานประจำวัน (สำหรับ Editor)</h3>
+                                <h3><i class="fa-solid fa-pen-nib" style="color: var(--pea-purple);"></i> 1. การบันทึกรายงานความก้าวหน้าภาคสนาม (สำหรับ Editor / ผู้ควบคุมงาน)</h3>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                                    ออกแบบเฉพาะเพื่อความคล่องตัวของผู้ควบคุมงาน กฟภ. ในไซต์งานก่อสร้าง รองรับการทำงานผ่านสมาร์ตโฟนเต็มรูปแบบ:
+                                </p>
                                 <ol class="manual-ordered-list">
-                                    <li>คลิกเมนู <strong>"รายงานความก้าวหน้า"</strong> บนแถบเมนูด้านซ้าย</li>
-                                    <li>เลือก <strong>โครงการ</strong> และเลือก <strong>แผนงานย่อย (Task)</strong> ที่ต้องการอัปเดต</li>
-                                    <li>ใส่วันที่รายงาน และระบุ <strong>ผลงานจริงสะสมเฉพาะงานนี้ (%)</strong> (เช่น 65.00%)</li>
-                                    <li>กรอกรายละเอียดงานที่ดำเนินการ และปัญหาอุปสรรค (ถ้ามี)</li>
-                                    <li>แนบรูปภาพหน้างาน (รองรับการถ่ายสดจากกล้องมือถือ)</li>
-                                    <li>คลิกปุ่ม <strong>"ส่งรายงาน"</strong> ข้อมูลจะถูกบันทึกและคำนวณ S-Curve ใหม่อัตโนมัติทันที</li>
+                                    <li><strong>เข้าสู่หน้าฟอร์ม:</strong> คลิกเมนู <strong>"รายงานความก้าวหน้า"</strong> บนแถบเมนู หรือแตะปุ่มด่วน <strong>"[ 📷 รายงานความก้าวหน้า ]"</strong> ที่ส่วนหัวของหน้ารายละเอียดโครงการ</li>
+                                    <li><strong>ข้อมูลตัวตนผู้ตรวจงาน (Auto-Default):</strong> ระบบจะดึงชื่อ-นามสกุล รหัสพนักงาน และตำแหน่งของคนที่ล็อกอินมาแสดงโดยอัตโนมัติ พร้อมป้ายสิทธิ์ Editor หากต้องการปรับปรุงข้อมูล สามารถแตะปุ่ม <em>"แก้ไขข้อมูล"</em> และระบบจะจำข้อมูลที่แก้ไขไว้สำหรับบัญชีนี้อย่างถาวร</li>
+                                    <li><strong>เลือกโครงการและแผนงานย่อย (Task Search):</strong> เลือกโครงการก่อสร้าง และพิมพ์คำค้นหาในช่อง <em>"ค้นหาแผนงานย่อย"</em> (เช่น ฐานราก, เสา, หม้อแปลง, พาดสาย) เพื่อเลือกกิจกรรมที่ต้องการได้ทันที</li>
+                                    <li><strong>ระบุวันที่และปรับ % ความก้าวหน้าสะสม:</strong> 
+                                        มีปุ่มลัดวันที่ (วันนี้, เมื่อวาน, ย้อนหลัง 2 วัน) และสามารถปรับ % ผลงานสะสมได้ง่ายดายผ่าน Slider หรือปุ่มชิปด่วน (+1%, +5%, +10%, 100%) พร้อมมาตรวัดเปรียบเทียบผลงานเดิม vs ผลงานใหม่แบบเรียลไทม์
+                                    </li>
+                                    <li><strong>บันทึกรายละเอียดงานและข้อความด่วน:</strong> สามารถพิมพ์รายละเอียดงาน หรือแตะเลือกชิปข้อความสำเร็จรูปสำหรับงาน กฟภ. เช่น งานเทคอนกรีตฐานราก, ติดตั้งอุปกรณ์ไฟฟ้า, ดึงสาย 115 kV หรือ สภาพอากาศฝนตกหยุดงาน</li>
+                                    <li><strong>ถ่ายภาพและระบบคิวภาพถ่าย (Multi-Photo Queue):</strong> แตะปุ่ม <em>"ถ่ายรูปจากกล้องมือถือ"</em> หรือ <em>"เลือกจากคลังภาพ"</em> สามารถถ่ายและเลือกได้หลายภาพต่อเนื่อง พร้อมดูภาพตัวอย่างและแตะลบเฉพาะรูปที่ไม่ต้องการได้ก่อนบันทึก</li>
+                                    <li><strong>ส่งรายงานความก้าวหน้า:</strong> แตะปุ่ม <strong>"บันทึกและส่งรายงานความก้าวหน้า"</strong> บนแถบด้านล่าง ระบบจะประทับลายน้ำ บีบอัดภาพ และซิงค์ผลงานไปยังแดชบอร์ดและเส้นกราฟ S-Curve ทันที</li>
                                 </ol>
                             </div>
 
                             <div class="manual-section-box mt-3">
-                                <h3><i class="fa-solid fa-stamp" style="color: #27ae60;"></i> 2. ระบบประทับลายน้ำ GPS ป้องกันการปลอมแปลง (Watermark Engine v4.0)</h3>
+                                <h3><i class="fa-solid fa-stamp" style="color: #27ae60;"></i> 2. ระบบประทับลายน้ำมาตรฐาน กฟภ. อัตโนมัติ (Watermark Engine v4.0)</h3>
                                 <p>
                                     เมื่ออัปโหลดรูปภาพผ่านระบบรายงานความก้าวหน้า หรือระบบ Punch List ระบบจะประมวลผลผ่าน <strong>Watermark Engine v4.0</strong> โดยอัตโนมัติ:
                                 </p>
                                 <ul class="manual-bullet-list">
                                     <li><strong>ตราสัญลักษณ์และสังกัด กฟภ.:</strong> ป้าย Badge ตราสัญลักษณ์ กฟภ. สีม่วง-ทอง และชื่อสถานีไฟฟ้า/โครงการที่รับผิดชอบ</li>
-                                    <li><strong>วัน-เวลาทางการไทย:</strong> ประทับวัน เดือน ปี พ.ศ. และเวลาถึงระดับวินาที (เช่น <code>18 ต.ค. 2569 เวลา 10:45:20 น.</code>)</li>
-                                    <li><strong>ชื่อ-รหัสพนักงาน:</strong> ดึงตัวตนผู้ปฏิบัติงานและตำแหน่งจากระบบยืนยันตัวตน กฟภ. โดยตรง</li>
-                                    <li><strong>พิกัดดาวเทียม GPS ละเอียดสูง:</strong> ละติจูด-ลองจิจูดทศนิยม 6 ตำแหน่ง พร้อมตรวจสอบรัศมีโครงการ</li>
+                                    <li><strong>วัน-เวลาทางการไทย:</strong> ประทับวัน เดือน ปี พ.ศ. และเวลาถึงระดับวินาที (เช่น <code>19 ต.ค. 2569 เวลา 14:35:12 น.</code>)</li>
+                                    <li><strong>ชื่อ-รหัสพนักงานและตำแหน่ง:</strong> ประทับชื่อ นามสกุล รหัสพนักงาน และตำแหน่งทางราชการของผู้ตรวจงานที่ดึงมาจากระบบล็อกอินโดยตรง</li>
+                                    <li><strong>สังกัดและหน่วยงานทางการ กฟภ.:</strong> แสดงสังกัดทางการ กฟภ. โดยไม่ระบุพิกัด GPS เพื่อความสะดวกและยืดหยุ่นกรณีผู้ควบคุมงานนำภาพมาอัปโหลดนอกไซต์งานก่อสร้างหรือจากสำนักงาน</li>
                                     <li><strong>การบีบอัดภาพอัจฉริยะ (Smart Compression):</strong> ย่อภาพขนาดมาตรฐาน 900x900 px คุณภาพสูง ขนาดไฟล์เพียง 35–45 KB ช่วยประหยัดพื้นที่และส่งข้อมูลหน้างานได้รวดเร็วแม้สัญญาณอินเทอร์เน็ตจำกัด</li>
                                 </ul>
                             </div>
@@ -3799,7 +3980,7 @@
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer;">
                         <input type="checkbox" id="chkZipStampWatermark" checked style="accent-color: var(--pea-purple);">
-                        <span>ประทับตราลายน้ำมาตรฐาน กฟภ. (PEA GPS Watermark) พิกัด วันที่ เวลา และโครงการ</span>
+                        <span>ประทับตราลายน้ำมาตรฐาน กฟภ. (PEA Watermark) วันที่ เวลา และโครงการ</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer;">
                         <input type="checkbox" id="chkZipIncludeManifest" checked style="accent-color: var(--pea-purple);">
