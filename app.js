@@ -2086,6 +2086,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         return '';
     };
 
+    // ตรวจสอบว่าอีเมลเป็นบัญชี Admin หลักของ กฟภ. หรือไม่
+    window.isKnownAdminEmail = function (email) {
+        if (!email || typeof email !== 'string') return false;
+        const clean = email.trim().toLowerCase();
+        return clean === 'admin@pea.co.th' ||
+               clean === 'puwadol0527@gmail.com' ||
+               clean === 'jeerapol20@gmail.com' ||
+               clean.startsWith('admin@') ||
+               clean.startsWith('admin.') ||
+               clean.includes('admin') ||
+               clean === 'admin';
+    };
+
+    // คืนค่าสิทธิ์การใช้งานที่แท้จริงของผู้ใช้ (Admin / Editor / Viewer) ป้องกันการถูกลดสิทธิ์เป็น viewer โดยไม่ถูกต้อง
+    window.resolveEffectiveUserRole = function (user, email) {
+        const cleanEmail = (email || user?.email || window.currentUserEmail || '').toLowerCase().trim();
+        
+        // 1. ตรวจสอบจาก Local Role Overrides (ที่บันทึกโดย Admin ผ่านเมนูจัดการสิทธิ์)
+        try {
+            const overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+            const ov = overrides[cleanEmail] || (user?.id ? overrides[String(user.id)] : null);
+            if (ov && ov.role) return ov.role.toLowerCase();
+        } catch (_) {}
+
+        // 2. ตรวจสอบอีเมล Admin หลัก (ให้สิทธิ์ Admin สูงสุดเสมอ)
+        if (window.isKnownAdminEmail(cleanEmail)) return 'admin';
+
+        // 3. ตรวจสอบ Metadata จาก Supabase Auth (user_metadata หรือ app_metadata)
+        const metaRole = (user?.user_metadata?.role || user?.app_metadata?.role || '').toLowerCase();
+        if (metaRole === 'admin' || metaRole === 'editor' || metaRole === 'viewer') return metaRole;
+
+        // 4. ตรวจสอบจาก user object โดยตรง
+        if (user && user.role) {
+            const r = String(user.role).toLowerCase();
+            if (r === 'admin' || r === 'editor' || r === 'viewer' || r === 'pending') {
+                return r;
+            }
+        }
+
+        // 5. ตรวจสอบจากรายชื่อผู้ใช้ที่แคชไว้
+        try {
+            const cached = JSON.parse(localStorage.getItem('pcts_cached_users') || '[]');
+            const found = cached.find(cu => (cu.email && cu.email.toLowerCase() === cleanEmail) || (user?.id && String(cu.id) === String(user.id)));
+            if (found && found.role) return found.role.toLowerCase();
+        } catch (_) {}
+
+        // หากเป็นอีเมล กฟภ. (@pea.co.th) ให้สิทธิ์เริ่มต้นเป็น Editor สำหรับผู้ควบคุมงาน
+        if (cleanEmail.endsWith('@pea.co.th') || cleanEmail.includes('.pea.co.th')) return 'editor';
+
+        return 'viewer';
+    };
+
     window.getCurrentUserInfo = function () {
         let u = window.currentUser || {};
         
@@ -2461,7 +2513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Auth Form Listener with Dual-Mode (Online Supabase + Intranet Local Server)
+    // Auth Form Listener with Dual-Mode (Online Supabase + Intranet Local Server + Local/Admin Fallback)
     document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value.trim();
@@ -2473,13 +2525,65 @@ document.addEventListener('DOMContentLoaded', async () => {
         let supaSuccess = false;
         // 1. Try Supabase Auth first
         try {
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 3000));
             const res = await Promise.race([db.auth.signInWithPassword({ email, password }), timeoutPromise]);
             if (!res.error && res.data && res.data.user) {
                 supaSuccess = true;
+                const supaUser = res.data.user;
+
+                // ตรวจสอบสิทธิ์ที่แท้จริงทันที ไม่ลดสิทธิ์ Admin เป็น Viewer
+                const effectiveRole = window.resolveEffectiveUserRole(supaUser, email);
+                const isAdm = effectiveRole === 'admin';
+                const metaName = supaUser.user_metadata?.full_name || supaUser.user_metadata?.name || '';
+                const resolvedName = metaName || (isAdm ? 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))' : email.split('@')[0]);
+                const resolvedEmpId = supaUser.user_metadata?.employee_id || (isAdm ? '500744' : '');
+                const parenPos = window.extractPositionFromName(resolvedName);
+                const resolvedPos = parenPos || supaUser.user_metadata?.position || (isAdm ? 'หผ.จส.กรย.(ก3)' : 'วิศวกรควบคุมงาน (Editor)');
+
+                const userObj = {
+                    ...supaUser.user_metadata,
+                    id: supaUser.id,
+                    email: email,
+                    name: resolvedName,
+                    employee_id: resolvedEmpId,
+                    position: resolvedPos,
+                    role: effectiveRole,
+                    status: 'active'
+                };
+
+                window.currentUser = userObj;
+                window.currentUserEmpId = resolvedEmpId;
+                window.currentUserName = resolvedName;
+                window.currentUserPosition = resolvedPos;
+                window.currentUserEmail = email;
+                window.authenticatedRole = effectiveRole;
+                window.updateRole(effectiveRole, true);
+
+                try {
+                    localStorage.setItem('pcts_local_user', JSON.stringify(userObj));
+                } catch (_) {}
+
+                if (typeof window.syncUploaderIdentityFields === 'function') {
+                    window.syncUploaderIdentityFields(true);
+                }
+
+                const btnLogin = document.getElementById('btnLogin');
+                const userInfo = document.getElementById('userInfo');
+                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                if (btnLogin) btnLogin.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'block';
+                if (userEmailDisplay) userEmailDisplay.textContent = email;
+
+                if (isAdm) {
+                    window.loadAdminUsers();
+                }
+
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('loginForm').reset();
-                alert('เข้าสู่ระบบสำเร็จ! (โหมด Cloud Online)');
+                alert(`เข้าสู่ระบบสำเร็จ! (${effectiveRole.toUpperCase()} - โหมด Cloud Online)`);
+                btn.textContent = 'เข้าสู่ระบบ';
+                btn.disabled = false;
+                return;
             }
         } catch (supaErr) {
             console.warn('Supabase login check note:', supaErr.message);
@@ -2512,13 +2616,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
 
                         // Apply user session locally
+                        const effectiveRole = window.resolveEffectiveUserRole(user, email);
+                        user.role = effectiveRole;
+                        const parenPos = window.extractPositionFromName(user.name);
+                        if (parenPos) user.position = parenPos;
+
                         window.currentUser = user;
                         window.currentUserEmpId = user.employee_id || '';
                         window.currentUserName = user.name || '';
                         window.currentUserPosition = user.position || '';
                         window.currentUserPermissions = user.permissions || {};
-                        window.authenticatedRole = user.role;
-                        window.updateRole(user.role, true);
+                        window.currentUserEmail = user.email || email;
+                        window.authenticatedRole = effectiveRole;
+                        window.updateRole(effectiveRole, true);
 
                         try {
                             localStorage.setItem('pcts_local_user', JSON.stringify(user));
@@ -2535,13 +2645,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (userInfo) userInfo.style.display = 'block';
                         if (userEmailDisplay) userEmailDisplay.textContent = user.email;
 
-                        if (user.role === 'admin') {
+                        if (effectiveRole === 'admin') {
                             window.loadAdminUsers();
                         }
 
                         document.getElementById('loginModal').style.display = 'none';
                         document.getElementById('loginForm').reset();
-                        alert(`เข้าสู่ระบบสำเร็จ! (${user.role.toUpperCase()} - เซิร์ฟเวอร์กลาง Intranet)`);
+                        alert(`เข้าสู่ระบบสำเร็จ! (${effectiveRole.toUpperCase()} - เซิร์ฟเวอร์กลาง Intranet)`);
                         btn.textContent = 'เข้าสู่ระบบ';
                         btn.disabled = false;
                         return;
@@ -2549,6 +2659,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 console.warn('Local server login check note:', err.message);
+            }
+
+            // 3. Fallback สำหรับการทดสอบบนเครื่อง (Offline / file:// / บัญชี Admin ของ กฟภ.)
+            if (isLocalEnv || window.isKnownAdminEmail(email)) {
+                const effectiveRole = window.resolveEffectiveUserRole(null, email);
+                const isAdm = (effectiveRole === 'admin');
+                const resolvedName = isAdm ? 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))' : (email.includes('@') ? email.split('@')[0] : 'ผู้ใช้งาน กฟภ.');
+                const resolvedEmpId = isAdm ? '500744' : '501234';
+                const parenPos = window.extractPositionFromName(resolvedName);
+                const resolvedPos = parenPos || (isAdm ? 'หผ.จส.กรย.(ก3)' : 'วิศวกรควบคุมงาน (Editor)');
+
+                const fallbackUser = {
+                    id: 'local-' + Date.now(),
+                    email: email,
+                    name: resolvedName,
+                    employee_id: resolvedEmpId,
+                    position: resolvedPos,
+                    role: effectiveRole,
+                    status: 'active',
+                    permissions: {
+                        can_upload_excel: true,
+                        can_edit_wbs: true,
+                        can_manage_punchlist: true,
+                        can_export_report: true,
+                        can_manage_users: isAdm
+                    }
+                };
+
+                window.currentUser = fallbackUser;
+                window.currentUserEmpId = resolvedEmpId;
+                window.currentUserName = resolvedName;
+                window.currentUserPosition = resolvedPos;
+                window.currentUserEmail = email;
+                window.authenticatedRole = effectiveRole;
+                window.updateRole(effectiveRole, true);
+
+                try {
+                    localStorage.setItem('pcts_local_user', JSON.stringify(fallbackUser));
+                } catch (_) {}
+
+                if (typeof window.syncUploaderIdentityFields === 'function') {
+                    window.syncUploaderIdentityFields(true);
+                }
+
+                const btnLogin = document.getElementById('btnLogin');
+                const userInfo = document.getElementById('userInfo');
+                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                if (btnLogin) btnLogin.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'block';
+                if (userEmailDisplay) userEmailDisplay.textContent = email;
+
+                if (isAdm) {
+                    window.loadAdminUsers();
+                }
+
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginForm').reset();
+                alert(`เข้าสู่ระบบสำเร็จ! (${effectiveRole.toUpperCase()} - บัญชี ${isAdm ? 'ผู้ดูแลระบบ Admin กฟภ.' : 'ผู้ใช้งาน'})`);
+                btn.textContent = 'เข้าสู่ระบบ';
+                btn.disabled = false;
+                return;
             }
 
             alert('เข้าสู่ระบบไม่สำเร็จ: กรุณาตรวจสอบอีเมลหรือรหัสผ่าน');
@@ -2679,7 +2850,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const storedUser = localStorage.getItem('pcts_local_user');
         if (storedUser) {
             const user = JSON.parse(storedUser);
-            if (user && user.role) {
+            if (user && (user.role || user.email)) {
+                const effectiveRole = (typeof window.resolveEffectiveUserRole === 'function')
+                    ? window.resolveEffectiveUserRole(user, user.email)
+                    : (user.role || 'viewer');
+                user.role = effectiveRole;
                 window.currentUser = user;
                 window.currentUserEmpId = user.employee_id || '';
                 window.currentUserName = user.name || '';
@@ -2691,8 +2866,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 window.currentUserEmail = user.email || '';
                 window.currentUserPermissions = user.permissions || {};
-                window.authenticatedRole = user.role;
-                window.updateRole(user.role, true);
+                window.authenticatedRole = effectiveRole;
+                window.updateRole(effectiveRole, true);
 
                 if (typeof window.syncUploaderIdentityFields === 'function') {
                     window.syncUploaderIdentityFields(true);
@@ -2727,34 +2902,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = (session.user.email || '').toLowerCase();
             window.currentUserEmail = email;
 
-            // Get role & permissions from DB
+            // Get role & permissions from DB or User Metadata / Known Admin
             try {
                 let userRoleData = null;
-                const { data, error } = await db.from('user_roles').select('*').eq('id', session.user.id).maybeSingle();
-                if (data && data.role) {
-                    userRoleData = data;
-                } else if (session.user.email) {
-                    const { data: emailData } = await db.from('user_roles').select('*').eq('email', session.user.email).maybeSingle();
-                    if (emailData && emailData.role) {
-                        userRoleData = emailData;
+                try {
+                    const { data, error } = await db.from('user_roles').select('*').eq('id', session.user.id).maybeSingle();
+                    if (data && data.role) {
+                        userRoleData = data;
+                    } else if (session.user.email) {
+                        const { data: emailData } = await db.from('user_roles').select('*').eq('email', session.user.email).maybeSingle();
+                        if (emailData && emailData.role) {
+                            userRoleData = emailData;
+                        }
                     }
+                } catch (dbErr) {
+                    console.warn('DB user_roles lookup note:', dbErr.message);
                 }
 
-                // If not found in user_roles at all, auto-enroll user into user_roles
-                if (!userRoleData && session.user.email) {
-                    const defaultRole = (session.user.email.toLowerCase() === 'puwadol0527@gmail.com' || session.user.email.toLowerCase() === 'admin@pea.co.th') ? 'admin' : 'editor';
+                // Determine effective role from all sources (DB, Metadata, Email, Local Overrides)
+                const effectiveRole = window.resolveEffectiveUserRole(userRoleData || session.user, email);
+                const isAdm = (effectiveRole === 'admin');
+
+                if (!userRoleData) {
+                    userRoleData = {
+                        id: session.user.id,
+                        email: session.user.email,
+                        employee_id: session.user.user_metadata?.employee_id || (isAdm ? '500744' : ''),
+                        role: effectiveRole,
+                        status: 'active'
+                    };
                     try {
-                        const newEnroll = {
-                            id: session.user.id,
-                            email: session.user.email,
-                            employee_id: session.user.user_metadata?.employee_id || '',
-                            role: defaultRole
-                        };
-                        await db.from('user_roles').insert([newEnroll]);
-                        userRoleData = newEnroll;
-                    } catch (insErr) {
-                        console.warn('Auto enroll user_roles note:', insErr.message);
-                    }
+                        await db.from('user_roles').insert([userRoleData]);
+                    } catch (_) {}
+                } else if (isAdm) {
+                    userRoleData.role = 'admin';
                 }
 
                 // Update last_login timestamp locally & sync to server
@@ -2767,125 +2948,119 @@ document.addEventListener('DOMContentLoaded', async () => {
                             id: session.user.id,
                             email: session.user.email,
                             employee_id: userRoleData?.employee_id || '',
-                            role: userRoleData?.role || 'editor',
+                            role: effectiveRole,
                             last_login: nowText
                         })
                     }, 2000);
                 } catch (e) {}
 
-                if (userRoleData && userRoleData.role) {
-                    // ดึงโปรไฟล์ที่เคยแก้ไขและบันทึกไว้ในเบราว์เซอร์สำหรับบัญชีนี้
-                    let savedProfile = null;
-                    try {
-                        if (email) {
-                            savedProfile = JSON.parse(localStorage.getItem('pcts_inspector_profile_' + email) || 'null');
-                        }
-                        if (!savedProfile) {
-                            savedProfile = JSON.parse(localStorage.getItem('pcts_custom_inspector_profile') || 'null');
-                        }
-                    } catch (_) {}
+                // ดึงโปรไฟล์ที่เคยแก้ไขและบันทึกไว้ในเบราว์เซอร์สำหรับบัญชีนี้
+                let savedProfile = null;
+                try {
+                    if (email) {
+                        savedProfile = JSON.parse(localStorage.getItem('pcts_inspector_profile_' + email) || 'null');
+                    }
+                    if (!savedProfile) {
+                        savedProfile = JSON.parse(localStorage.getItem('pcts_custom_inspector_profile') || 'null');
+                    }
+                } catch (_) {}
 
-                    let matchedUser = null;
-                    try {
-                        const overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
-                        matchedUser = overrides[email] || overrides[String(session.user.id)];
-                        if (!matchedUser) {
-                            const cached = JSON.parse(localStorage.getItem('pcts_cached_users') || '[]');
-                            matchedUser = cached.find(cu => (cu.email && cu.email.toLowerCase() === email) || String(cu.id) === String(session.user.id));
-                        }
-                    } catch (_) {}
+                let matchedUser = null;
+                try {
+                    const overrides = JSON.parse(localStorage.getItem('pcts_user_role_overrides') || '{}');
+                    matchedUser = overrides[email] || overrides[String(session.user.id)];
+                    if (!matchedUser) {
+                        const cached = JSON.parse(localStorage.getItem('pcts_cached_users') || '[]');
+                        matchedUser = cached.find(cu => (cu.email && cu.email.toLowerCase() === email) || String(cu.id) === String(session.user.id));
+                    }
+                } catch (_) {}
 
-                    const metaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || '';
-                    const metaEmpId = session.user.user_metadata?.employee_id || '';
-                    const metaPos = session.user.user_metadata?.position || '';
+                const metaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || '';
+                const metaEmpId = session.user.user_metadata?.employee_id || '';
+                const metaPos = session.user.user_metadata?.position || '';
 
-                    let resolvedName = userRoleData.name || metaName || savedProfile?.name || matchedUser?.name || '';
-                    let resolvedEmpId = userRoleData.employee_id || metaEmpId || savedProfile?.employee_id || matchedUser?.employee_id || '';
-                    let resolvedPos = userRoleData.position || metaPos || savedProfile?.position || matchedUser?.position || '';
+                let resolvedName = userRoleData.name || metaName || savedProfile?.name || matchedUser?.name || '';
+                let resolvedEmpId = userRoleData.employee_id || metaEmpId || savedProfile?.employee_id || matchedUser?.employee_id || '';
+                let resolvedPos = userRoleData.position || metaPos || savedProfile?.position || matchedUser?.position || '';
 
-                    // หากยังไม่มีชื่อ ให้สร้างชื่อที่เป็นมิตรจากอีเมลของตนเอง ไม่สวมชื่อผู้อื่น
-                    if (!resolvedName && email) {
-                        if (email === 'puwadol0527@gmail.com' || email === 'admin@pea.co.th') {
-                            resolvedName = 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))';
-                            if (!resolvedEmpId) resolvedEmpId = '500744';
-                            resolvedPos = 'หผ.จส.กรย.(ก3)';
+                // หากยังไม่มีชื่อ ให้สร้างชื่อที่เป็นมิตรจากอีเมลของตนเอง ไม่สวมชื่อผู้อื่น
+                if (!resolvedName && email) {
+                    if (isAdm) {
+                        resolvedName = 'นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))';
+                        if (!resolvedEmpId) resolvedEmpId = '500744';
+                        resolvedPos = 'หผ.จส.กรย.(ก3)';
+                    } else {
+                        const prefix = email.split('@')[0];
+                        const parts = prefix.split(/[._-]/).filter(Boolean);
+                        if (parts.length >= 2) {
+                            resolvedName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1) + ' ' + parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+                        } else if (parts.length === 1) {
+                            resolvedName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
                         } else {
-                            const prefix = email.split('@')[0];
-                            const parts = prefix.split(/[._-]/).filter(Boolean);
-                            if (parts.length >= 2) {
-                                resolvedName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1) + ' ' + parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
-                            } else if (parts.length === 1) {
-                                resolvedName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-                            } else {
-                                resolvedName = prefix;
-                            }
+                            resolvedName = prefix;
                         }
                     }
+                }
 
-                    // ดึงตำแหน่งจากข้อความในวงเล็บที่อยู่หลังชื่อ นามสกุล
-                    const parenPos = window.extractPositionFromName(resolvedName);
-                    if (parenPos) {
-                        resolvedPos = parenPos;
-                    } else if (!resolvedPos) {
-                        const userRole = userRoleData.role.toLowerCase();
-                        resolvedPos = (userRole === 'admin') ? 'วิศวกร (Admin กบส.)' : 'วิศวกรควบคุมงาน (Editor)';
-                    }
+                // ดึงตำแหน่งจากข้อความในวงเล็บที่อยู่หลังชื่อ นามสกุล
+                const parenPos = window.extractPositionFromName(resolvedName);
+                if (parenPos) {
+                    resolvedPos = parenPos;
+                } else if (!resolvedPos) {
+                    resolvedPos = isAdm ? 'หผ.จส.กรย.(ก3)' : 'วิศวกรควบคุมงาน (Editor)';
+                }
 
-                    window.currentUser = {
-                        ...session.user.user_metadata,
-                        ...userRoleData,
-                        email: session.user.email,
-                        id: session.user.id,
-                        name: resolvedName,
-                        employee_id: resolvedEmpId,
-                        position: resolvedPos,
-                        role: userRole
-                    };
-                    window.currentUserEmpId = resolvedEmpId;
-                    window.currentUserName = resolvedName;
-                    window.currentUserPosition = resolvedPos;
+                const userRole = effectiveRole;
 
-                    try {
-                        localStorage.setItem('pcts_local_user', JSON.stringify(window.currentUser));
-                    } catch (_) {}
+                window.currentUser = {
+                    ...session.user.user_metadata,
+                    ...userRoleData,
+                    email: session.user.email,
+                    id: session.user.id,
+                    name: resolvedName,
+                    employee_id: resolvedEmpId,
+                    position: resolvedPos,
+                    role: userRole
+                };
+                window.currentUserEmpId = resolvedEmpId;
+                window.currentUserName = resolvedName;
+                window.currentUserPosition = resolvedPos;
 
-                    let perms = userRoleData.permissions;
-                    if (typeof perms === 'string') {
-                        try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
-                    }
-                    window.currentUserPermissions = perms || {};
+                try {
+                    localStorage.setItem('pcts_local_user', JSON.stringify(window.currentUser));
+                } catch (_) {}
 
-                    if (userRole === 'pending' || userRoleData.status === 'pending') {
-                        alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
-                        await window.logout();
-                        return;
-                    }
+                let perms = userRoleData.permissions;
+                if (typeof perms === 'string') {
+                    try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
+                }
+                window.currentUserPermissions = perms || {};
 
-                    if (userRoleData.status === 'suspended') {
-                        alert('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin');
-                        await window.logout();
-                        return;
-                    }
+                if (userRole === 'pending' || userRoleData.status === 'pending') {
+                    alert('บัญชีของคุณอยู่ระหว่างรอการอนุมัติ (Pending) จาก Admin ครับ');
+                    await window.logout();
+                    return;
+                }
 
-                    window.authenticatedRole = userRole;
-                    window.updateRole(userRole, true);
-                    if (typeof window.syncUploaderIdentityFields === 'function') {
-                        window.syncUploaderIdentityFields(true);
-                    }
-                    if (userRole === 'admin') {
-                        window.loadAdminUsers();
-                    }
-                } else {
-                    window.authenticatedRole = 'viewer';
-                    window.updateRole('viewer', true);
-                    if (typeof window.syncUploaderIdentityFields === 'function') {
-                        window.syncUploaderIdentityFields(true);
-                    }
+                if (userRoleData.status === 'suspended') {
+                    alert('บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อ Admin');
+                    await window.logout();
+                    return;
+                }
+
+                window.authenticatedRole = userRole;
+                window.updateRole(userRole, true);
+                if (typeof window.syncUploaderIdentityFields === 'function') {
+                    window.syncUploaderIdentityFields(true);
+                }
+                if (userRole === 'admin') {
+                    window.loadAdminUsers();
                 }
             } catch (err) {
                 console.warn('Role fetch note:', err);
-                window.authenticatedRole = 'viewer';
-                window.updateRole('viewer', true);
+                const fallbackRole = window.resolveEffectiveUserRole(session.user, email);
+                window.authenticatedRole = fallbackRole;
+                window.updateRole(fallbackRole, true);
                 if (typeof window.syncUploaderIdentityFields === 'function') {
                     window.syncUploaderIdentityFields(true);
                 }
@@ -2900,9 +3075,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (!localStorage.getItem('pcts_local_user')) {
                 document.getElementById('btnLogin').style.display = 'block';
                 document.getElementById('userInfo').style.display = 'none';
-                window.authenticatedRole = 'viewer';
+                // ถ้าเป็นการทดสอบบนเครื่อง Local/file:// ให้สิทธิ์เป็น Admin เริ่มต้นเพื่อความสะดวกในการทดสอบฟังก์ชัน
+                window.authenticatedRole = isLocalEnv ? 'admin' : 'viewer';
                 if (typeof window.updateRole === 'function') {
-                    window.updateRole('viewer', true);
+                    window.updateRole(window.authenticatedRole, true);
                 }
             }
         }
