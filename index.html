@@ -3392,12 +3392,14 @@
         </div>
     </div>
 
-    <!-- Image Viewer Modal -->
-    <div id="imageViewerModal" class="modal" style="z-index: 10000; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(6px);" onclick="closeImageModal()">
-        <div class="modal-content" style="background: transparent; box-shadow: none; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; border: none; margin: 0; width: 100%; position: relative;">
-            <span class="close" onclick="closeImageModal()" style="position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; text-shadow: 0 0 5px black; z-index: 10001;">&times;</span>
-            <img id="imageViewerSrc" src="" style="max-width: 95vw; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 5px 30px rgba(0,0,0,0.6);" onclick="event.stopPropagation()">
-            <div id="imageViewerCaption" style="margin-top: 12px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); color: white; padding: 8px 20px; border-radius: 24px; font-size: 13px; max-width: 90vw; text-align: center; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none;" onclick="event.stopPropagation()"></div>
+    <!-- Fullscreen Responsive Image Viewer Modal (No Scrollbar, Auto Fit) -->
+    <div id="imageViewerModal" class="image-viewer-lightbox" onclick="closeImageModal()" style="display: none;">
+        <button type="button" class="image-viewer-close-btn" onclick="closeImageModal()" title="ปิด (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="image-viewer-container" onclick="event.stopPropagation()">
+            <img id="imageViewerSrc" src="" alt="ภาพถ่ายความก้าวหน้าโครงการ" class="image-viewer-img">
+            <div id="imageViewerCaption" class="image-viewer-caption" style="display: none;"></div>
         </div>
     </div>
 

@@ -2353,6 +2353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Mobile-Optimized Multi-Photo Queue & Preview Engine ---
     window.mobileReportPhotos = [];
+    window._recentSelectedFiles = new Map();
 
     window.handlePhotoSelection = function (files) {
         if (!files || files.length === 0) return;
@@ -2365,16 +2366,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
         const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
 
+        const now = Date.now();
+
         fileList.forEach((file) => {
             const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|gif|bmp|heic|svg)$/i.test(file.name || '') || (!file.type && file.size > 0);
             if (!isImg) return;
+
+            const fileKey = `${file.name}_${file.size}_${file.lastModified}`;
+            // ป้องกันการเลือกรูปซ้ำภายใน 2.5 วินาที หรือรูปที่มีอยู่ในคิวแล้ว
+            const lastAdded = window._recentSelectedFiles.get(fileKey);
+            if (lastAdded && (now - lastAdded < 2500)) {
+                return;
+            }
+            if (window.mobileReportPhotos.some(p => p.fileKey === fileKey)) {
+                return;
+            }
+            window._recentSelectedFiles.set(fileKey, now);
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target?.result;
                 if (!dataUrl) return;
 
+                // ตรวจสอบซ้ำว่าไม่มีรูปซ้ำในคิวก่อน Push
+                if (window.mobileReportPhotos.some(p => p.fileKey === fileKey || p.dataUrl === dataUrl)) {
+                    return;
+                }
+
                 const photoObj = {
                     id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                    fileKey: fileKey,
                     file: file,
                     dataUrl: dataUrl,
                     uploaderEmpId: uploaderEmpId,
@@ -2398,7 +2419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (camInput) camInput.value = '';
             if (galInput) galInput.value = '';
             if (legInput) legInput.value = '';
-        }, 1500);
+        }, 1200);
     };
 
     window.removePhotoFromQueue = function (index) {
@@ -2410,6 +2431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.clearPhotoQueue = function () {
         window.mobileReportPhotos = [];
+        if (window._recentSelectedFiles) window._recentSelectedFiles.clear();
         window.renderPhotoQueuePreviews();
         const camInput = document.getElementById('cameraDirectInput');
         const galInput = document.getElementById('galleryMultiInput');
@@ -2437,7 +2459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const card = document.createElement('div');
             card.className = 'photo-queue-card';
             card.innerHTML = `
-                <img src="${item.dataUrl}" class="photo-queue-img" alt="ภาพที่ ${idx + 1}">
+                <img src="${item.dataUrl}" class="photo-queue-img" alt="ภาพที่ ${idx + 1}" onclick="openImageModal('${item.dataUrl}', '${item.uploaderName} - ภาพที่ ${idx + 1}')" style="cursor: pointer;" title="คลิกเพื่อดูภาพขนาดเต็ม (ไม่ตัดขอบ)">
                 <span class="photo-queue-badge">ภาพที่ ${idx + 1}</span>
                 <button type="button" class="photo-queue-del-btn" onclick="removePhotoFromQueue(${idx})" title="ลบภาพนี้">
                     <i class="fa-solid fa-xmark"></i>
@@ -2449,27 +2471,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             previewArea.appendChild(card);
         });
     };
-
-    // Camera direct capture button listener
-    document.getElementById('cameraDirectInput')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
-
-    // Gallery multi-picker listener
-    document.getElementById('galleryMultiInput')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
-
-    // Legacy file-input listener for desktop drag-and-drop
-    document.querySelector('#editorForm .file-input')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
 
     window.updateRole = function (role, allowAuth = false) {
         // หากไม่ใช่การอัปเดตจากระบบ Auth และผู้ใช้จริงไม่ใช่ Admin จะไม่อนุญาตให้เปลี่ยนสิทธิ์
@@ -6123,10 +6124,20 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
             if (meterBox) meterBox.style.display = 'none';
         };
 
-        // รองรับรูปภาพจากคิวบนมือถือ (window.mobileReportPhotos) และ fallback input file
-        const photosToProcess = (window.mobileReportPhotos && window.mobileReportPhotos.length > 0)
+        // รองรับรูปภาพจากคิวบนมือถือ (window.mobileReportPhotos) และ fallback input file พร้อมตัดรูปซ้ำ (Deduplication)
+        const rawPhotos = (window.mobileReportPhotos && window.mobileReportPhotos.length > 0)
             ? [...window.mobileReportPhotos]
             : (fileInput?.files && fileInput.files.length > 0 ? Array.from(fileInput.files).map(f => ({ file: f, dataUrl: '' })) : []);
+
+        const photosToProcess = [];
+        const seenPhotoKeys = new Set();
+        for (const itm of rawPhotos) {
+            const key = itm.fileKey || (itm.file ? `${itm.file.name}_${itm.file.size}_${itm.file.lastModified}` : (itm.dataUrl ? itm.dataUrl.slice(0, 100) : itm.id));
+            if (key && !seenPhotoKeys.has(key)) {
+                seenPhotoKeys.add(key);
+                photosToProcess.push(itm);
+            }
+        }
 
         if (photosToProcess.length > 0) {
             // ดึงข้อมูลตัวตนผู้ตรวจงาน / ผู้อัปโหลดภาพ (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
@@ -9942,34 +9953,49 @@ function botReply(userMsg) {
 
 window.openImageModal = function (url, caption = '') {
     const modal = document.getElementById('imageViewerModal');
-    if (modal) {
-        document.getElementById('imageViewerSrc').src = url;
-        const capEl = document.getElementById('imageViewerCaption');
-        if (capEl) {
-            if (caption) {
-                capEl.innerHTML = caption;
-                capEl.style.display = 'block';
-            } else {
-                capEl.style.display = 'none';
-                capEl.innerHTML = '';
-            }
+    if (!modal || !url) return;
+
+    const imgEl = document.getElementById('imageViewerSrc');
+    if (imgEl) imgEl.src = url;
+
+    const capEl = document.getElementById('imageViewerCaption');
+    if (capEl) {
+        if (caption) {
+            capEl.innerHTML = caption;
+            capEl.style.display = 'block';
+        } else {
+            capEl.style.display = 'none';
+            capEl.innerHTML = '';
         }
-        modal.style.display = 'flex';
     }
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 };
 
 window.closeImageModal = function () {
     const modal = document.getElementById('imageViewerModal');
     if (modal) {
         modal.style.display = 'none';
-        document.getElementById('imageViewerSrc').src = '';
+        const imgEl = document.getElementById('imageViewerSrc');
+        if (imgEl) imgEl.src = '';
         const capEl = document.getElementById('imageViewerCaption');
         if (capEl) {
             capEl.style.display = 'none';
             capEl.innerHTML = '';
         }
     }
+    document.body.style.overflow = '';
 };
+
+// Global escape key listener to close image modal
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        const modal = document.getElementById('imageViewerModal');
+        if (modal && modal.style.display !== 'none') {
+            window.closeImageModal();
+        }
+    }
+});
 
 window.getStatusBadgeClass = function (status) {
     if (status === 'แล้วเสร็จ') return 'status-completed';
