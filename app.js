@@ -2351,6 +2351,126 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (text) text.textContent = isHidden ? 'ซ่อนฟอร์มแก้ไข' : 'แก้ไขข้อมูล';
     };
 
+    // --- Mobile-Optimized Multi-Photo Queue & Preview Engine ---
+    window.mobileReportPhotos = [];
+
+    window.handlePhotoSelection = function (files) {
+        if (!files || files.length === 0) return;
+        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
+
+        const fileList = Array.from(files);
+
+        const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
+        const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
+        const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
+        const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
+
+        fileList.forEach((file) => {
+            const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|gif|bmp|heic|svg)$/i.test(file.name || '') || (!file.type && file.size > 0);
+            if (!isImg) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target?.result;
+                if (!dataUrl) return;
+
+                const photoObj = {
+                    id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                    file: file,
+                    dataUrl: dataUrl,
+                    uploaderEmpId: uploaderEmpId,
+                    uploaderName: uploaderName,
+                    uploaderPosition: uploaderPosition
+                };
+                window.mobileReportPhotos.push(photoObj);
+                window.renderPhotoQueuePreviews();
+            };
+            reader.onerror = (err) => {
+                console.warn('FileReader error for photo selection:', err);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Delay input reset so async FileReader can obtain native stream handles
+        setTimeout(() => {
+            const camInput = document.getElementById('cameraDirectInput');
+            const galInput = document.getElementById('galleryMultiInput');
+            const legInput = document.querySelector('#editorForm .file-input');
+            if (camInput) camInput.value = '';
+            if (galInput) galInput.value = '';
+            if (legInput) legInput.value = '';
+        }, 1500);
+    };
+
+    window.removePhotoFromQueue = function (index) {
+        if (Array.isArray(window.mobileReportPhotos) && index >= 0 && index < window.mobileReportPhotos.length) {
+            window.mobileReportPhotos.splice(index, 1);
+            window.renderPhotoQueuePreviews();
+        }
+    };
+
+    window.clearPhotoQueue = function () {
+        window.mobileReportPhotos = [];
+        window.renderPhotoQueuePreviews();
+        const camInput = document.getElementById('cameraDirectInput');
+        const galInput = document.getElementById('galleryMultiInput');
+        const legInput = document.querySelector('#editorForm .file-input');
+        if (camInput) camInput.value = '';
+        if (galInput) galInput.value = '';
+        if (legInput) legInput.value = '';
+    };
+
+    window.renderPhotoQueuePreviews = function () {
+        const previewArea = document.getElementById('imagePreviewArea');
+        const queueSection = document.getElementById('photoQueueSection');
+        const countBadge = document.getElementById('photoQueueCount');
+        if (!previewArea) return;
+
+        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
+        const count = window.mobileReportPhotos.length;
+        if (countBadge) countBadge.textContent = count;
+        if (queueSection) {
+            queueSection.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        previewArea.innerHTML = '';
+        window.mobileReportPhotos.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'photo-queue-card';
+            card.innerHTML = `
+                <img src="${item.dataUrl}" class="photo-queue-img" alt="ภาพที่ ${idx + 1}">
+                <span class="photo-queue-badge">ภาพที่ ${idx + 1}</span>
+                <button type="button" class="photo-queue-del-btn" onclick="removePhotoFromQueue(${idx})" title="ลบภาพนี้">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="photo-queue-wm-tag" title="ผู้ตรวจ: ${item.uploaderName} (${item.uploaderEmpId})">
+                    <i class="fa-solid fa-stamp"></i> PEA: ${item.uploaderName}
+                </div>
+            `;
+            previewArea.appendChild(card);
+        });
+    };
+
+    // Camera direct capture button listener
+    document.getElementById('cameraDirectInput')?.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            window.handlePhotoSelection(this.files);
+        }
+    });
+
+    // Gallery multi-picker listener
+    document.getElementById('galleryMultiInput')?.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            window.handlePhotoSelection(this.files);
+        }
+    });
+
+    // Legacy file-input listener for desktop drag-and-drop
+    document.querySelector('#editorForm .file-input')?.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            window.handlePhotoSelection(this.files);
+        }
+    });
+
     window.updateRole = function (role, allowAuth = false) {
         // หากไม่ใช่การอัปเดตจากระบบ Auth และผู้ใช้จริงไม่ใช่ Admin จะไม่อนุญาตให้เปลี่ยนสิทธิ์
         if (!allowAuth && window.authenticatedRole !== 'admin') {
@@ -3858,129 +3978,127 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     renderTables();
 
-    // --- S-Curve Chart.js Initialization (Modern Gradient & Enhanced Tooltips) ---
-    const sCanvas = document.getElementById('sCurveChart');
-    const ctx = sCanvas.getContext('2d');
-
-    // Create Linear Gradients
-    const gradPurple = ctx.createLinearGradient(0, 0, 0, 420);
-    gradPurple.addColorStop(0, 'rgba(116, 44, 129, 0.35)');
-    gradPurple.addColorStop(0.7, 'rgba(116, 44, 129, 0.06)');
-    gradPurple.addColorStop(1, 'rgba(116, 44, 129, 0.0)');
-
-    const gradGold = ctx.createLinearGradient(0, 0, 0, 420);
-    gradGold.addColorStop(0, 'rgba(243, 156, 18, 0.22)');
-    gradGold.addColorStop(0.7, 'rgba(243, 156, 18, 0.04)');
-    gradGold.addColorStop(1, 'rgba(243, 156, 18, 0.0)');
-
-    window.sChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: sCurveData.labels,
-            datasets: [
-                {
-                    label: 'แผนงาน (Plan) %',
-                    data: sCurveData.plan,
-                    borderColor: '#F39C12', // PEA Gold
-                    backgroundColor: gradGold,
-                    borderWidth: 2.8,
-                    borderDash: [5, 4],
-                    fill: true,
-                    tension: 0.38,
-                    pointRadius: 4,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: '#F39C12',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
-                },
-                {
-                    label: 'ผลงานจริง (Actual) %',
-                    data: sCurveData.actual,
-                    borderColor: '#742C81', // PEA Purple
-                    backgroundColor: gradPurple,
-                    borderWidth: 3.2,
-                    fill: true,
-                    tension: 0.38,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    pointBackgroundColor: '#742C81',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    grid: {
-                        color: 'rgba(226, 232, 240, 0.7)',
-                        borderDash: [3, 3]
-                    },
-                    ticks: {
-                        callback: function (val) { return val + '%'; },
-                        font: { family: 'Prompt', size: 11 }
-                    },
-                    title: { display: true, text: 'ความก้าวหน้าสะสม (%)', font: { family: 'Prompt', weight: '500', size: 12 } }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(226, 232, 240, 0.4)'
-                    },
-                    ticks: {
-                        font: { family: 'Prompt', size: 11 }
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false // We use our custom modern chips ribbon
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                    titleFont: { family: 'Prompt', size: 13, weight: '600' },
-                    bodyFont: { family: 'Sarabun', size: 12 },
-                    padding: 12,
-                    cornerRadius: 8,
-                    boxPadding: 4,
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                label += context.parsed.y.toFixed(2) + '%';
-                            }
-                            return label;
+    // --- S-Curve Chart.js Initialization (Modern & Safe) ---
+    try {
+        const sCanvas = document.getElementById('sCurveChart');
+        if (sCanvas && typeof Chart !== 'undefined') {
+            const existingChart = Chart.getChart(sCanvas) || window.sChart;
+            if (existingChart && typeof existingChart.destroy === 'function') {
+                try { existingChart.destroy(); } catch (_) {}
+            }
+            const ctx = sCanvas.getContext('2d');
+            window.sChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sCurveData.labels,
+                    datasets: [
+                        {
+                            label: 'แผนงาน (Plan) %',
+                            data: sCurveData.plan,
+                            borderColor: '#F39C12', // PEA Gold
+                            backgroundColor: 'rgba(243, 156, 18, 0.15)',
+                            borderWidth: 2.8,
+                            borderDash: [5, 4],
+                            fill: true,
+                            tension: 0.38,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#F39C12',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
                         },
-                        afterBody: function (contexts) {
-                            if (contexts.length >= 2) {
-                                const planVal = contexts[0].parsed.y;
-                                const actVal = contexts[1].parsed.y;
-                                if (actVal !== null && !isNaN(actVal)) {
-                                    const diff = (actVal - planVal).toFixed(2);
-                                    const icon = diff >= 0 ? '▲ +' : '▼ ';
-                                    const status = diff >= 0 ? 'เร็วกว่าแผน' : 'ล่าช้ากว่าแผน';
-                                    return `ผลต่าง: ${icon}${diff}% (${status})`;
+                        {
+                            label: 'ผลงานจริง (Actual) %',
+                            data: sCurveData.actual,
+                            borderColor: '#742C81', // PEA Purple
+                            backgroundColor: 'rgba(116, 44, 129, 0.15)',
+                            borderWidth: 3.2,
+                            fill: true,
+                            tension: 0.38,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#742C81',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(226, 232, 240, 0.7)',
+                                borderDash: [3, 3]
+                            },
+                            ticks: {
+                                callback: function (val) { return val + '%'; },
+                                font: { family: 'Prompt', size: 11 }
+                            },
+                            title: { display: true, text: 'ความก้าวหน้าสะสม (%)', font: { family: 'Prompt', weight: '500', size: 12 } }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(226, 232, 240, 0.4)'
+                            },
+                            ticks: {
+                                font: { family: 'Prompt', size: 11 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { family: 'Prompt', size: 13, weight: '600' },
+                            bodyFont: { family: 'Sarabun', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            boxPadding: 4,
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    }
+                                    return label;
+                                },
+                                afterBody: function (contexts) {
+                                    if (contexts.length >= 2) {
+                                        const planVal = contexts[0].parsed.y;
+                                        const actVal = contexts[1].parsed.y;
+                                        if (actVal !== null && !isNaN(actVal)) {
+                                            const diff = (actVal - planVal).toFixed(2);
+                                            const icon = diff >= 0 ? '▲ +' : '▼ ';
+                                            const status = diff >= 0 ? 'เร็วกว่าแผน' : 'ล่าช้ากว่าแผน';
+                                            return `ผลต่าง: ${icon}${diff}% (${status})`;
+                                        }
+                                    }
+                                    return '';
                                 }
                             }
-                            return '';
                         }
                     }
                 }
+            });
+
+            if (typeof window.updateChartsTheme === 'function') {
+                const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                window.updateChartsTheme(curTheme);
             }
         }
-    });
-
-    if (typeof window.updateChartsTheme === 'function') {
-        const curTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        window.updateChartsTheme(curTheme);
+    } catch (chartErr) {
+        console.warn('sChart init error caught safely:', chartErr);
     }
 
     // --- FullCalendar Initialization ---
@@ -4119,126 +4237,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             workReportModal.style.display = "none";
         }
     }
-
-    // --- Mobile-Optimized Multi-Photo Queue & Preview Engine ---
-    window.mobileReportPhotos = [];
-
-    window.handlePhotoSelection = function (files) {
-        if (!files || files.length === 0) return;
-        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
-
-        const fileList = Array.from(files);
-
-        const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
-        const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
-        const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
-        const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
-
-        fileList.forEach((file) => {
-            const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|gif|bmp|heic|svg)$/i.test(file.name || '') || (!file.type && file.size > 0);
-            if (!isImg) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result;
-                if (!dataUrl) return;
-
-                const photoObj = {
-                    id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-                    file: file,
-                    dataUrl: dataUrl,
-                    uploaderEmpId: uploaderEmpId,
-                    uploaderName: uploaderName,
-                    uploaderPosition: uploaderPosition
-                };
-                window.mobileReportPhotos.push(photoObj);
-                window.renderPhotoQueuePreviews();
-            };
-            reader.onerror = (err) => {
-                console.warn('FileReader error for photo selection:', err);
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Delay input reset so async FileReader can obtain native stream handles
-        setTimeout(() => {
-            const camInput = document.getElementById('cameraDirectInput');
-            const galInput = document.getElementById('galleryMultiInput');
-            const legInput = document.querySelector('#editorForm .file-input');
-            if (camInput) camInput.value = '';
-            if (galInput) galInput.value = '';
-            if (legInput) legInput.value = '';
-        }, 1500);
-    };
-
-    window.removePhotoFromQueue = function (index) {
-        if (Array.isArray(window.mobileReportPhotos) && index >= 0 && index < window.mobileReportPhotos.length) {
-            window.mobileReportPhotos.splice(index, 1);
-            window.renderPhotoQueuePreviews();
-        }
-    };
-
-    window.clearPhotoQueue = function () {
-        window.mobileReportPhotos = [];
-        window.renderPhotoQueuePreviews();
-        const camInput = document.getElementById('cameraDirectInput');
-        const galInput = document.getElementById('galleryMultiInput');
-        const legInput = document.querySelector('#editorForm .file-input');
-        if (camInput) camInput.value = '';
-        if (galInput) galInput.value = '';
-        if (legInput) legInput.value = '';
-    };
-
-    window.renderPhotoQueuePreviews = function () {
-        const previewArea = document.getElementById('imagePreviewArea');
-        const queueSection = document.getElementById('photoQueueSection');
-        const countBadge = document.getElementById('photoQueueCount');
-        if (!previewArea) return;
-
-        if (!Array.isArray(window.mobileReportPhotos)) window.mobileReportPhotos = [];
-        const count = window.mobileReportPhotos.length;
-        if (countBadge) countBadge.textContent = count;
-        if (queueSection) {
-            queueSection.style.display = count > 0 ? 'block' : 'none';
-        }
-
-        previewArea.innerHTML = '';
-        window.mobileReportPhotos.forEach((item, idx) => {
-            const card = document.createElement('div');
-            card.className = 'photo-queue-card';
-            card.innerHTML = `
-                <img src="${item.dataUrl}" class="photo-queue-img" alt="ภาพที่ ${idx + 1}">
-                <span class="photo-queue-badge">ภาพที่ ${idx + 1}</span>
-                <button type="button" class="photo-queue-del-btn" onclick="removePhotoFromQueue(${idx})" title="ลบภาพนี้">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <div class="photo-queue-wm-tag" title="ผู้ตรวจ: ${item.uploaderName} (${item.uploaderEmpId})">
-                    <i class="fa-solid fa-stamp"></i> PEA: ${item.uploaderName}
-                </div>
-            `;
-            previewArea.appendChild(card);
-        });
-    };
-
-    // Camera direct capture button listener
-    document.getElementById('cameraDirectInput')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
-
-    // Gallery multi-picker listener
-    document.getElementById('galleryMultiInput')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
-
-    // Legacy file-input listener for desktop drag-and-drop
-    document.querySelector('#editorForm .file-input')?.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
-            window.handlePhotoSelection(this.files);
-        }
-    });
 
 });
 
@@ -6005,260 +6003,284 @@ document.getElementById('adminForm')?.addEventListener('submit', async function 
 // Editor Form (Actual Progress Entry & Mobile Multi-Photo Watermark Engine)
 document.getElementById('editorForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    const projectId = document.getElementById('editorProjectSelect').value;
-    const taskId = document.getElementById('editorTaskSelect').value;
-    const actualVal = document.getElementById('taskActualInput').value;
-    const reportDate = document.getElementById('reportDate').value;
+    const projectId = document.getElementById('editorProjectSelect')?.value;
+    const taskId = document.getElementById('editorTaskSelect')?.value;
+    const actualVal = document.getElementById('taskActualInput')?.value;
+    const reportDate = document.getElementById('reportDate')?.value;
     const desc = (document.getElementById('editorTaskDesc')?.value || document.querySelector('#editorForm textarea')?.value || '').trim();
     const fileInput = document.querySelector('#editorForm .file-input');
     const submitBtn = document.getElementById('btnEditorSubmit') || document.querySelector('#editorForm button[type="submit"]');
 
-    if (projectId && taskId && reportDate) {
-        const p = projects.find(proj => proj.id === parseInt(projectId));
-        if (p) {
-            const t = p.tasks.find(tk => tk.id === parseInt(taskId));
-            if (t) {
-                // Check if new actual is less than current actual
-                const prevActStr = document.getElementById('taskActualInput').dataset.currentActual;
-                if (actualVal !== "" && prevActStr !== undefined && prevActStr !== "") {
-                    const prevAct = parseFloat(prevActStr);
-                    const newAct = parseFloat(actualVal);
-                    if (!isNaN(prevAct) && !isNaN(newAct) && newAct < prevAct) {
-                        const confirmed = confirm(`⚠️ คำเตือน: เปอร์เซ็นต์ความก้าวหน้าน้อยกว่าเดิม!\n\nแผนงาน: "${t.name}"\nความก้าวหน้าปัจจุบัน: ${prevAct.toFixed(2)}%\nค่าใหม่ที่ระบุ: ${newAct.toFixed(2)}%\n\nคุณแน่ใจหรือไม่ว่าต้องการปรับลด % ความก้าวหน้าลง?`);
-                        if (!confirmed) {
-                            return;
-                        }
-                    }
-                }
+    if (!projectId) {
+        alert("⚠️ กรุณาเลือกโครงการก่อสร้าง");
+        document.getElementById('editorProjectSelect')?.focus();
+        return;
+    }
+    if (!taskId) {
+        alert("⚠️ กรุณาเลือกแผนงานย่อย (Task)");
+        document.getElementById('editorTaskSelect')?.focus();
+        return;
+    }
+    if (!reportDate) {
+        alert("⚠️ กรุณาระบุวันที่รายงาน");
+        document.getElementById('reportDate')?.focus();
+        return;
+    }
 
-                // Show loading state
-                const originalBtnText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึกรายงาน...';
-                submitBtn.disabled = true;
+    const p = projects.find(proj => proj.id === parseInt(projectId));
+    if (!p) {
+        alert("⚠️ ไม่พบข้อมูลโครงการก่อสร้างที่เลือกในระบบ");
+        return;
+    }
+    const t = p.tasks ? p.tasks.find(tk => tk.id === parseInt(taskId)) : null;
+    if (!t) {
+        alert("⚠️ ไม่พบข้อมูลแผนงานย่อย (Task) ที่เลือกในโครงการนี้");
+        return;
+    }
 
-                if (actualVal !== "") {
-                    t.actual = parseFloat(actualVal);
-                }
-
-                if (!p.gallery) p.gallery = [];
-
-                const processUpdate = async () => {
-                    p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                    // Always cache locally to prevent data loss under any network condition
-                    try {
-                        localStorage.setItem('pcts_projects_cache', JSON.stringify(projects));
-                        localStorage.setItem('pcts_projects', JSON.stringify(projects));
-                    } catch (lsErr) {
-                        console.warn('localStorage save warning:', lsErr);
-                    }
-
-                    // Keep currentProjectViewData synchronized if user is in details view
-                    if (window.currentProjectViewData && window.currentProjectViewData.id === p.id) {
-                        window.currentProjectViewData.gallery = p.gallery;
-                        window.currentProjectViewData.tasks = p.tasks;
-                        if (typeof window.renderGalleryTab === 'function') {
-                            window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
-                        }
-                        if (typeof window.initProjectCalendar === 'function') {
-                            window.initProjectCalendar();
-                        }
-                    }
-
-                    try {
-                        await saveProjects(p.id);
-                    } catch (saveErr) {
-                        console.warn('Cloud sync note in editor submit:', saveErr);
-                    } finally {
-                        submitBtn.innerHTML = originalBtnText;
-                        submitBtn.disabled = false;
-                    }
-
-                    window.renderTables();
-                    alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
-                    addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
-
-                    if (typeof window.clearPhotoQueue === 'function') {
-                        window.clearPhotoQueue();
-                    } else {
-                        const prevArea = document.getElementById('imagePreviewArea');
-                        if (prevArea) prevArea.innerHTML = '';
-                    }
-
-                    document.getElementById('editorForm').reset();
-                    if (typeof window.setEditorDatePreset === 'function') {
-                        window.setEditorDatePreset('today');
-                    }
-
-                    const edInput = document.getElementById('taskActualInput');
-                    if (edInput) {
-                        edInput.dataset.currentActual = '';
-                        edInput.placeholder = 'เช่น 50.00';
-                    }
-                    const edBadge = document.getElementById('editorCurrentProgressBadge');
-                    if (edBadge) edBadge.style.display = 'none';
-                    const edWarn = document.getElementById('editorProgressWarn');
-                    if (edWarn) edWarn.style.display = 'none';
-                    const meterBox = document.getElementById('progressMeterBox');
-                    if (meterBox) meterBox.style.display = 'none';
-                };
-
-                // รองรับรูปภาพจากคิวบนมือถือ (window.mobileReportPhotos) และ fallback input file
-                const photosToProcess = (window.mobileReportPhotos && window.mobileReportPhotos.length > 0)
-                    ? [...window.mobileReportPhotos]
-                    : (fileInput?.files && fileInput.files.length > 0 ? Array.from(fileInput.files).map(f => ({ file: f, dataUrl: '' })) : []);
-
-                if (photosToProcess.length > 0) {
-                    // ดึงข้อมูลตัวตนผู้ตรวจงาน / ผู้อัปโหลดภาพ (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
-                    const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
-                    const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
-                    const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
-                    const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
-
-                    // ตรวจสอบการเปิดใช้งานลายน้ำ (ไม่ระบุ GPS)
-                    const isWatermarkEnabled = document.getElementById('enableGpsWatermark') ? document.getElementById('enableGpsWatermark').checked : true;
-
-                    for (const item of photosToProcess) {
-                        try {
-                            let sourceDataUrl = item.dataUrl;
-                            if (!sourceDataUrl && item.file) {
-                                sourceDataUrl = await new Promise((resolve) => {
-                                    const r = new FileReader();
-                                    r.onload = e => resolve(e.target?.result || '');
-                                    r.onerror = () => resolve('');
-                                    r.readAsDataURL(item.file);
-                                });
-                            }
-                            if (!sourceDataUrl) continue;
-
-                            // Load image into canvas
-                            const img = await new Promise((resolve) => {
-                                const im = new Image();
-                                im.onload = () => resolve(im);
-                                im.onerror = () => resolve(null);
-                                im.src = sourceDataUrl;
-                            });
-                            if (!img) continue;
-
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 900;
-                            const MAX_HEIGHT = 900;
-                            let width = img.width || 800;
-                            let height = img.height || 600;
-                            if (width > height) {
-                                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                            } else {
-                                if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                            }
-                            canvas.width = Math.round(width);
-                            canvas.height = Math.round(height);
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                            // ประทับลายน้ำ กฟภ. วันที่ เวลา และ ข้อมูลผู้ตรวจงาน (ไม่ระบุ GPS เพื่อความยืดหยุ่น)
-                            if (isWatermarkEnabled && typeof window.applyGpsWatermark === 'function') {
-                                try {
-                                    await window.applyGpsWatermark(canvas, {
-                                        projectName: p.name,
-                                        taskName: t.name,
-                                        reportDate: reportDate,
-                                        empId: uploaderEmpId,
-                                        uploaderName: uploaderName,
-                                        uploaderPosition: uploaderPosition
-                                    });
-                                } catch (wmErr) {
-                                    console.warn('[Watermark] Notice:', wmErr);
-                                }
-                            }
-
-                            const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.65);
-                            let finalPhotoUrl = fallbackDataUrl;
-
-                            // อัปโหลดเข้า Supabase Storage พร้อมตัวจับเวลา Timeout 3.5 วินาที
-                            try {
-                                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.65));
-                                if (blob && window.db && window.db.storage) {
-                                    const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
-                                    const folderDate = new Date().toISOString().split('T')[0];
-                                    const filePath = `${folderDate}/${fileName}`;
-
-                                    const uploadPromise = (async () => {
-                                        try {
-                                            const { error: uploadError } = await window.db.storage
-                                                .from('project-images')
-                                                .upload(filePath, blob, { contentType: 'image/jpeg' });
-                                            if (uploadError) return null;
-                                            const { data: { publicUrl } } = window.db.storage
-                                                .from('project-images')
-                                                .getPublicUrl(filePath);
-                                            return publicUrl;
-                                        } catch (_) {
-                                            return null;
-                                        }
-                                    })();
-
-                                    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3500));
-                                    const storageUrl = await Promise.race([uploadPromise, timeoutPromise]);
-                                    if (storageUrl) {
-                                        finalPhotoUrl = storageUrl;
-                                    }
-                                }
-                            } catch (stErr) {
-                                console.warn('[Storage] Used fallback dataURL:', stErr);
-                            }
-
-                            const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
-                            const baseDesc = desc || `อัปเดตงาน: ${t.name}`;
-                            const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
-
-                            p.gallery.push({
-                                url: finalPhotoUrl,
-                                date: reportDate,
-                                desc: fullDesc,
-                                taskId: t.id,
-                                taskName: t.name,
-                                uploaderEmpId: uploaderEmpId,
-                                uploaderName: uploaderName,
-                                uploaderPosition: uploaderPosition,
-                                uploaderRole: window.currentRole || 'editor'
-                            });
-                        } catch (itemErr) {
-                            console.error('Error processing photo item:', itemErr);
-                        }
-                    }
-
-                    await processUpdate();
-                } else {
-                    const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
-                    const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
-                    const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
-                    const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
-
-                    if (desc || actualVal !== "") {
-                        const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
-                        const baseDesc = desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`);
-                        const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
-
-                        p.gallery.push({
-                            url: null,
-                            date: reportDate,
-                            desc: fullDesc,
-                            taskId: t.id,
-                            taskName: t.name,
-                            uploaderEmpId: uploaderEmpId,
-                            uploaderName: uploaderName,
-                            uploaderPosition: uploaderPosition,
-                            uploaderRole: window.currentRole || 'editor'
-                        });
-                    }
-                    await processUpdate();
-                }
+    // Check if new actual is less than current actual
+    const prevActStr = document.getElementById('taskActualInput')?.dataset.currentActual;
+    if (actualVal !== "" && prevActStr !== undefined && prevActStr !== "") {
+        const prevAct = parseFloat(prevActStr);
+        const newAct = parseFloat(actualVal);
+        if (!isNaN(prevAct) && !isNaN(newAct) && newAct < prevAct) {
+            const confirmed = confirm(`⚠️ คำเตือน: เปอร์เซ็นต์ความก้าวหน้าน้อยกว่าเดิม!\n\nแผนงาน: "${t.name}"\nความก้าวหน้าปัจจุบัน: ${prevAct.toFixed(2)}%\nค่าใหม่ที่ระบุ: ${newAct.toFixed(2)}%\n\nคุณแน่ใจหรือไม่ว่าต้องการปรับลด % ความก้าวหน้าลง?`);
+            if (!confirmed) {
+                return;
             }
         }
-    } else {
-        alert("กรุณาเลือกโครงการ, แผนงานย่อย และวันที่รายงานให้ครบถ้วน");
-        submitBtn.innerHTML = originalBtnText;
-        submitBtn.disabled = false;
+    }
+
+    // Show loading state
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : '<i class="fa-solid fa-paper-plane"></i> บันทึกและส่งรายงานความก้าวหน้า';
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึกรายงาน...';
+        submitBtn.disabled = true;
+    }
+
+    try {
+        if (actualVal !== "") {
+            t.actual = parseFloat(actualVal);
+        }
+
+        if (!p.gallery) p.gallery = [];
+
+        const processUpdate = async () => {
+            p.gallery.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Always cache locally to prevent data loss under any network condition
+            try {
+                localStorage.setItem('pcts_projects_cache', JSON.stringify(projects));
+                localStorage.setItem('pcts_projects', JSON.stringify(projects));
+            } catch (lsErr) {
+                console.warn('localStorage save warning:', lsErr);
+            }
+
+            // Keep currentProjectViewData synchronized if user is in details view
+            if (window.currentProjectViewData && window.currentProjectViewData.id === p.id) {
+                window.currentProjectViewData.gallery = p.gallery;
+                window.currentProjectViewData.tasks = p.tasks;
+                if (typeof window.renderGalleryTab === 'function') {
+                    window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
+                }
+                if (typeof window.initProjectCalendar === 'function') {
+                    window.initProjectCalendar();
+                }
+            }
+
+            try {
+                await saveProjects(p.id);
+            } catch (saveErr) {
+                console.warn('Cloud sync note in editor submit:', saveErr);
+            }
+
+            window.renderTables();
+            alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
+            addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
+
+            if (typeof window.clearPhotoQueue === 'function') {
+                window.clearPhotoQueue();
+            } else {
+                const prevArea = document.getElementById('imagePreviewArea');
+                if (prevArea) prevArea.innerHTML = '';
+            }
+
+            document.getElementById('editorForm').reset();
+            if (typeof window.setEditorDatePreset === 'function') {
+                window.setEditorDatePreset('today');
+            }
+
+            const edInput = document.getElementById('taskActualInput');
+            if (edInput) {
+                edInput.dataset.currentActual = '';
+                edInput.placeholder = 'เช่น 50.00';
+            }
+            const edBadge = document.getElementById('editorCurrentProgressBadge');
+            if (edBadge) edBadge.style.display = 'none';
+            const edWarn = document.getElementById('editorProgressWarn');
+            if (edWarn) edWarn.style.display = 'none';
+            const meterBox = document.getElementById('progressMeterBox');
+            if (meterBox) meterBox.style.display = 'none';
+        };
+
+        // รองรับรูปภาพจากคิวบนมือถือ (window.mobileReportPhotos) และ fallback input file
+        const photosToProcess = (window.mobileReportPhotos && window.mobileReportPhotos.length > 0)
+            ? [...window.mobileReportPhotos]
+            : (fileInput?.files && fileInput.files.length > 0 ? Array.from(fileInput.files).map(f => ({ file: f, dataUrl: '' })) : []);
+
+        if (photosToProcess.length > 0) {
+            // ดึงข้อมูลตัวตนผู้ตรวจงาน / ผู้อัปโหลดภาพ (รหัสพนักงาน, ชื่อ-นามสกุล, ตำแหน่ง)
+            const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
+            const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
+            const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
+            const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
+
+            // ตรวจสอบการเปิดใช้งานลายน้ำ (ไม่ระบุ GPS)
+            const isWatermarkEnabled = document.getElementById('enableGpsWatermark') ? document.getElementById('enableGpsWatermark').checked : true;
+
+            for (const item of photosToProcess) {
+                try {
+                    let sourceDataUrl = item.dataUrl;
+                    if (!sourceDataUrl && item.file) {
+                        sourceDataUrl = await new Promise((resolve) => {
+                            const r = new FileReader();
+                            r.onload = e => resolve(e.target?.result || '');
+                            r.onerror = () => resolve('');
+                            r.readAsDataURL(item.file);
+                        });
+                    }
+                    if (!sourceDataUrl) continue;
+
+                    // Load image into canvas
+                    const img = await new Promise((resolve) => {
+                        const im = new Image();
+                        im.onload = () => resolve(im);
+                        im.onerror = () => resolve(null);
+                        im.src = sourceDataUrl;
+                    });
+                    if (!img) continue;
+
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 900;
+                    const MAX_HEIGHT = 900;
+                    let width = img.width || 800;
+                    let height = img.height || 600;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+                    canvas.width = Math.round(width);
+                    canvas.height = Math.round(height);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // ประทับลายน้ำ กฟภ. วันที่ เวลา และ ข้อมูลผู้ตรวจงาน (ไม่ระบุ GPS เพื่อความยืดหยุ่น)
+                    if (isWatermarkEnabled && typeof window.applyGpsWatermark === 'function') {
+                        try {
+                            await window.applyGpsWatermark(canvas, {
+                                projectName: p.name,
+                                taskName: t.name,
+                                reportDate: reportDate,
+                                empId: uploaderEmpId,
+                                uploaderName: uploaderName,
+                                uploaderPosition: uploaderPosition
+                            });
+                        } catch (wmErr) {
+                            console.warn('[Watermark] Notice:', wmErr);
+                        }
+                    }
+
+                    const fallbackDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                    let finalPhotoUrl = fallbackDataUrl;
+
+                    // อัปโหลดเข้า Supabase Storage พร้อมตัวจับเวลา Timeout 3.5 วินาที
+                    try {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.65));
+                        if (blob && window.db && window.db.storage) {
+                            const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                            const folderDate = new Date().toISOString().split('T')[0];
+                            const filePath = `${folderDate}/${fileName}`;
+
+                            const uploadPromise = (async () => {
+                                try {
+                                    const { error: uploadError } = await window.db.storage
+                                        .from('project-images')
+                                        .upload(filePath, blob, { contentType: 'image/jpeg' });
+                                    if (uploadError) return null;
+                                    const { data: { publicUrl } } = window.db.storage
+                                        .from('project-images')
+                                        .getPublicUrl(filePath);
+                                    return publicUrl;
+                                } catch (_) {
+                                    return null;
+                                }
+                            })();
+
+                            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3500));
+                            const storageUrl = await Promise.race([uploadPromise, timeoutPromise]);
+                            if (storageUrl) {
+                                finalPhotoUrl = storageUrl;
+                            }
+                        }
+                    } catch (stErr) {
+                        console.warn('[Storage] Used fallback dataURL:', stErr);
+                    }
+
+                    const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
+                    const baseDesc = desc || `อัปเดตงาน: ${t.name}`;
+                    const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
+
+                    p.gallery.push({
+                        url: finalPhotoUrl,
+                        date: reportDate,
+                        desc: fullDesc,
+                        taskId: t.id,
+                        taskName: t.name,
+                        uploaderEmpId: uploaderEmpId,
+                        uploaderName: uploaderName,
+                        uploaderPosition: uploaderPosition,
+                        uploaderRole: window.currentRole || 'editor'
+                    });
+                } catch (itemErr) {
+                    console.error('Error processing photo item:', itemErr);
+                }
+            }
+
+            await processUpdate();
+        } else {
+            const curInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
+            const uploaderEmpId = document.getElementById('uploaderEmpId')?.value.trim() || curInfo.employee_id || window.currentUserEmpId || '';
+            const uploaderName = document.getElementById('uploaderFullName')?.value.trim() || curInfo.name || window.currentUserName || 'ผู้ตรวจงาน กฟภ.';
+            const uploaderPosition = document.getElementById('uploaderPosition')?.value.trim() || curInfo.position || window.currentUserPosition || 'วิศวกรควบคุมงาน';
+
+            if (desc || actualVal !== "") {
+                const uploaderTag = ` [ผู้ตรวจ: ${uploaderName} | รหัส: ${uploaderEmpId} | ตำแหน่ง: ${uploaderPosition}]`;
+                const baseDesc = desc || (actualVal !== "" ? `อัปเดตความก้าวหน้าเป็น ${actualVal}%` : `อัปเดตงาน: ${t.name}`);
+                const fullDesc = baseDesc.includes('รหัส:') ? baseDesc : (baseDesc + uploaderTag);
+
+                p.gallery.push({
+                    url: null,
+                    date: reportDate,
+                    desc: fullDesc,
+                    taskId: t.id,
+                    taskName: t.name,
+                    uploaderEmpId: uploaderEmpId,
+                    uploaderName: uploaderName,
+                    uploaderPosition: uploaderPosition,
+                    uploaderRole: window.currentRole || 'editor'
+                });
+            }
+            await processUpdate();
+        }
+    } catch (submitErr) {
+        console.error('Error in editor form submit:', submitErr);
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (submitErr.message || submitErr));
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        }
     }
 });
 
