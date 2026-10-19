@@ -4112,6 +4112,28 @@ html, body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+.btn-manual-print-chapter {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 10px 16px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.btn-manual-print-chapter:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 /* Category Navigation Bar */
 .manual-nav-bar {
     display: flex;
@@ -4399,71 +4421,256 @@ body:has(#editor-view.active) .mascot-widget {
     color: #94a3b8;
 }
 
-.manual-tabcontent {
+/* --- Manual Cover Page (Screen & Layout) --- */
+.manual-cover-page {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 28px 36px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(116, 44, 129, 0.3) transparent !important;
+    border: 2px solid #742C81 !important;
+    border-radius: 14px !important;
+    padding: 36px 44px !important;
+    box-shadow: 0 4px 20px rgba(116, 44, 129, 0.08) !important;
+    position: relative;
+    overflow: hidden;
 }
 
-.manual-tabcontent::-webkit-scrollbar {
-    width: 6px !important;
-    height: 6px !important;
-    display: block !important;
+.manual-cover-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #742C81 0%, #f59e0b 50%, #742C81 100%);
 }
 
-.manual-tabcontent::-webkit-scrollbar-thumb {
-    background: rgba(116, 44, 129, 0.25) !important;
-    border-radius: 4px !important;
+.manual-cover-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
-.manual-tabcontent::-webkit-scrollbar-thumb:hover {
-    background: rgba(116, 44, 129, 0.5) !important;
+.manual-cover-pea-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* Manual Figure & Screenshot Styling */
-.manual-figure {
-    margin: 18px 0;
+.manual-cover-bolt {
+    font-size: 32px;
+    color: #eab308;
+    background: rgba(116, 44, 129, 0.08);
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(116, 44, 129, 0.2);
+}
+
+.manual-cover-org {
+    display: flex;
+    flex-direction: column;
+}
+
+.manual-cover-org-th {
+    font-size: 15px;
+    font-weight: 700;
+    color: #742C81;
+    letter-spacing: 0.5px;
+}
+
+.manual-cover-org-en {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.manual-cover-dept-badge {
+    font-size: 11px;
+    color: #742C81;
+    background: rgba(116, 44, 129, 0.06);
+    border: 1px solid rgba(116, 44, 129, 0.18);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.manual-cover-center {
     text-align: center;
+    padding: 16px 20px 24px 20px;
+    background: radial-gradient(circle at 50% 20%, rgba(116, 44, 129, 0.04) 0%, transparent 70%);
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.manual-cover-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #742C81 0%, #581c87 100%);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(116, 44, 129, 0.25);
+}
+
+.manual-cover-title {
+    font-family: 'Prompt', sans-serif !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    line-height: 1.35 !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.manual-cover-subtitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #742C81;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.manual-cover-desc {
+    font-size: 12px;
+    color: #475569;
+    max-width: 680px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.manual-cover-roles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.manual-cover-role-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    padding: 14px 16px;
+    text-align: center;
+    transition: all 0.2s ease;
 }
 
-.manual-img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    display: block;
-    margin: 0 auto;
-    object-fit: contain;
-    max-height: 480px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-}
-
-.manual-figcaption {
-    font-size: 11.5px;
-    color: #64748b;
-    margin-top: 8px;
-    font-weight: 500;
+.manual-cover-role-card .role-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 16px;
+    margin: 0 auto 8px auto;
+}
+
+.manual-cover-role-card.role-viewer .role-icon {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+}
+
+.manual-cover-role-card.role-editor .role-icon {
+    background: rgba(116, 44, 129, 0.12);
+    color: #742C81;
+}
+
+.manual-cover-role-card.role-admin .role-icon {
+    background: rgba(225, 29, 72, 0.12);
+    color: #e11d48;
+}
+
+.manual-cover-role-card .role-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.manual-cover-role-card .role-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.manual-cover-toc {
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+}
+
+.manual-cover-toc-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #742C81;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px dashed #d8b4fe;
+    padding-bottom: 8px;
+}
+
+.manual-cover-toc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 16px;
+}
+
+.manual-cover-toc-item {
+    font-size: 11.5px;
+    color: #334155;
+    line-height: 1.45;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.manual-cover-toc-item:hover {
+    color: #742C81;
+    text-decoration: underline;
+}
+
+.manual-cover-toc-item strong {
+    color: #742C81;
+}
+
+.manual-cover-meta-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 14px;
+    font-size: 11px;
+    color: #64748b;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.manual-cover-meta-footer .meta-item {
+    display: flex;
+    align-items: center;
     gap: 6px;
 }
 
-/* ---------------- Print Styles for User Manual (Strict A4 Portrait) ---------------- */
-/* ---------------- Print Styles for User Manual (Strict A4 Portrait) ---------------- */
+/* ---------------- Print Styles for User Manual (Optimized A4 Portrait) ---------------- */
 @media print {
     @page {
         size: A4 portrait !important;
-        margin: 10mm 12mm 10mm 12mm !important;
+        margin: 12mm 14mm 14mm 14mm !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     /* Hide EVERYTHING in the application except #manual-view */
@@ -4483,8 +4690,11 @@ body:has(#editor-view.active) .mascot-widget {
     .manual-hero-actions,
     .manual-nav-bar,
     .btn-manual-print,
+    .btn-manual-print-chapter,
     .btn-pwa-sidebar,
-    .leaflet-control-container {
+    .leaflet-control-container,
+    .leaflet-pane,
+    .toast-container {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -4500,26 +4710,208 @@ body:has(#editor-view.active) .mascot-widget {
         margin: 0 !important;
         padding: 0 !important;
         background: #ffffff !important;
-        color: #000000 !important;
+        color: #0f172a !important;
         overflow: visible !important;
+        font-family: 'Prompt', 'Sarabun', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* Each chapter is strictly 1 A4 Page (Total 6 Chapters = 6 Pages) */
-    .manual-tabcontent {
-        display: block !important;
+    /* Executive Cover Page Printing */
+    .manual-cover-page {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
         page-break-after: always !important;
         break-after: page !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        min-height: 250mm !important;
+        max-height: 255mm !important;
+        box-sizing: border-box !important;
+        border: 2px solid #742C81 !important;
+        border-radius: 8px !important;
+        padding: 12mm 10mm !important;
+        background: #ffffff !important;
+        margin: 0 0 10mm 0 !important;
+        box-shadow: none !important;
+    }
+
+    .manual-cover-page::before {
+        display: none !important;
+    }
+
+    .manual-cover-header-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 1.5px solid #742C81 !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .manual-cover-bolt {
+        font-size: 24px !important;
+        color: #eab308 !important;
+        background: rgba(116, 44, 129, 0.08) !important;
+        padding: 6px 10px !important;
+        border-radius: 8px !important;
+        border: 1px solid #742C81 !important;
+    }
+
+    .manual-cover-org-th {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #742C81 !important;
+    }
+
+    .manual-cover-org-en {
+        font-size: 9px !important;
+        color: #475569 !important;
+    }
+
+    .manual-cover-dept-badge {
+        font-size: 9.5px !important;
+        color: #742C81 !important;
+        background: #faf5ff !important;
+        border: 1px solid #742C81 !important;
+        padding: 4px 10px !important;
+        border-radius: 14px !important;
+    }
+
+    .manual-cover-center {
+        text-align: center !important;
+        padding: 8px 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .manual-cover-badge-pill {
+        display: inline-block !important;
+        background: #742C81 !important;
+        color: #ffffff !important;
+        font-size: 9.5px !important;
+        padding: 3px 12px !important;
+        border-radius: 14px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .manual-cover-title {
+        font-size: 19px !important;
+        font-weight: 800 !important;
+        color: #1e293b !important;
+        line-height: 1.3 !important;
+        margin: 0 0 6px 0 !important;
+    }
+
+    .manual-cover-subtitle {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        color: #742C81 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .manual-cover-desc {
+        font-size: 10px !important;
+        color: #475569 !important;
+        line-height: 1.5 !important;
+        max-width: 100% !important;
+    }
+
+    .manual-cover-roles-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .manual-cover-role-card {
+        flex: 1 1 0 !important;
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 8px 10px !important;
+        text-align: center !important;
+    }
+
+    .manual-cover-role-card .role-icon {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 12px !important;
+        margin: 0 auto 4px auto !important;
+    }
+
+    .manual-cover-role-card .role-name {
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        margin-bottom: 2px !important;
+    }
+
+    .manual-cover-role-card .role-desc {
+        font-size: 8.5px !important;
+        line-height: 1.35 !important;
+        color: #475569 !important;
+    }
+
+    .manual-cover-toc {
+        background: #fdf4ff !important;
+        border: 1px solid #f0abfc !important;
+        border-radius: 6px !important;
+        padding: 10px 14px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .manual-cover-toc-title {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #742C81 !important;
+        margin-bottom: 6px !important;
+        border-bottom: 1px solid #e9d5ff !important;
+        padding-bottom: 4px !important;
+    }
+
+    .manual-cover-toc-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 4px 12px !important;
+    }
+
+    .manual-cover-toc-item {
+        font-size: 9px !important;
+        line-height: 1.4 !important;
+        color: #334155 !important;
+    }
+
+    .manual-cover-toc-item strong {
+        color: #742C81 !important;
+    }
+
+    .manual-cover-meta-footer {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-top: 1px solid #cbd5e1 !important;
+        padding-top: 8px !important;
+        font-size: 9px !important;
+        color: #64748b !important;
+    }
+
+    /* Chapter Containers: Natural flow, each starts on new page, no overflow truncation */
+    .manual-tabcontent {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
         background: #ffffff !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
+        padding: 0 0 8mm 0 !important;
         margin: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         height: auto !important;
-        max-height: 275mm !important;
+        max-height: none !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
     }
 
     .manual-tabcontent:last-of-type {
@@ -4532,37 +4924,55 @@ body:has(#editor-view.active) .mascot-widget {
         justify-content: space-between !important;
         align-items: center !important;
         border-bottom: 2px solid #742C81 !important;
-        padding-bottom: 4px !important;
-        margin-bottom: 8px !important;
+        padding-bottom: 6px !important;
+        margin-bottom: 10px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 
     .manual-a4-pea-brand {
         font-size: 11px !important;
         font-weight: 700 !important;
         color: #742C81 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
 
     .manual-a4-doc-name {
         font-size: 10px !important;
         color: #475569 !important;
+        margin-top: 2px !important;
     }
 
     .manual-a4-chapter-badge {
-        font-size: 10px !important;
+        font-size: 9.5px !important;
         background: #742C81 !important;
         color: #ffffff !important;
         padding: 2px 8px !important;
         border-radius: 4px !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
     }
 
     .manual-chapter-header {
-        margin-bottom: 8px !important;
+        margin-bottom: 10px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding-bottom: 6px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 
     .manual-chapter-header h2 {
         color: #742C81 !important;
         font-size: 15px !important;
-        margin: 0 0 2px 0 !important;
+        margin: 0 0 3px 0 !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
     }
 
     .manual-chapter-header p {
@@ -4572,84 +4982,135 @@ body:has(#editor-view.active) .mascot-widget {
     }
 
     .manual-figure {
-        margin: 6px 0 !important;
-        padding: 4px !important;
+        margin: 8px auto !important;
+        padding: 6px !important;
         border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
         background: #f8fafc !important;
         text-align: center !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        box-sizing: border-box !important;
+        max-width: 100% !important;
     }
 
     .manual-img {
         max-width: 100% !important;
         height: auto !important;
-        max-height: 270px !important;
+        max-height: 250px !important;
         display: block !important;
         margin: 0 auto !important;
         object-fit: contain !important;
-        border: 1px solid #cbd5e1 !important;
         border-radius: 4px !important;
+        box-sizing: border-box !important;
     }
 
     .manual-figcaption {
         font-size: 9px !important;
         color: #475569 !important;
-        margin-top: 3px !important;
+        margin-top: 4px !important;
         font-weight: 600 !important;
     }
 
     .manual-section-box {
         background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 8px 10px !important;
-        margin-bottom: 6px !important;
+        padding: 10px 12px !important;
+        margin-bottom: 10px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        box-sizing: border-box !important;
     }
 
     .manual-section-box h3 {
         font-size: 12px !important;
         color: #1e293b !important;
-        margin: 0 0 4px 0 !important;
+        margin: 0 0 6px 0 !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 
-    .manual-section-box p, .manual-section-box li {
+    .manual-section-box p, 
+    .manual-section-box li,
+    .manual-bullet-list li,
+    .manual-ordered-list li {
         font-size: 10px !important;
-        line-height: 1.4 !important;
+        line-height: 1.55 !important;
         color: #334155 !important;
     }
 
     .manual-steps-grid {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
+        display: flex !important;
+        flex-direction: row !important;
         gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin-top: 8px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 
     .manual-step-item {
-        padding: 6px 8px !important;
+        flex: 1 1 0 !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 8px 10px !important;
         margin-bottom: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        box-sizing: border-box !important;
+    }
+
+    .manual-step-num {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 11px !important;
+        border-radius: 4px !important;
+        margin-bottom: 4px !important;
+        background: rgba(116, 44, 129, 0.1) !important;
+        color: #742C81 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .manual-step-item h4 {
-        font-size: 11px !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
         margin: 0 0 2px 0 !important;
+        color: #1e293b !important;
     }
 
     .manual-step-item p {
         font-size: 9.5px !important;
+        line-height: 1.4 !important;
         margin: 0 !important;
+        color: #475569 !important;
     }
 
     .manual-table-wrap {
         overflow: visible !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .manual-table {
         width: 100% !important;
         font-size: 9.5px !important;
         border-collapse: collapse !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .manual-table tr {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
@@ -4658,24 +5119,47 @@ body:has(#editor-view.active) .mascot-widget {
         background: #f1f5f9 !important;
         color: #1e293b !important;
         border: 1px solid #cbd5e1 !important;
-        padding: 4px 6px !important;
+        padding: 6px 8px !important;
         font-size: 9.5px !important;
+        font-weight: 700 !important;
+        text-align: left !important;
     }
 
     .manual-table td {
         border: 1px solid #e2e8f0 !important;
-        padding: 3px 6px !important;
+        padding: 5px 8px !important;
         color: #334155 !important;
         font-size: 9px !important;
+        line-height: 1.45 !important;
+        vertical-align: top !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }
 
     .manual-tip-box {
         background: #fdf4ff !important;
         border: 1px solid #f0abfc !important;
+        border-left: 4px solid #742C81 !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 9.5px !important;
+        line-height: 1.5 !important;
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        box-sizing: border-box !important;
+        color: #334155 !important;
+    }
+
+    .manual-steps-list .manual-list-item {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 6px !important;
         padding: 6px 10px !important;
+        margin-bottom: 6px !important;
         font-size: 9.5px !important;
-        margin-top: 6px !important;
+        line-height: 1.45 !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
@@ -4683,11 +5167,14 @@ body:has(#editor-view.active) .mascot-widget {
     .manual-a4-footer {
         display: flex !important;
         justify-content: space-between !important;
+        align-items: center !important;
         border-top: 1px dashed #cbd5e1 !important;
-        padding-top: 4px !important;
-        margin-top: 8px !important;
+        padding-top: 6px !important;
+        margin-top: 12px !important;
         font-size: 9px !important;
-        color: #94a3b8 !important;
+        color: #64748b !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 }
 

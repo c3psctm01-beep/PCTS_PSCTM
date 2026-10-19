@@ -6670,6 +6670,7 @@ window.openProjectTab = function (evt, tabName) {
 };
 
 // --- User Manual Tabs & A4 Document Engine ---
+window.currentManualTab = 'mCoverPage';
 window.openManualTab = function (evt, tabId) {
     const tabs = document.querySelectorAll('.manual-tabcontent');
     const btns = document.querySelectorAll('.manual-nav-btn');
@@ -6677,7 +6678,13 @@ window.openManualTab = function (evt, tabId) {
 
     if (tabId === 'all') {
         tabs.forEach(t => t.style.display = 'block');
-        if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
+        } else {
+            const allBtn = Array.from(btns).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes("'all'"));
+            if (allBtn) allBtn.classList.add('active');
+        }
+        window.currentManualTab = 'all';
     } else {
         tabs.forEach(t => t.style.display = 'none');
         const target = document.getElementById(tabId);
@@ -6685,7 +6692,13 @@ window.openManualTab = function (evt, tabId) {
             target.style.display = 'block';
             target.scrollTop = 0;
         }
-        if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
+        } else {
+            const matchBtn = Array.from(btns).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId));
+            if (matchBtn) matchBtn.classList.add('active');
+        }
+        window.currentManualTab = tabId;
     }
 
     // Auto scroll view smoothly to top of manual content
@@ -6696,14 +6709,36 @@ window.openManualTab = function (evt, tabId) {
     }
 };
 
-window.printManualA4 = function () {
-    // 1. Temporarily display all chapters so the full manual is printed
+window.printManualA4 = function (mode = 'all') {
+    // 1. Temporarily display selected chapters so printing matches user intent
     const tabs = document.querySelectorAll('.manual-tabcontent');
     const prevDisplays = [];
     tabs.forEach((t, i) => {
         prevDisplays[i] = t.style.display;
-        t.style.display = 'block';
     });
+
+    if (mode === 'current') {
+        // Print only current chapter or cover page
+        let activeTab = null;
+        if (window.currentManualTab && window.currentManualTab !== 'all') {
+            activeTab = document.getElementById(window.currentManualTab);
+        } else {
+            tabs.forEach(t => {
+                if (t.style.display !== 'none' && !activeTab) {
+                    activeTab = t;
+                }
+            });
+        }
+        if (!activeTab && tabs.length > 0) activeTab = tabs[0];
+        tabs.forEach(t => {
+            t.style.display = (t === activeTab) ? 'block' : 'none';
+        });
+    } else {
+        // Print all chapters + cover page
+        tabs.forEach(t => {
+            t.style.display = 'block';
+        });
+    }
 
     // 2. Hide mascot widget
     const mascot = document.querySelector('.mascot-widget');
@@ -6724,7 +6759,7 @@ window.printManualA4 = function () {
         printStyle.innerHTML = `
             @page {
                 size: A4 portrait !important;
-                margin: 10mm 12mm 10mm 12mm !important;
+                margin: 12mm 14mm 14mm 14mm !important;
             }
         `;
         document.head.appendChild(printStyle);

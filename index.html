@@ -1929,15 +1929,21 @@
                             </p>
                         </div>
                         <div class="manual-hero-actions">
-                            <button type="button" class="btn btn-manual-print" onclick="printManualA4()">
-                                <i class="fa-solid fa-print"></i> พิมพ์คู่มือ A4 (PDF)
+                            <button type="button" class="btn btn-manual-print" onclick="printManualA4('all')">
+                                <i class="fa-solid fa-print"></i> พิมพ์คู่มือทั้งเล่ม (Full PDF)
+                            </button>
+                            <button type="button" class="btn btn-manual-print-chapter" onclick="printManualA4('current')">
+                                <i class="fa-solid fa-file-lines"></i> พิมพ์เฉพาะบทนี้
                             </button>
                         </div>
                     </div>
 
                     <!-- Category Tab Navigation -->
                     <div class="manual-nav-bar card mt-3">
-                        <button class="manual-nav-btn active" onclick="openManualTab(event, 'mTab1')">
+                        <button class="manual-nav-btn active" onclick="openManualTab(event, 'mCoverPage')">
+                            <i class="fa-solid fa-book-bookmark"></i> <span>หน้าปก & สารบัญ</span>
+                        </button>
+                        <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab1')">
                             <i class="fa-solid fa-shield-halved"></i> <span>1. ภาพรวมและสิทธิ์</span>
                         </button>
                         <button class="manual-nav-btn" onclick="openManualTab(event, 'mTab2')">
@@ -1956,14 +1962,93 @@
                             <i class="fa-solid fa-mobile-screen"></i> <span>6. ติดตั้งแอปมือถือ (PWA)</span>
                         </button>
                         <button class="manual-nav-btn" onclick="openManualTab(event, 'all')" style="border-left: 2px solid #cbd5e1; margin-left: 4px;">
-                            <i class="fa-solid fa-file-lines"></i> <span>ดูทุกบทต่อเนื่อง (Full A4 Doc)</span>
+                            <i class="fa-solid fa-file-pdf"></i> <span>ดูทุกบทต่อเนื่อง (Full A4 Doc)</span>
                         </button>
                     </div>
 
                     <!-- Manual A4 Document Container -->
                     <div class="manual-a4-container mt-3">
+                        <!-- Manual Cover Page (หน้าปกทางการ กฟภ. & สารบัญ) -->
+                        <div id="mCoverPage" class="manual-tabcontent manual-cover-page card" style="display: block;">
+                            <div class="manual-cover-wrapper">
+                                <div class="manual-cover-header-top">
+                                    <div class="manual-cover-pea-logo">
+                                        <i class="fa-solid fa-bolt manual-cover-bolt"></i>
+                                        <div class="manual-cover-org">
+                                            <span class="manual-cover-org-th">การไฟฟ้าส่วนภูมิภาค</span>
+                                            <span class="manual-cover-org-en">PROVINCIAL ELECTRICITY AUTHORITY</span>
+                                        </div>
+                                    </div>
+                                    <div class="manual-cover-dept-badge">
+                                        <i class="fa-solid fa-shield-halved"></i> สายงานระบบส่งและจำหน่าย &bull; ฝ่ายก่อสร้างสถานีไฟฟ้าและสายส่ง
+                                    </div>
+                                </div>
+
+                                <div class="manual-cover-center">
+                                    <div class="manual-cover-badge-pill">
+                                        <i class="fa-solid fa-award"></i> เอกสารมาตรฐานคู่มือการปฏิบัติงานฉบับทางการ
+                                    </div>
+                                    <h1 class="manual-cover-title">คู่มือการใช้งานระบบติดตามงานก่อสร้าง<br>สถานีไฟฟ้าและระบบสายส่ง 115 kV</h1>
+                                    <div class="manual-cover-subtitle">PEA Construction Tracking System (PCTS VER 4.0)</div>
+                                    <p class="manual-cover-desc">
+                                        คู่มือแนะนำสถาปัตยกรรมระบบ ฟังก์ชันการติดตามความก้าวหน้าโครงการแบบเรียลไทม์ การวิเคราะห์กราฟ S-Curve & WBS, การบันทึกผลงานภาคสนามพร้อมประทับลายน้ำมาตรฐาน กฟภ., การลงนามดิจิทัล 3 ฝ่าย, ระบบจำลองสัญญาค่าปรับและขอขยายเวลา (EOT Simulator) และการติดตั้งใช้งานแอปพลิเคชันมือถือ (PWA) ครบวงจร
+                                    </p>
+                                </div>
+
+                                <div class="manual-cover-roles-grid">
+                                    <div class="manual-cover-role-card role-viewer">
+                                        <div class="role-icon"><i class="fa-solid fa-user"></i></div>
+                                        <div class="role-name">สิทธิ์ Viewer</div>
+                                        <div class="role-desc">ผู้บริหาร, คณะกรรมการตรวจรับ, บุคคลทั่วไป ดูภาพรวมและรายงาน PDF</div>
+                                    </div>
+                                    <div class="manual-cover-role-card role-editor">
+                                        <div class="role-icon"><i class="fa-solid fa-user-gear"></i></div>
+                                        <div class="role-name">สิทธิ์ Editor</div>
+                                        <div class="role-desc">ผู้ควบคุมงาน บันทึกผลงานประจำวัน แนบคลังภาพพร้อมลายน้ำ กฟภ.</div>
+                                    </div>
+                                    <div class="manual-cover-role-card role-admin">
+                                        <div class="role-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                        <div class="role-name">สิทธิ์ Admin</div>
+                                        <div class="role-desc">ผู้ดูแลระบบ จัดการโครงการ WBS อนุมัติสิทธิ์ และนำเข้าข้อมูล Excel</div>
+                                    </div>
+                                </div>
+
+                                <div class="manual-cover-toc">
+                                    <div class="manual-cover-toc-title">
+                                        <i class="fa-solid fa-list-check" style="color: var(--pea-purple);"></i> สารบัญเนื้อหาคู่มือ 6 บท (Table of Contents)
+                                    </div>
+                                    <div class="manual-cover-toc-grid">
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab1')">
+                                            <strong>บทที่ 1:</strong> ภาพรวมระบบและระดับสิทธิ์การเข้าใช้งาน (User Roles)
+                                        </div>
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab2')">
+                                            <strong>บทที่ 2:</strong> หน้าภาพรวม, แดชบอร์ด PSCTM และแผนที่พิกัดสถานี GIS
+                                        </div>
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab3')">
+                                            <strong>บทที่ 3:</strong> การติดตามผลงานโครงการ (WBS, S-Curve, สายส่ง 115 kV, EOT)
+                                        </div>
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab4')">
+                                            <strong>บทที่ 4:</strong> ระบบรายงานความก้าวหน้าภาคสนาม, ลายน้ำ กฟภ. และลงนามดิจิทัล
+                                        </div>
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab5')">
+                                            <strong>บทที่ 5:</strong> การจัดการระบบ (Admin), สิทธิ์ผู้ใช้งาน และนำเข้าข้อมูล Excel 092
+                                        </div>
+                                        <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab6')">
+                                            <strong>บทที่ 6:</strong> การติดตั้งแอปพลิเคชันมือถือ (PWA) และคำถามที่พบบ่อย (FAQ)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="manual-cover-meta-footer">
+                                    <div class="meta-item"><i class="fa-solid fa-code-branch"></i> เวอร์ชันระบบ: <strong>PCTS VER 4.0</strong></div>
+                                    <div class="meta-item"><i class="fa-solid fa-calendar-days"></i> มีนาคม 2569</div>
+                                    <div class="meta-item"><i class="fa-solid fa-building-circle-check"></i> แผนกพัฒนาระบบเทคโนโลยีก่อสร้างสถานีไฟฟ้า</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Chapter 1: Overview & Roles -->
-                        <div id="mTab1" class="manual-tabcontent card" style="display: block;">
+                        <div id="mTab1" class="manual-tabcontent card" style="display: none;">
                             <div class="manual-a4-header">
                                 <div class="manual-a4-header-left">
                                     <div class="manual-a4-pea-brand">
