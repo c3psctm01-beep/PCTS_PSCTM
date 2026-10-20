@@ -164,6 +164,15 @@
                     <button type="button" class="btn btn-primary btn-sm role-editor" onclick="window.openAddNewTowerModal()" title="เพิ่มข้อมูลต้นเสาใหม่ (Add Pole)">
                         <i class="fa-solid fa-plus"></i> เพิ่มต้นเสา (Add Pole)
                     </button>
+                    ${total > 0 ? `
+                        <button type="button" class="btn btn-sm role-admin" onclick="window.deleteAllTowers()" title="ลบข้อมูลต้นเสาทั้งหมดในโครงการนี้" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 6px 12px; font-weight: 500; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-trash-can"></i> ลบเสาทั้งหมด
+                        </button>
+                    ` : `
+                        <button type="button" class="btn btn-sm btn-outline role-editor" onclick="window.resetDefaultTowers()" title="สร้างชุดเสามาตรฐานเริ่มต้น 24 ต้น (P01 - P24)" style="border: 1px dashed var(--pea-purple); color: var(--pea-purple); padding: 6px 12px; font-weight: 500; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-rotate-right"></i> สร้างชุดเสาเริ่มต้น (24 ต้น)
+                        </button>
+                    `}
                 </div>
             </div>
 
@@ -183,7 +192,7 @@
                     <div class="kpi-info">
                         <span class="label">1. งานฐานราก</span>
                         <strong class="val">${foundDone}/${total} <span class="unit">ต้น</span></strong>
-                        <span class="sub" style="color: #10b981;">${((foundDone / total) * 100).toFixed(1)}% แล้วเสร็จ</span>
+                        <span class="sub" style="color: #10b981;">${total > 0 ? ((foundDone / total) * 100).toFixed(1) : '0.0'}% แล้วเสร็จ</span>
                     </div>
                 </div>
 
@@ -192,7 +201,7 @@
                     <div class="kpi-info">
                         <span class="label">2. งานตั้งเสา</span>
                         <strong class="val">${erectDone}/${total} <span class="unit">ต้น</span></strong>
-                        <span class="sub" style="color: #3b82f6;">${((erectDone / total) * 100).toFixed(1)}% แล้วเสร็จ</span>
+                        <span class="sub" style="color: #3b82f6;">${total > 0 ? ((erectDone / total) * 100).toFixed(1) : '0.0'}% แล้วเสร็จ</span>
                     </div>
                 </div>
 
@@ -201,7 +210,7 @@
                     <div class="kpi-info">
                         <span class="label">3. งานพาดสาย</span>
                         <strong class="val">${stringDone}/${total} <span class="unit">ต้น</span></strong>
-                        <span class="sub" style="color: #f59e0b;">${((stringDone / total) * 100).toFixed(1)}% แล้วเสร็จ</span>
+                        <span class="sub" style="color: #f59e0b;">${total > 0 ? ((stringDone / total) * 100).toFixed(1) : '0.0'}% แล้วเสร็จ</span>
                     </div>
                 </div>
 
@@ -314,9 +323,24 @@
         if (filteredTowers.length === 0) {
             html += `
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 35px 20px; color: var(--text-secondary);">
-                        <i class="fa-solid fa-tower-observation" style="font-size: 28px; opacity: 0.4; margin-bottom: 8px;"></i><br>
-                        ไม่พบข้อมูลต้นเสาตามเงื่อนไขที่เลือก
+                    <td colspan="9" style="text-align: center; padding: 45px 20px; color: var(--text-secondary);">
+                        <i class="fa-solid fa-tower-observation" style="font-size: 38px; opacity: 0.35; margin-bottom: 10px; display: inline-block;"></i>
+                        <h4 style="margin: 0 0 6px 0; font-size: 15px; color: var(--text-primary);">
+                            ${total === 0 ? 'ยังไม่มีข้อมูลต้นเสาในโครงการนี้' : 'ไม่พบข้อมูลต้นเสาตามเงื่อนไขที่เลือก'}
+                        </h4>
+                        <p style="margin: 0 0 ${total === 0 ? '16px' : '0'} 0; font-size: 12.5px; color: #94a3b8;">
+                            ${total === 0 ? 'สามารถเพิ่มข้อมูลต้นเสาเองทีละต้น หรือสร้างชุดข้อมูลเสาสายส่ง 115 kV มาตรฐานเริ่มต้น (24 ต้น)' : 'ลองปรับเปลี่ยนเงื่อนไขตัวกรองสถานะหรือคำค้นหา'}
+                        </p>
+                        ${total === 0 ? `
+                            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-primary btn-sm role-editor" onclick="window.openAddNewTowerModal()">
+                                    <i class="fa-solid fa-plus"></i> เพิ่มต้นเสาใหม่
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm role-editor" onclick="window.resetDefaultTowers()">
+                                    <i class="fa-solid fa-rotate-right"></i> สร้างชุดเสาเริ่มต้น 24 ต้น (P01 - P24)
+                                </button>
+                            </div>
+                        ` : ''}
                     </td>
                 </tr>
             `;
@@ -636,6 +660,91 @@
             }
         } catch (err) {
             console.error('Error deleting tower:', err);
+            window.renderTowerMatrixTab(p);
+        }
+    };
+
+    /**
+     * ลบข้อมูลต้นเสาทั้งหมดในโครงการ
+     */
+    window.deleteAllTowers = async function () {
+        const p = window.currentProjectViewData;
+        if (!p) return;
+        const currentCount = Array.isArray(p.towers) ? p.towers.length : 0;
+        if (currentCount === 0) {
+            alert('ไม่มีรายการต้นเสาให้ลบ');
+            return;
+        }
+
+        if (!confirm(`⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลต้นเสาทั้งหมด (${currentCount} ต้น) ของโครงการ "${p.name}"?\n\nการดำเนินการนี้จะลบรายการเสา สถานะ และคอขวดทั้งหมดในโครงการนี้ออกจากระบบ`)) {
+            return;
+        }
+
+        p.towers = [];
+
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.towers = [];
+        }
+
+        try {
+            let saved = true;
+            if (typeof window.saveProjects === 'function') {
+                saved = await window.saveProjects(p.id);
+            }
+            window.renderTowerMatrixTab(p);
+            if (typeof Toastify === 'function') {
+                if (saved === false) {
+                    Toastify({
+                        text: 'ลบข้อมูลเสาทั้งหมดในเครื่องแล้ว แต่การซิงค์ข้อมูลกับคลาวด์ขัดข้อง',
+                        duration: 4000,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                } else {
+                    Toastify({
+                        text: `🗑️ ลบข้อมูลต้นเสาทั้งหมด (${currentCount} ต้น) เรียบร้อยแล้ว`,
+                        duration: 3500,
+                        style: { background: 'linear-gradient(135deg, #ef4444, #b91c1c)', borderRadius: '8px' }
+                    }).showToast();
+                }
+            }
+        } catch (err) {
+            console.error('Error deleting all towers:', err);
+            window.renderTowerMatrixTab(p);
+        }
+    };
+
+    /**
+     * สร้างชุดเสาเริ่มต้น 24 ต้นใหม่ (Reset Default Towers)
+     */
+    window.resetDefaultTowers = async function () {
+        const p = window.currentProjectViewData;
+        if (!p) return;
+        if (!confirm(`คุณต้องการสร้างชุดข้อมูลต้นเสาเริ่มต้น 24 ต้น (P01 - P24) ให้กับโครงการนี้ใช่หรือไม่?`)) return;
+
+        p.towers = null; // Set to null so initProjectTowers generates 24 standard poles
+        const newTowers = window.initProjectTowers(p);
+
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.towers = newTowers;
+        }
+
+        try {
+            if (typeof window.saveProjects === 'function') {
+                await window.saveProjects(p.id);
+            }
+            window.renderTowerMatrixTab(p);
+            if (typeof Toastify === 'function') {
+                Toastify({
+                    text: '✨ สร้างชุดข้อมูลเสาเริ่มต้น 24 ต้นเรียบร้อยแล้ว',
+                    duration: 3000,
+                    style: { background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '8px' }
+                }).showToast();
+            }
+        } catch (err) {
+            console.error('Error resetting towers:', err);
             window.renderTowerMatrixTab(p);
         }
     };
