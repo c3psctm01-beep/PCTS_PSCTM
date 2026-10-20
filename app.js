@@ -304,6 +304,40 @@ window.getWorkTypeBadgeInfo = function (workType) {
     }
 };
 
+// Helper: Escape HTML characters for reports and displays
+window.escapeHtmlForReport = function (str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
+// Helper: Clean all internal system metadata tags from project details
+window.cleanProjectDetails = function (text) {
+    if (!text || typeof text !== 'string') return '';
+    return text
+        // Specific metadata tags embedded in details column
+        .replace(/\[WORKTYPE:[\s\S]*?\]/gi, '')
+        .replace(/\[TYPE:[\s\S]*?\]/gi, '')
+        .replace(/\[SUP:[\s\S]*?\]/gi, '')
+        .replace(/\[COM1:[\s\S]*?\]/gi, '')
+        .replace(/\[COM2:[\s\S]*?\]/gi, '')
+        .replace(/\[COM3:[\s\S]*?\]/gi, '')
+        .replace(/\[COM:[\s\S]*?\]/gi, '')
+        .replace(/\[LAT:[\s\S]*?\]/gi, '')
+        .replace(/\[LNG:[\s\S]*?\]/gi, '')
+        .replace(/\[YEAR:[\s\S]*?\]/gi, '')
+        .replace(/\[EOT:[\s\S]*?\]/gi, '')
+        .replace(/\[PUNCH:[\s\S]*?\]/gi, '')
+        .replace(/\[BA:[\s\S]*?\]/gi, '')
+        // Generic fallback to strip any remaining [TAG:...] patterns
+        .replace(/\[[A-Za-z0-9_-]+:[\s\S]*?\]/g, '')
+        .trim();
+};
+
 let projects = [];
 
 window.loadProjects = async function () {
@@ -449,6 +483,9 @@ window.loadProjects = async function () {
                     } catch (_) {}
                 }
                 if (pBeforeAfter.length === 0 && defProj?.beforeAfter) pBeforeAfter = JSON.parse(JSON.stringify(defProj.beforeAfter));
+
+                // Always strip all metadata tags so pDetails only contains clean user text
+                pDetails = window.cleanProjectDetails(pDetails);
 
                 return {
                     id: dbProj.id,
@@ -1476,21 +1513,7 @@ window.saveProjects = async function (projectId = null) {
 
         const dbProjects = targetProjects.map(p => {
             // Strip any existing tag prefixes from details to avoid tag duplicates
-            let cleanDetails = (p.details || '')
-                .replace(/\[WORKTYPE:.*?\]/g, '')
-                .replace(/\[TYPE:.*?\]/g, '')
-                .replace(/\[SUP:.*?\]/g, '')
-                .replace(/\[COM:.*?\]/g, '')
-                .replace(/\[COM1:.*?\]/g, '')
-                .replace(/\[COM2:.*?\]/g, '')
-                .replace(/\[COM3:.*?\]/g, '')
-                .replace(/\[LAT:.*?\]/g, '')
-                .replace(/\[LNG:.*?\]/g, '')
-                .replace(/\[YEAR:.*?\]/g, '')
-                .replace(/\[EOT:[\s\S]*?\]/g, '')
-                .replace(/\[PUNCH:[\s\S]*?\]/g, '')
-                .replace(/\[BA:[\s\S]*?\]/g, '')
-                .trim();
+            let cleanDetails = window.cleanProjectDetails(p.details);
 
             const latStr = (p.latitude !== null && p.latitude !== undefined && !isNaN(p.latitude)) ? p.latitude : '';
             const lngStr = (p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) ? p.longitude : '';
@@ -3996,6 +4019,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load projects from Supabase before rendering
     await window.loadProjects();
+    if (Array.isArray(window.projects)) {
+        window.projects.forEach(proj => {
+            if (proj && proj.details) proj.details = window.cleanProjectDetails(proj.details);
+        });
+    }
     if (typeof window.renderDashboardYearOptions === 'function') {
         window.renderDashboardYearOptions();
     }
@@ -4486,6 +4514,9 @@ window.viewProjectDetails = function (projectId) {
         return;
     }
 
+    if (p && p.details) {
+        p.details = window.cleanProjectDetails(p.details);
+    }
     window.currentProjectViewData = p;
 
     // Set title safely
@@ -7625,11 +7656,14 @@ window.buildReportPayload = function (selected) {
                     <td class="label-cell">สถานะปัจจุบัน</td>
                     <td class="value-cell"><span class="badge-status">${p.status}</span></td>
                 </tr>
-                ${p.details ? `
+                ${(() => {
+                    const cleanDesc = window.cleanProjectDetails(p.details);
+                    return cleanDesc ? `
                 <tr>
                     <td class="label-cell">รายละเอียดเพิ่มเติม</td>
-                    <td class="value-cell" colspan="3">${p.details}</td>
-                </tr>` : ''}
+                    <td class="value-cell" colspan="3">${window.escapeHtmlForReport(cleanDesc)}</td>
+                </tr>` : '';
+                })()}
             </table>
         </div>`;
     }
@@ -10132,13 +10166,7 @@ function formatThaiDateString(dateStr, isShort = false) {
 
 // Helper: Escape HTML
 function escapeHtmlForReport(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    return window.escapeHtmlForReport(str);
 }
 
 window.openWorkReportModal = function (targetProjectId = null) {
