@@ -18,7 +18,7 @@
      */
     window.initProjectTowers = function (project) {
         if (!project) return [];
-        if (Array.isArray(project.towers) && project.towers.length > 0) {
+        if (Array.isArray(project.towers)) {
             // ปรับปรุงหมายเลขเสาเดิมที่เคยใช้ T นำหน้า ให้เป็น P นำหน้าทั้งหมดอัตโนมัติ
             project.towers.forEach(t => {
                 if (t.towerNo && /^[Tt]\d+/.test(t.towerNo)) {
@@ -110,6 +110,13 @@
         }
 
         project.towers = towers;
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(project.id));
+            if (match) match.towers = towers;
+        }
+        if (typeof window.saveProjects === 'function') {
+            window.saveProjects(project.id);
+        }
         return towers;
     };
 
@@ -418,6 +425,12 @@
         tower[phase] = nextStatus;
         tower.updatedAt = new Date().toISOString().split('T')[0];
 
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.towers = p.towers;
+        }
+
         try {
             if (typeof window.saveProjects === 'function') {
                 await window.saveProjects(p.id);
@@ -555,6 +568,12 @@
             });
         }
 
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.towers = p.towers;
+        }
+
         try {
             if (typeof window.saveProjects === 'function') {
                 await window.saveProjects(p.id);
@@ -583,17 +602,41 @@
         const idx = p.towers.findIndex(t => t.id === towerId);
         if (idx === -1) return;
 
-        if (!confirm(`ยืนยันการลบต้นเสา ${p.towers[idx].towerNo}?`)) return;
+        const towerNo = p.towers[idx].towerNo;
+        if (!confirm(`ยืนยันการลบต้นเสา ${towerNo}?`)) return;
 
         p.towers.splice(idx, 1);
 
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.towers = p.towers;
+        }
+
         try {
+            let saved = true;
             if (typeof window.saveProjects === 'function') {
-                await window.saveProjects(p.id);
+                saved = await window.saveProjects(p.id);
             }
             window.renderTowerMatrixTab(p);
+            if (typeof Toastify === 'function') {
+                if (saved === false) {
+                    Toastify({
+                        text: `ลบต้นเสา ${towerNo} ในเครื่องแล้ว แต่การซิงค์ข้อมูลกับคลาวด์ขัดข้อง`,
+                        duration: 4000,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                } else {
+                    Toastify({
+                        text: `🗑️ ลบต้นเสา ${towerNo} เรียบร้อยแล้ว`,
+                        duration: 3000,
+                        style: { background: 'linear-gradient(135deg, #ef4444, #b91c1c)', borderRadius: '8px' }
+                    }).showToast();
+                }
+            }
         } catch (err) {
-            alert('เกิดข้อผิดพลาด: ' + err.message);
+            console.error('Error deleting tower:', err);
+            window.renderTowerMatrixTab(p);
         }
     };
 

@@ -333,6 +333,7 @@ window.cleanProjectDetails = function (text) {
         .replace(/\[EOT:[\s\S]*?\]/gi, '')
         .replace(/\[PUNCH:[\s\S]*?\]/gi, '')
         .replace(/\[BA:[\s\S]*?\]/gi, '')
+        .replace(/\[TOWERS:[\s\S]*?\]/gi, '')
         // Generic fallback to strip any remaining [TAG:...] patterns
         .replace(/\[[A-Za-z0-9_-]+:[\s\S]*?\]/g, '')
         .trim();
@@ -541,6 +542,37 @@ window.loadProjects = async function () {
                     pBeforeAfter = JSON.parse(JSON.stringify(defProj.beforeAfter));
                 }
 
+                // --- Towers / Pole Matrix Handling (Respect empty list and saved state) ---
+                let hasExplicitTowers = false;
+                let pTowers = undefined;
+                if (Array.isArray(dbProj.towers)) {
+                    pTowers = dbProj.towers;
+                    hasExplicitTowers = true;
+                }
+                if (pDetails.includes('[TOWERS:')) {
+                    try {
+                        const mTowers = pDetails.match(/\[TOWERS:([\s\S]*?)\]/);
+                        if (mTowers && mTowers[1]) {
+                            pTowers = JSON.parse(decodeURIComponent(mTowers[1]));
+                            pDetails = pDetails.replace(mTowers[0], '');
+                            hasExplicitTowers = true;
+                        }
+                    } catch (_) {}
+                }
+                if (!hasExplicitTowers) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+                        const cp = cached.find(c => String(c.id) === String(dbProj.id));
+                        if (cp && Array.isArray(cp.towers)) {
+                            pTowers = cp.towers;
+                            hasExplicitTowers = true;
+                        }
+                    } catch (_) {}
+                }
+                if (!hasExplicitTowers && Array.isArray(defProj?.towers)) {
+                    pTowers = JSON.parse(JSON.stringify(defProj.towers));
+                }
+
                 // Always strip all metadata tags so pDetails only contains clean user text
                 pDetails = window.cleanProjectDetails(pDetails);
 
@@ -587,6 +619,7 @@ window.loadProjects = async function () {
                     eot: pEot,
                     punchList: pPunchList,
                     beforeAfter: pBeforeAfter,
+                    towers: pTowers,
                     disbursement: (() => {
                         let disb = dbProj.disbursement || (defaultProjects.find(dp => dp.id === dbProj.id)?.disbursement || null);
                         if (disb) {
@@ -1563,6 +1596,7 @@ window.saveProjects = async function (projectId = null) {
                     projects[idx].punchList = currentProj.punchList;
                     projects[idx].beforeAfter = currentProj.beforeAfter;
                     projects[idx].eot = currentProj.eot;
+                    projects[idx].towers = currentProj.towers;
                     projects[idx].gallery = currentProj.gallery;
                     projects[idx].tasks = currentProj.tasks;
                     projects[idx].details = currentProj.details;
@@ -1573,6 +1607,7 @@ window.saveProjects = async function (projectId = null) {
                         window.projects[wIdx].punchList = currentProj.punchList;
                         window.projects[wIdx].beforeAfter = currentProj.beforeAfter;
                         window.projects[wIdx].eot = currentProj.eot;
+                        window.projects[wIdx].towers = currentProj.towers;
                         window.projects[wIdx].gallery = currentProj.gallery;
                         window.projects[wIdx].tasks = currentProj.tasks;
                         window.projects[wIdx].details = currentProj.details;
@@ -1624,9 +1659,13 @@ window.saveProjects = async function (projectId = null) {
             if (p.beforeAfter !== undefined && p.beforeAfter !== null) {
                 try { baTag = `[BA:${encodeURIComponent(JSON.stringify(p.beforeAfter))}]`; } catch (_) {}
             }
+            let towerTag = '';
+            if (p.towers !== undefined && p.towers !== null) {
+                try { towerTag = `[TOWERS:${encodeURIComponent(JSON.stringify(p.towers))}]`; } catch (_) {}
+            }
 
             const pWorkType = p.workType || window.inferProjectWorkType(p) || 'งานสถานีไฟฟ้าถาวร';
-            const tagPrefix = `[WORKTYPE:${pWorkType}][TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}${eotTag}${punchTag}${baTag}`;
+            const tagPrefix = `[WORKTYPE:${pWorkType}][TYPE:${p.type || 'จ้างเหมา'}][SUP:${p.supervisor || ''}][COM:${p.committee || ''}][COM1:${p.committee1 || ''}][COM2:${p.committee2 || ''}][COM3:${p.committee3 || ''}][LAT:${latStr}][LNG:${lngStr}]${yearStr}${eotTag}${punchTag}${baTag}${towerTag}`;
 
             return {
                 id: p.id,
@@ -1652,6 +1691,7 @@ window.saveProjects = async function (projectId = null) {
                 eot: p.eot || [],
                 punch_list: p.punchList || [],
                 before_after: p.beforeAfter || [],
+                towers: p.towers || [],
                 disbursement: p.disbursement || null
             };
         });
@@ -1667,6 +1707,7 @@ window.saveProjects = async function (projectId = null) {
                 delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                 delete legacy.latitude; delete legacy.longitude;
                 delete legacy.eot; delete legacy.punch_list; delete legacy.before_after;
+                delete legacy.towers;
                 res = await db.from('projects').update(legacy).eq('id', projectId);
             }
             err = res.error;
@@ -1680,6 +1721,7 @@ window.saveProjects = async function (projectId = null) {
                     delete legacy.committee1; delete legacy.committee2; delete legacy.committee3;
                     delete legacy.latitude; delete legacy.longitude;
                     delete legacy.eot; delete legacy.punch_list; delete legacy.before_after;
+                    delete legacy.towers;
                     return legacy;
                 });
                 res = await db.from('projects').upsert(legacyProjects);

@@ -16,6 +16,7 @@ ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
 ADD COLUMN IF NOT EXISTS eot JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS punch_list JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS before_after JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS towers JSONB DEFAULT '[]'::jsonb,
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- 2. สร้าง Trigger อัปเดต updated_at อัตโนมัติ

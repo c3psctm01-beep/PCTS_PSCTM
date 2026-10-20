@@ -102,6 +102,7 @@
                             if (Array.isArray(newRecord.eot)) window.projects[idx].eot = newRecord.eot;
                             if (Array.isArray(newRecord.punch_list)) window.projects[idx].punchList = newRecord.punch_list;
                             if (Array.isArray(newRecord.before_after)) window.projects[idx].beforeAfter = newRecord.before_after;
+                            if (Array.isArray(newRecord.towers)) window.projects[idx].towers = newRecord.towers;
                             if (newRecord.latitude) window.projects[idx].latitude = parseFloat(newRecord.latitude);
                             if (newRecord.longitude) window.projects[idx].longitude = parseFloat(newRecord.longitude);
                             if (newRecord.details) {
@@ -128,6 +129,12 @@
                                         if (mE && mE[1]) window.projects[idx].eot = JSON.parse(decodeURIComponent(mE[1]));
                                     } catch (_) {}
                                 }
+                                if (!Array.isArray(newRecord.towers) && newRecord.details.includes('[TOWERS:')) {
+                                    try {
+                                        const mT = newRecord.details.match(/\[TOWERS:([\s\S]*?)\]/);
+                                        if (mT && mT[1]) window.projects[idx].towers = JSON.parse(decodeURIComponent(mT[1]));
+                                    } catch (_) {}
+                                }
                             }
 
                             // ซิงค์ต่อไปยังหน้าต่างแสดงผลปัจจุบัน หากเปิดดูโครงการนี้อยู่
@@ -135,6 +142,7 @@
                                 window.currentProjectViewData.punchList = window.projects[idx].punchList;
                                 window.currentProjectViewData.beforeAfter = window.projects[idx].beforeAfter;
                                 window.currentProjectViewData.eot = window.projects[idx].eot;
+                                window.currentProjectViewData.towers = window.projects[idx].towers;
                             }
                             updatedProject = window.projects[idx];
                         }
@@ -159,7 +167,7 @@
                             await window.loadProjects();
                         }
                     } else if (eventType === 'DELETE' && oldRecord) {
-                        window.projects = window.projects.filter(p => p.id !== oldRecord.id);
+                        window.projects = window.projects.filter(p => String(p.id) !== String(oldRecord.id));
                         showRealtimeToast(`🗑️ มีการลบโครงการออกจากระบบ`, 'info');
                     }
 
@@ -171,10 +179,11 @@
                         if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
                             window.renderGisMap();
                         }
-                        if (window.currentProjectViewData && newRecord && window.currentProjectViewData.id === newRecord.id) {
-                            const currentTarget = updatedProject || window.projects.find(p => p.id === newRecord.id) || window.currentProjectViewData;
+                        if (window.currentProjectViewData && newRecord && String(window.currentProjectViewData.id) === String(newRecord.id)) {
+                            const currentTarget = updatedProject || window.projects.find(p => String(p.id) === String(newRecord.id)) || window.currentProjectViewData;
                             if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(currentTarget);
                             if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(currentTarget);
+                            if (typeof window.renderTowerMatrixTab === 'function') window.renderTowerMatrixTab(currentTarget);
                             if (typeof window.renderGalleryTab === 'function') {
                                 window.renderGalleryTab(currentTarget, window.currentGalleryFilterTaskId || 'all');
                             }
