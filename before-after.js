@@ -315,18 +315,41 @@
         const p = window.currentProjectViewData;
         if (!p || !p.beforeAfter || !p.beforeAfter[index]) return;
 
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบจุดเปรียบเทียบนี้?`)) return;
+        const pair = p.beforeAfter[index];
+        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบจุดเปรียบเทียบ "${pair.title || ''}"?`)) return;
 
         p.beforeAfter.splice(index, 1);
         if (activeSliderIndex >= p.beforeAfter.length) {
             activeSliderIndex = Math.max(0, p.beforeAfter.length - 1);
         }
 
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.beforeAfter = p.beforeAfter;
+        }
+
         try {
-            await window.saveProjects(p.id);
+            const saved = await window.saveProjects(p.id);
             window.renderBeforeAfterTab(p);
+            if (typeof Toastify === 'function') {
+                if (saved === false) {
+                    Toastify({
+                        text: 'ลบจุดเปรียบเทียบในเครื่องแล้ว แต่การซิงค์ข้อมูลกับคลาวด์ขัดข้อง',
+                        duration: 4000,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                } else {
+                    Toastify({
+                        text: '🗑️ ลบจุดเปรียบเทียบภาพเรียบร้อยแล้ว',
+                        duration: 3000,
+                        style: { background: 'linear-gradient(135deg, #ef4444, #b91c1c)', borderRadius: '8px' }
+                    }).showToast();
+                }
+            }
         } catch (err) {
             console.error('Error deleting before-after pair:', err);
+            window.renderBeforeAfterTab(p);
         }
     };
 

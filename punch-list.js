@@ -569,15 +569,38 @@
         const p = window.currentProjectViewData;
         if (!p || !p.punchList || !p.punchList[index]) return;
 
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการข้อบกพร่องนี้?`)) return;
+        const item = p.punchList[index];
+        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการข้อบกพร่อง "${item.title || ''}"?`)) return;
 
         p.punchList.splice(index, 1);
 
+        // Synchronize immediately to window.projects
+        if (Array.isArray(window.projects)) {
+            const match = window.projects.find(proj => String(proj.id) === String(p.id));
+            if (match) match.punchList = p.punchList;
+        }
+
         try {
-            await window.saveProjects(p.id);
+            const saved = await window.saveProjects(p.id);
             window.renderPunchListTab(p);
+            if (typeof Toastify === 'function') {
+                if (saved === false) {
+                    Toastify({
+                        text: 'ลบรายการในเครื่องแล้ว แต่การซิงค์ข้อมูลกับคลาวด์ขัดข้อง',
+                        duration: 4000,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                } else {
+                    Toastify({
+                        text: '🗑️ ลบรายการข้อบกพร่องเรียบร้อยแล้ว',
+                        duration: 3000,
+                        style: { background: 'linear-gradient(135deg, #ef4444, #b91c1c)', borderRadius: '8px' }
+                    }).showToast();
+                }
+            }
         } catch (err) {
             console.error('Error deleting punch item:', err);
+            window.renderPunchListTab(p);
         }
     };
 

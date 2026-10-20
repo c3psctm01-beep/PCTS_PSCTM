@@ -448,41 +448,98 @@ window.loadProjects = async function () {
                 if ((pLatitude === null || isNaN(pLatitude)) && defProj?.latitude) pLatitude = defProj.latitude;
                 if ((pLongitude === null || isNaN(pLongitude)) && defProj?.longitude) pLongitude = defProj.longitude;
 
-                let pEot = Array.isArray(dbProj.eot) ? dbProj.eot : [];
-                if (pEot.length === 0 && pDetails.includes('[EOT:')) {
+                // --- EOT Handling (Respect empty list and saved state) ---
+                let hasExplicitEot = false;
+                let pEot = [];
+                if (Array.isArray(dbProj.eot)) {
+                    pEot = dbProj.eot;
+                    hasExplicitEot = true;
+                }
+                if (pDetails.includes('[EOT:')) {
                     try {
                         const mEot = pDetails.match(/\[EOT:([\s\S]*?)\]/);
                         if (mEot && mEot[1]) {
                             pEot = JSON.parse(decodeURIComponent(mEot[1]));
                             pDetails = pDetails.replace(mEot[0], '');
+                            hasExplicitEot = true;
                         }
                     } catch (_) {}
                 }
-                if (pEot.length === 0 && defProj?.eot) pEot = JSON.parse(JSON.stringify(defProj.eot));
+                if (!hasExplicitEot) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+                        const cp = cached.find(c => String(c.id) === String(dbProj.id));
+                        if (cp && Array.isArray(cp.eot)) {
+                            pEot = cp.eot;
+                            hasExplicitEot = true;
+                        }
+                    } catch (_) {}
+                }
+                if (!hasExplicitEot && defProj?.eot) {
+                    pEot = JSON.parse(JSON.stringify(defProj.eot));
+                }
 
-                let pPunchList = Array.isArray(dbProj.punch_list) ? dbProj.punch_list : [];
-                if (pPunchList.length === 0 && pDetails.includes('[PUNCH:')) {
+                // --- Punch List Handling (Respect empty list and saved state) ---
+                let hasExplicitPunch = false;
+                let pPunchList = [];
+                if (Array.isArray(dbProj.punch_list)) {
+                    pPunchList = dbProj.punch_list;
+                    hasExplicitPunch = true;
+                }
+                if (pDetails.includes('[PUNCH:')) {
                     try {
                         const mPunch = pDetails.match(/\[PUNCH:([\s\S]*?)\]/);
                         if (mPunch && mPunch[1]) {
                             pPunchList = JSON.parse(decodeURIComponent(mPunch[1]));
                             pDetails = pDetails.replace(mPunch[0], '');
+                            hasExplicitPunch = true;
                         }
                     } catch (_) {}
                 }
-                if (pPunchList.length === 0 && defProj?.punchList) pPunchList = JSON.parse(JSON.stringify(defProj.punchList));
+                if (!hasExplicitPunch) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+                        const cp = cached.find(c => String(c.id) === String(dbProj.id));
+                        if (cp && Array.isArray(cp.punchList)) {
+                            pPunchList = cp.punchList;
+                            hasExplicitPunch = true;
+                        }
+                    } catch (_) {}
+                }
+                if (!hasExplicitPunch && defProj?.punchList) {
+                    pPunchList = JSON.parse(JSON.stringify(defProj.punchList));
+                }
 
-                let pBeforeAfter = Array.isArray(dbProj.before_after) ? dbProj.before_after : [];
-                if (pBeforeAfter.length === 0 && pDetails.includes('[BA:')) {
+                // --- Before / After Handling (Respect empty list and saved state) ---
+                let hasExplicitBeforeAfter = false;
+                let pBeforeAfter = [];
+                if (Array.isArray(dbProj.before_after)) {
+                    pBeforeAfter = dbProj.before_after;
+                    hasExplicitBeforeAfter = true;
+                }
+                if (pDetails.includes('[BA:')) {
                     try {
                         const mBA = pDetails.match(/\[BA:([\s\S]*?)\]/);
                         if (mBA && mBA[1]) {
                             pBeforeAfter = JSON.parse(decodeURIComponent(mBA[1]));
                             pDetails = pDetails.replace(mBA[0], '');
+                            hasExplicitBeforeAfter = true;
                         }
                     } catch (_) {}
                 }
-                if (pBeforeAfter.length === 0 && defProj?.beforeAfter) pBeforeAfter = JSON.parse(JSON.stringify(defProj.beforeAfter));
+                if (!hasExplicitBeforeAfter) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+                        const cp = cached.find(c => String(c.id) === String(dbProj.id));
+                        if (cp && Array.isArray(cp.beforeAfter)) {
+                            pBeforeAfter = cp.beforeAfter;
+                            hasExplicitBeforeAfter = true;
+                        }
+                    } catch (_) {}
+                }
+                if (!hasExplicitBeforeAfter && defProj?.beforeAfter) {
+                    pBeforeAfter = JSON.parse(JSON.stringify(defProj.beforeAfter));
+                }
 
                 // Always strip all metadata tags so pDetails only contains clean user text
                 pDetails = window.cleanProjectDetails(pDetails);
@@ -583,7 +640,13 @@ window.loadProjects = async function () {
             window.renderDashboardYearOptions();
         }
     } catch (e) {
-        window.projects = projects || defaultProjects;
+        try {
+            const cached = JSON.parse(localStorage.getItem('pcts_projects_cache') || '[]');
+            if (Array.isArray(cached) && cached.length > 0) {
+                projects = cached;
+            }
+        } catch (_) {}
+        window.projects = (projects && projects.length > 0) ? projects : defaultProjects;
         console.error('Supabase Load Error:', e);
         alert('โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ' + (e.message || ''));
         renderAdminProjects();
@@ -1491,9 +1554,38 @@ window.saveProjects = async function (projectId = null) {
         // Stamp local save to let realtime-sync know this client initiated the change
         window._pctsLastLocalSave = { projectId: projectId, timestamp: Date.now() };
 
-        let targetProjects = projects;
-        if (projectId) {
-            targetProjects = projects.filter(p => p.id === projectId);
+        // Ensure memory synchronization from currentProjectViewData
+        if (window.currentProjectViewData && projectId !== null && projectId !== undefined) {
+            const currentProj = window.currentProjectViewData;
+            if (String(currentProj.id) === String(projectId)) {
+                const idx = projects.findIndex(p => String(p.id) === String(projectId));
+                if (idx !== -1) {
+                    projects[idx].punchList = currentProj.punchList;
+                    projects[idx].beforeAfter = currentProj.beforeAfter;
+                    projects[idx].eot = currentProj.eot;
+                    projects[idx].gallery = currentProj.gallery;
+                    projects[idx].tasks = currentProj.tasks;
+                    projects[idx].details = currentProj.details;
+                }
+                if (window.projects && window.projects !== projects) {
+                    const wIdx = window.projects.findIndex(p => String(p.id) === String(projectId));
+                    if (wIdx !== -1) {
+                        window.projects[wIdx].punchList = currentProj.punchList;
+                        window.projects[wIdx].beforeAfter = currentProj.beforeAfter;
+                        window.projects[wIdx].eot = currentProj.eot;
+                        window.projects[wIdx].gallery = currentProj.gallery;
+                        window.projects[wIdx].tasks = currentProj.tasks;
+                        window.projects[wIdx].details = currentProj.details;
+                    }
+                }
+            }
+        }
+
+        const allProjects = (window.projects && window.projects.length) ? window.projects : projects;
+        let targetProjects = allProjects;
+        if (projectId !== null && projectId !== undefined) {
+            targetProjects = allProjects.filter(p => String(p.id) === String(projectId));
+            if (targetProjects.length === 0) targetProjects = allProjects;
         }
 
         // Cache custom coordinates and projects in localStorage immediately
@@ -1506,7 +1598,7 @@ window.saveProjects = async function (projectId = null) {
                 }
             });
             localStorage.setItem('pcts_custom_coords', JSON.stringify(customCoords));
-            localStorage.setItem('pcts_projects_cache', JSON.stringify(projects));
+            localStorage.setItem('pcts_projects_cache', JSON.stringify(allProjects));
         } catch (e) {
             console.warn('Error saving pcts_custom_coords:', e);
         }
@@ -1519,16 +1611,17 @@ window.saveProjects = async function (projectId = null) {
             const lngStr = (p.longitude !== null && p.longitude !== undefined && !isNaN(p.longitude)) ? p.longitude : '';
             const yearStr = p.projectYear ? `[YEAR:${p.projectYear}]` : '';
 
+            // Explicitly encode tags even if empty array so Supabase & reload preserve empty state
             let eotTag = '';
-            if (p.eot && p.eot.length > 0) {
+            if (p.eot !== undefined && p.eot !== null) {
                 try { eotTag = `[EOT:${encodeURIComponent(JSON.stringify(p.eot))}]`; } catch (_) {}
             }
             let punchTag = '';
-            if (p.punchList && p.punchList.length > 0) {
+            if (p.punchList !== undefined && p.punchList !== null) {
                 try { punchTag = `[PUNCH:${encodeURIComponent(JSON.stringify(p.punchList))}]`; } catch (_) {}
             }
             let baTag = '';
-            if (p.beforeAfter && p.beforeAfter.length > 0) {
+            if (p.beforeAfter !== undefined && p.beforeAfter !== null) {
                 try { baTag = `[BA:${encodeURIComponent(JSON.stringify(p.beforeAfter))}]`; } catch (_) {}
             }
 

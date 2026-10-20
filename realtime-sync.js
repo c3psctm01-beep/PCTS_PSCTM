@@ -91,7 +91,7 @@
                     let updatedProject = null;
 
                     if (eventType === 'UPDATE' && newRecord) {
-                        const idx = window.projects.findIndex(p => p.id === newRecord.id);
+                        const idx = window.projects.findIndex(p => String(p.id) === String(newRecord.id));
                         if (idx !== -1) {
                             // อัปเดตข้อมูลโครงการในหน่วยความจำ
                             window.projects[idx].name = newRecord.name || window.projects[idx].name;
@@ -99,9 +99,9 @@
                             window.projects[idx].tasks = newRecord.tasks || window.projects[idx].tasks;
                             window.projects[idx].gallery = newRecord.gallery || window.projects[idx].gallery;
                             window.projects[idx].disbursement = newRecord.disbursement || window.projects[idx].disbursement;
-                            if (newRecord.eot) window.projects[idx].eot = newRecord.eot;
-                            if (newRecord.punch_list) window.projects[idx].punchList = newRecord.punch_list;
-                            if (newRecord.before_after) window.projects[idx].beforeAfter = newRecord.before_after;
+                            if (Array.isArray(newRecord.eot)) window.projects[idx].eot = newRecord.eot;
+                            if (Array.isArray(newRecord.punch_list)) window.projects[idx].punchList = newRecord.punch_list;
+                            if (Array.isArray(newRecord.before_after)) window.projects[idx].beforeAfter = newRecord.before_after;
                             if (newRecord.latitude) window.projects[idx].latitude = parseFloat(newRecord.latitude);
                             if (newRecord.longitude) window.projects[idx].longitude = parseFloat(newRecord.longitude);
                             if (newRecord.details) {
@@ -109,6 +109,32 @@
                                 if (latM && latM[1]) window.projects[idx].latitude = parseFloat(latM[1]);
                                 const lngM = newRecord.details.match(/\[LNG:(.*?)\]/);
                                 if (lngM && lngM[1]) window.projects[idx].longitude = parseFloat(lngM[1]);
+
+                                if (!Array.isArray(newRecord.punch_list) && newRecord.details.includes('[PUNCH:')) {
+                                    try {
+                                        const mP = newRecord.details.match(/\[PUNCH:([\s\S]*?)\]/);
+                                        if (mP && mP[1]) window.projects[idx].punchList = JSON.parse(decodeURIComponent(mP[1]));
+                                    } catch (_) {}
+                                }
+                                if (!Array.isArray(newRecord.before_after) && newRecord.details.includes('[BA:')) {
+                                    try {
+                                        const mB = newRecord.details.match(/\[BA:([\s\S]*?)\]/);
+                                        if (mB && mB[1]) window.projects[idx].beforeAfter = JSON.parse(decodeURIComponent(mB[1]));
+                                    } catch (_) {}
+                                }
+                                if (!Array.isArray(newRecord.eot) && newRecord.details.includes('[EOT:')) {
+                                    try {
+                                        const mE = newRecord.details.match(/\[EOT:([\s\S]*?)\]/);
+                                        if (mE && mE[1]) window.projects[idx].eot = JSON.parse(decodeURIComponent(mE[1]));
+                                    } catch (_) {}
+                                }
+                            }
+
+                            // ซิงค์ต่อไปยังหน้าต่างแสดงผลปัจจุบัน หากเปิดดูโครงการนี้อยู่
+                            if (window.currentProjectViewData && String(window.currentProjectViewData.id) === String(newRecord.id)) {
+                                window.currentProjectViewData.punchList = window.projects[idx].punchList;
+                                window.currentProjectViewData.beforeAfter = window.projects[idx].beforeAfter;
+                                window.currentProjectViewData.eot = window.projects[idx].eot;
                             }
                             updatedProject = window.projects[idx];
                         }
@@ -116,7 +142,7 @@
                         // ตรวจสอบว่าเป็นการบันทึกจากอุปกรณ์/แท็บนี้เองหรือไม่
                         const lastSave = window._pctsLastLocalSave;
                         const isSelfSave = lastSave &&
-                            (lastSave.projectId === newRecord.id || lastSave.projectId === null) &&
+                            (String(lastSave.projectId) === String(newRecord.id) || lastSave.projectId === null) &&
                             (Date.now() - lastSave.timestamp < 5000);
 
                         // หากไม่ใช่การเซฟจากตนเอง จึงจะแจ้งเตือนการอัปเดตข้อมูลสด
