@@ -1451,6 +1451,9 @@ window.rejectUser = function(userId) { window.deleteAdminUser(userId); };
 
 window.saveProjects = async function (projectId = null) {
     try {
+        // Stamp local save to let realtime-sync know this client initiated the change
+        window._pctsLastLocalSave = { projectId: projectId, timestamp: Date.now() };
+
         let targetProjects = projects;
         if (projectId) {
             targetProjects = projects.filter(p => p.id === projectId);
@@ -1722,18 +1725,37 @@ function calculateProjectProgress(p) {
     let actualProg = (totalActualWeighted / totalWeight) * 100;
     let planProg = (totalPlanWeighted / totalWeight) * 100;
     if (p.status === "แล้วเสร็จ") { planProg = 100; actualProg = 100; }
-    // DELAY CHECK NOTIFICATION
-    if ((planProg - actualProg) >= 10 && p.status !== "แล้วเสร็จ") {
-        const lastWarn = sessionStorage.getItem(`warn_${p.id}`);
-        const nowTime = new Date().getTime();
-        if (!lastWarn || (nowTime - parseInt(lastWarn)) > 60000) { // warn once per minute max per project
-            addAppNotification(`⚠️ แจ้งเตือน: โครงการ "${p.name}" ล่าช้ากว่าแผนงานเกิน 10% (Plan: ${planProg.toFixed(2)}%, Actual: ${actualProg.toFixed(2)}%)`, 'danger');
-            sessionStorage.setItem(`warn_${p.id}`, nowTime);
-        }
-    }
 
     return { plan: planProg.toFixed(2), actual: actualProg.toFixed(2) };
 }
+
+// ตรวจสอบโครงการที่ล่าช้าเกินเกณฑ์ 10% อย่างเป็นระบบ (เรียกเฉพาะตอนเปิดแอปหรือเปลี่ยนเซสชัน ไม่เรียกพร่ำเพรื่อในการคำนวณ)
+window.checkDelayedProjectsNotifications = function () {
+    if (!Array.isArray(projects) || projects.length === 0) return;
+    try {
+        const now = Date.now();
+        const lastCheck = parseInt(sessionStorage.getItem('pcts_delay_check_ts') || '0', 10);
+        // ตรวจสอบเพียงรอบเดียวต่อเซสชัน หรือเว้นช่วงอย่างน้อย 30 นาที
+        if (now - lastCheck < 30 * 60 * 1000) return;
+        sessionStorage.setItem('pcts_delay_check_ts', now.toString());
+
+        projects.forEach(p => {
+            if (!p.tasks || p.tasks.length === 0 || p.status === 'แล้วเสร็จ') return;
+            const prog = calculateProjectProgress(p);
+            const planVal = parseFloat(prog.plan) || 0;
+            const actualVal = parseFloat(prog.actual) || 0;
+            if ((planVal - actualVal) >= 10) {
+                // ป้องกันการแจ้งเตือนซ้ำ: ไม่เพิ่มถ้ามีแจ้งเตือนที่ยังไม่ได้อ่านของโครงการนี้อยู่แล้ว
+                const isAlreadyPresent = appNotifications.some(n => !n.read && n.projectId === p.id && n.type === 'danger');
+                if (!isAlreadyPresent) {
+                    addAppNotification(`⚠️ โครงการ "${p.name}" ล่าช้ากว่าแผนงานเกิน 10% (แผน: ${planVal.toFixed(1)}%, จริง: ${actualVal.toFixed(1)}%)`, 'danger', p.id);
+                }
+            }
+        });
+    } catch (e) {
+        console.warn('checkDelayedProjectsNotifications error:', e);
+    }
+};
 
 const sCurveData = {
     labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
@@ -3978,6 +4000,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.renderDashboardYearOptions();
     }
     renderTables();
+    if (typeof window.checkDelayedProjectsNotifications === 'function') {
+        window.checkDelayedProjectsNotifications();
+    }
 
     // --- S-Curve Chart.js Initialization (Modern & Safe) ---
     try {
@@ -5074,7 +5099,8 @@ window.saveEditGalleryPhoto = async function () {
     }
 
     // Save changes to database / localStorage
-    await saveProjects();
+    window._pctsLastLocalSave = { projectId: p.id, timestamp: Date.now() };
+    await saveProjects(p.id);
 
     closeEditGalleryModal();
 
@@ -5106,7 +5132,8 @@ window.deleteGalleryItem = async function (projectId, photoIndexOrDate, desc) {
             }
             if (index !== -1 && index < p.gallery.length) {
                 p.gallery.splice(index, 1);
-                await saveProjects();
+                window._pctsLastLocalSave = { projectId: p.id, timestamp: Date.now() };
+                await saveProjects(p.id);
                 window.renderGalleryTab(p, window.currentGalleryFilterTaskId || 'all');
                 if (window.calendar) {
                     window.calendar.refetchEvents();
@@ -5809,7 +5836,8 @@ window.deleteWbsTask = function (projectId, taskId) {
         const p = projects.find(proj => proj.id === projectId);
         if (p) {
             p.tasks = p.tasks.filter(t => t.id !== taskId);
-            saveProjects();
+            window._pctsLastLocalSave = { projectId: p.id, timestamp: Date.now() };
+            saveProjects(p.id);
             renderAdminWbsTable(projectId);
             // Trigger change event to update weight hint
             document.getElementById('adminProjectSelect').dispatchEvent(new Event('change'));
@@ -5984,7 +6012,8 @@ document.getElementById('adminForm')?.addEventListener('submit', async function 
                 alert(`เพิ่มแผนงานย่อย "${taskName}" ให้โครงการ "${p.name}" เรียบร้อยแล้ว!`);
             }
 
-            await saveProjects();
+            window._pctsLastLocalSave = { projectId: p.id, timestamp: Date.now() };
+            await saveProjects(p.id);
             window.renderTables();
             this.reset();
             document.getElementById('weightHint').innerText = '';
@@ -6096,8 +6125,27 @@ document.getElementById('editorForm')?.addEventListener('submit', async function
             }
 
             window.renderTables();
-            alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
-            addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success');
+            
+            // แจ้งเตือนความสำเร็จด้วย Toastify สวยงาม ไม่ขัดจังหวะหน้าจอ (หรือ fallback เป็น alert)
+            if (typeof Toastify === 'function') {
+                Toastify({
+                    text: `✅ บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`,
+                    duration: 3500,
+                    close: true,
+                    gravity: 'top',
+                    position: 'right',
+                    style: {
+                        background: 'linear-gradient(135deg, #10B981, #059669)',
+                        borderRadius: '8px',
+                        fontFamily: "'Prompt', 'Sarabun', sans-serif",
+                        fontSize: '13px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }
+                }).showToast();
+            } else {
+                alert(`บันทึกรายงานความก้าวหน้าแผนงาน "${t.name}" เรียบร้อยแล้ว!`);
+            }
+            addAppNotification(`🔔 มีการรายงานความก้าวหน้าโครงการ "${p.name}" แผนงาน "${t.name}" (Actual: ${t.actual}%)`, 'success', p.id);
 
             if (typeof window.clearPhotoQueue === 'function') {
                 window.clearPhotoQueue();
@@ -6508,12 +6556,31 @@ window.downloadExcelReport = function () {
 // --- App Notifications System ---
 let appNotifications = JSON.parse(localStorage.getItem('pcts_notifications')) || [];
 
-function addAppNotification(msg, type = 'info') {
-    appNotifications.unshift({ msg, type, date: new Date().toISOString(), read: false });
+// คลีนข้อมูลแจ้งเตือนที่ซ้ำซ้อนจากบั๊กเดิมออก เพื่อให้ระบบสะอาดขึ้นทันที
+if (Array.isArray(appNotifications)) {
+    const seenMsgs = new Set();
+    appNotifications = appNotifications.filter(n => {
+        if (!n || !n.msg) return false;
+        const key = `${n.msg}_${n.read}`;
+        if (seenMsgs.has(key)) return false;
+        seenMsgs.add(key);
+        return true;
+    });
+    localStorage.setItem('pcts_notifications', JSON.stringify(appNotifications));
+}
+
+function addAppNotification(msg, type = 'info', projectId = null) {
+    if (!msg) return;
+    // ป้องกันการแจ้งเตือนซ้ำ: หากมีข้อความเดียวกันที่ยังไม่ได้อ่านอยู่แล้ว ไม่ต้องเพิ่มซ้ำ
+    const isDuplicate = appNotifications.some(n => !n.read && n.msg === msg);
+    if (isDuplicate) return;
+
+    appNotifications.unshift({ msg, type, projectId, date: new Date().toISOString(), read: false });
     if (appNotifications.length > 30) appNotifications.pop();
     localStorage.setItem('pcts_notifications', JSON.stringify(appNotifications));
     if (typeof renderAppNotifications === 'function') renderAppNotifications();
 }
+window.addAppNotification = addAppNotification;
 
 window.renderAppNotifications = function () {
     const list = document.getElementById('notifList');

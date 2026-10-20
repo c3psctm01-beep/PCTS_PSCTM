@@ -9,6 +9,9 @@
     'use strict';
 
     let realtimeChannel = null;
+    let toastDebounceTimer = null;
+    let pendingToastNames = new Set();
+    let renderDebounceTimer = null;
 
     /**
      * แสดง Toastify Notification สไตล์ PEA
@@ -39,6 +42,25 @@
     }
 
     /**
+     * ดีบาวน์และรวบกลุ่มการแจ้งเตือน Realtime เพื่อป้องกันไม่ให้ Toast เด้งซ้อนกันรัวๆ
+     */
+    function scheduleRealtimeToast(projectName, type = 'info') {
+        if (projectName) pendingToastNames.add(projectName);
+
+        clearTimeout(toastDebounceTimer);
+        toastDebounceTimer = setTimeout(() => {
+            if (pendingToastNames.size === 0) return;
+            if (pendingToastNames.size === 1) {
+                const name = Array.from(pendingToastNames)[0];
+                showRealtimeToast(`🔄 โครงการ "${name}" มีการอัปเดตข้อมูลสด`, type);
+            } else {
+                showRealtimeToast(`🔄 มีการอัปเดตข้อมูลสด ${pendingToastNames.size} โครงการ`, type);
+            }
+            pendingToastNames.clear();
+        }, 700);
+    }
+
+    /**
      * เริ่มต้น Realtime Subscription กับ Supabase
      */
     window.initPctsRealtimeSync = function () {
@@ -48,7 +70,12 @@
         }
 
         if (realtimeChannel) {
-            realtimeChannel.unsubscribe();
+            try {
+                realtimeChannel.unsubscribe();
+                if (typeof window.db.removeChannel === 'function') {
+                    window.db.removeChannel(realtimeChannel);
+                }
+            } catch (_) {}
         }
 
         realtimeChannel = window.db.channel('pcts-projects-realtime')
@@ -60,6 +87,8 @@
                     const eventType = payload.eventType; // 'INSERT', 'UPDATE', 'DELETE'
                     const newRecord = payload.new;
                     const oldRecord = payload.old;
+
+                    let updatedProject = null;
 
                     if (eventType === 'UPDATE' && newRecord) {
                         const idx = window.projects.findIndex(p => p.id === newRecord.id);
@@ -81,11 +110,25 @@
                                 const lngM = newRecord.details.match(/\[LNG:(.*?)\]/);
                                 if (lngM && lngM[1]) window.projects[idx].longitude = parseFloat(lngM[1]);
                             }
+                            updatedProject = window.projects[idx];
                         }
 
-                        showRealtimeToast(`🔄 โครงการ "${newRecord.name || 'โครงการ'}" มีการอัปเดตข้อมูลสด`, 'info');
+                        // ตรวจสอบว่าเป็นการบันทึกจากอุปกรณ์/แท็บนี้เองหรือไม่
+                        const lastSave = window._pctsLastLocalSave;
+                        const isSelfSave = lastSave &&
+                            (lastSave.projectId === newRecord.id || lastSave.projectId === null) &&
+                            (Date.now() - lastSave.timestamp < 5000);
+
+                        // หากไม่ใช่การเซฟจากตนเอง จึงจะแจ้งเตือนการอัปเดตข้อมูลสด
+                        if (!isSelfSave) {
+                            scheduleRealtimeToast(newRecord.name || 'โครงการ', 'info');
+                        }
                     } else if (eventType === 'INSERT' && newRecord) {
-                        showRealtimeToast(`✨ มีการเพิ่มโครงการใหม่: "${newRecord.name}"`, 'success');
+                        const lastSave = window._pctsLastLocalSave;
+                        const isSelfSave = lastSave && (Date.now() - lastSave.timestamp < 5000);
+                        if (!isSelfSave) {
+                            showRealtimeToast(`✨ มีการเพิ่มโครงการใหม่: "${newRecord.name}"`, 'success');
+                        }
                         if (typeof window.loadProjects === 'function') {
                             await window.loadProjects();
                         }
@@ -94,16 +137,23 @@
                         showRealtimeToast(`🗑️ มีการลบโครงการออกจากระบบ`, 'info');
                     }
 
-                    // รีเฟรชมุมมองปัจจุบันเบาๆ
-                    if (typeof window.renderTables === 'function') window.renderTables();
-                    if (typeof window.renderAdminProjects === 'function') window.renderAdminProjects();
-                    if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
-                        window.renderGisMap();
-                    }
-                    if (window.currentProjectViewData && (newRecord && window.currentProjectViewData.id === newRecord.id)) {
-                        if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(window.projects[idx]);
-                        if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(window.projects[idx]);
-                    }
+                    // ดีบาวน์การรีเฟรชมุมมองเพื่อประสิทธิภาพ ไม่กระตุกหรือทำงานซ้ำซ้อน
+                    clearTimeout(renderDebounceTimer);
+                    renderDebounceTimer = setTimeout(() => {
+                        if (typeof window.renderTables === 'function') window.renderTables();
+                        if (typeof window.renderAdminProjects === 'function') window.renderAdminProjects();
+                        if (typeof window.renderGisMap === 'function' && window.currentProjectViewMode === 'gis') {
+                            window.renderGisMap();
+                        }
+                        if (window.currentProjectViewData && newRecord && window.currentProjectViewData.id === newRecord.id) {
+                            const currentTarget = updatedProject || window.projects.find(p => p.id === newRecord.id) || window.currentProjectViewData;
+                            if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(currentTarget);
+                            if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(currentTarget);
+                            if (typeof window.renderGalleryTab === 'function') {
+                                window.renderGalleryTab(currentTarget, window.currentGalleryFilterTaskId || 'all');
+                            }
+                        }
+                    }, 200);
                 }
             )
             .subscribe((status) => {
