@@ -4099,13 +4099,7 @@
       appState._rendered = true;
 
       if (isFromStorage) {
-        if (initialData._storageSource === 'supabase') {
-          showToast(`เชื่อมต่อ Supabase Cloud: โหลดข้อมูลล่าสุด "${initialData.fileName}" เรียบร้อยแล้ว`, 'info');
-        } else if (initialData._storageSource === 'server') {
-          showToast(`เชื่อมต่อเซิร์ฟเวอร์ส่วนกลาง: โหลดข้อมูลล่าสุด "${initialData.fileName}" เรียบร้อยแล้ว`, 'info');
-        } else {
-          showToast(`โหลดสถานะตามไฟล์ล่าสุด: "${initialData.fileName}" เรียบร้อยแล้ว`, 'info');
-        }
+        console.log(`[Dashboard Init] Loaded data from ${initialData._storageSource || 'storage'}: ${initialData.fileName}`);
       }
     }
   }

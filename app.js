@@ -4932,9 +4932,8 @@ window.viewProjectDetails = function (projectId) {
         console.warn('Disbursement render error:', e);
     }
 
-    // Render Phase 2: Punch List, Before/After, Weather, Towers
+    // Render Phase 2: Punch List, Weather, Towers
     try { if (typeof window.renderPunchListTab === 'function') window.renderPunchListTab(p); } catch (e) {}
-    try { if (typeof window.renderBeforeAfterTab === 'function') window.renderBeforeAfterTab(p); } catch (e) {}
     try { if (typeof window.renderSubstationWeatherWidget === 'function') window.renderSubstationWeatherWidget(p); } catch (e) {}
     try { if (typeof window.initProjectTowers === 'function') window.initProjectTowers(p); } catch (e) {}
 
@@ -6876,14 +6875,6 @@ window.openProjectTab = function (evt, tabName) {
         setTimeout(() => {
             if (typeof window.renderPunchListTab === 'function') {
                 window.renderPunchListTab(window.currentProjectViewData);
-            }
-        }, 30);
-    }
-
-    if (tabName === 'tabBeforeAfter') {
-        setTimeout(() => {
-            if (typeof window.renderBeforeAfterTab === 'function') {
-                window.renderBeforeAfterTab(window.currentProjectViewData);
             }
         }, 30);
     }

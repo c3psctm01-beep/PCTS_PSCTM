@@ -953,7 +953,6 @@
                         <button class="tablinks" onclick="openProjectTab(event, 'tabDisbursement')"><i class="fa-solid fa-money-bill-transfer"></i> เบิกจ่ายงบประมาณ</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabMap')"><i class="fa-solid fa-map-location-dot"></i> ตำแหน่งสถานี</button>
                         <button class="tablinks" onclick="openProjectTab(event, 'tabPunchList')"><i class="fa-solid fa-clipboard-check"></i> รายการตรวจรับ (Punch List)</button>
-                        <button class="tablinks" onclick="openProjectTab(event, 'tabBeforeAfter')"><i class="fa-solid fa-code-compare"></i> ภาพ ก่อน-หลัง</button>
                     </div>
 
                     <!-- Tab: WBS -->
@@ -1379,13 +1378,6 @@
                             <!-- Injected by punch-list.js -->
                         </div>
                     </div> <!-- End Tab Punch List -->
-
-                    <!-- Tab: Before & After Comparison -->
-                    <div id="tabBeforeAfter" class="tabcontent" style="display: none;">
-                        <div id="beforeAfterTabContainer">
-                            <!-- Injected by before-after.js -->
-                        </div>
-                    </div> <!-- End Tab Before & After -->
 
                     <!-- Tab: Transmission Line 115 kV Tower-by-Tower Matrix -->
                     <div id="tabTowerMatrix" class="tabcontent" style="display: none;">
@@ -2286,9 +2278,6 @@
                                     </div>
                                     <div class="manual-list-item">
                                         <strong>8. จัดการข้อบกพร่อง (Punch List / Defect Management):</strong> บันทึกรายการข้อบกพร่องหน้างาน ระดับความเร่งด่วน ภาพถ่าย และสถานะการแก้ไขจนกว่าจะตรวจรับ
-                                    </div>
-                                    <div class="manual-list-item">
-                                        <strong>9. เปรียบเทียบ ก่อน-หลัง (Before & After Slider):</strong> สไลเดอร์เลื่อนเปรียบเทียบภาพถ่ายจุดเดียวกันระหว่างก่อนเริ่มงานและปัจจุบันเพื่อเห็นพัฒนาการงานก่อสร้าง
                                     </div>
                                     <div class="manual-list-item">
                                         <strong>10. คำนวณค่าปรับและวันสิ้นสุดสัญญาใหม่ (Contract Penalty & EOT Simulator):</strong> ตรวจสอบสถานะสัญญา วันสิ้นสุดสัญญาเดิมและใหม่ คำนวณค่าปรับสะสมรายวัน แจ้งเตือนเกณฑ์วิกฤตค่าปรับเกิน 10% ตาม พ.ร.บ. จัดซื้อจัดจ้างฯ พร้อมสไลเดอร์จำลองขอขยายเวลาก่อสร้างแบบ Real-Time และแบบฟอร์มสรุปสัญญา
@@ -3773,49 +3762,7 @@
         </div>
     </div>
 
-    <!-- Before & After Modal -->
-    <div id="beforeAfterModal" class="modal" style="display: none; align-items: center; justify-content: center;">
-        <div class="modal-content card" style="max-width: 580px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 25px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <h2 style="margin: 0; font-size: 16px; color: var(--pea-purple); display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-code-compare"></i> เพิ่มจุดเปรียบเทียบภาพ ก่อน-หลัง (Before & After)
-                </h2>
-                <span class="close-modal" onclick="closeAddBeforeAfterModal()" style="font-size: 24px; cursor: pointer;">&times;</span>
-            </div>
-            <form id="baAddForm" onsubmit="saveNewBeforeAfterPair(event)">
-                <div class="form-group">
-                    <label>ชื่อจุดเปรียบเทียบ / ตำแหน่งสถานี *</label>
-                    <input type="text" id="baTitleInput" placeholder="เช่น ลานหม้อแปลง T1, อาคารควบคุมสถานี" required>
-                </div>
-                <div class="form-group">
-                    <label>คำอธิบายความเปลี่ยนแปลง</label>
-                    <input type="text" id="baDescInput" placeholder="เช่น ภาพเปรียบเทียบจากพื้นที่ดินถมเดิม สู่ลานไก 115 kV ติดตั้งอุปกรณ์ครบถ้วน">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ภาพก่อนเริ่มงาน (Before) *</label>
-                        <input type="file" id="baBeforeFileInput" accept="image/*" required style="padding: 6px;">
-                        <input type="text" id="baBeforeDateInput" placeholder="ระบุวันที่/ช่วงเวลา เช่น มิ.ย. 2568" style="margin-top: 6px; font-size: 11.5px;">
-                        <div id="baBeforePreview" style="margin-top: 6px;"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>ภาพปัจจุบัน/แล้วเสร็จ (After) *</label>
-                        <input type="file" id="baAfterFileInput" accept="image/*" required style="padding: 6px;">
-                        <input type="text" id="baAfterDateInput" placeholder="ระบุวันที่/ช่วงเวลา เช่น ปัจจุบัน" style="margin-top: 6px; font-size: 11.5px;">
-                        <div id="baAfterPreview" style="margin-top: 6px;"></div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1; padding: 10px;">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกจุดเปรียบเทียบ
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAddBeforeAfterModal()" style="padding: 10px;">
-                        ยกเลิก
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
 <!-- Validation Error Modal -->
   <div class="modal-overlay" id="validationModal">
@@ -4495,7 +4442,6 @@
     <script src="tower-matrix.js?v=1"></script>
     <script src="scurve-export.js?v=1"></script>
     <script src="punch-list.js?v=2"></script>
-    <script src="before-after.js?v=1"></script>
     <script src="weather-widget.js?v=1"></script>
     <script src="calendar-manager.js?v=2"></script>
 
@@ -4508,7 +4454,7 @@
     <script src="psctm-validator.js?v=3"></script>
     <script src="psctm-parser.js?v=3"></script>
     <script src="psctm-default-data.js?v=3"></script>
-    <script src="psctm-dashboard.js?v=5"></script>
+    <script src="psctm-dashboard.js?v=6"></script>
 
     <!-- Main Application Core -->
     <script src="app.js?v=27"></script>
