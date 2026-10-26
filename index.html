@@ -42,7 +42,7 @@
     <meta name="theme-color" content="#742C81">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
     <!-- PSCTM Transmission & Substations Dashboard CSS -->
     <link rel="stylesheet" href="psctm-dashboard.css?v=3">
 </head>
@@ -2034,7 +2034,7 @@
                                             <strong>บทที่ 5:</strong> การจัดการระบบ (Admin), สิทธิ์ผู้ใช้งาน และนำเข้าข้อมูล Excel 092
                                         </div>
                                         <div class="manual-cover-toc-item" onclick="openManualTab(null, 'mTab6')">
-                                            <strong>บทที่ 6:</strong> การติดตั้งแอปพลิเคชันมือถือ (PWA) และคำถามที่พบบ่อย (FAQ)
+                                            <strong>บทที่ 6:</strong> การติดตั้งแอปมือถือ (PWA), เมนูนำทางล่างจอ และคำถามที่พบบ่อย (FAQ)
                                         </div>
                                     </div>
                                 </div>
@@ -2561,7 +2561,48 @@
                                 </ol>
                             </div>
 
-                            
+                            <!-- 3. Mobile Bottom Navigation -->
+                            <div class="manual-section-box mt-3">
+                                <h3><i class="fa-solid fa-bars-staggered" style="color: var(--pea-purple);"></i> 3. แถบเมนูนำทางหลักบนสมาร์ตโฟน (Mobile Bottom Navigation Bar)</h3>
+                                <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 12px;">
+                                    สำหรับผู้ใช้งานสิทธิ์ <strong>Editor</strong> และ <strong>Admin</strong> ระบบจะเปิดแถบเมนูด้านล่างหน้าจอ (Bottom Nav) อัตโนมัติ เพื่อให้ผู้ควบคุมงานสามารถแตะสลับหน้าจอได้อย่างรวดเร็วขณะถือเครื่องมือถือด้วยมือเดียว:
+                                </p>
+                                <div class="manual-steps-list">
+                                    <div class="manual-list-item">
+                                        <strong><i class="fa-solid fa-chart-pie" style="color: var(--pea-purple); margin-right: 6px;"></i> 1. สถานะงาน (Status):</strong> สลับดูภาพรวมโครงการ แดชบอร์ด PSCTM และสถานะความก้าวหน้ารายโครงการ
+                                    </div>
+                                    <div class="manual-list-item">
+                                        <strong><i class="fa-solid fa-clipboard-list" style="color: var(--pea-purple); margin-right: 6px;"></i> 2. รายงานงาน (Report):</strong> เปิดหน้าแบบฟอร์มบันทึกความก้าวหน้าโครงการ กรอก % ผลงาน และตรวจคิวรูปภาพ
+                                    </div>
+                                    <div class="manual-list-item">
+                                        <strong><i class="fa-solid fa-camera" style="color: #ffffff; background: var(--pea-purple); padding: 3px 6px; border-radius: 50%; font-size: 11px; margin-right: 6px;"></i> 3. ปุ่มอัปโหลดรูป (Center Camera FAB):</strong> ปุ่มกล้องวงกลมกึ่งกลางจอ สำหรับเรียกเปิดเมนู Action Sheet ถ่ายภาพด่วนได้จากทุกหน้าจอ
+                                    </div>
+                                    <div class="manual-list-item">
+                                        <strong><i class="fa-solid fa-shield-halved" style="color: #F39C12; margin-right: 6px;"></i> 4. จัดการระบบ (Admin):</strong> แสดงเฉพาะผู้ดูแลระบบ เพื่อเข้าถึงเมนูเพิ่ม/แก้ไขโครงการ และการจัดการสิทธิ์
+                                    </div>
+                                    <div class="manual-list-item">
+                                        <strong><i class="fa-solid fa-circle-user" style="color: #27ae60; margin-right: 6px;"></i> 5. ข้อมูลส่วนตัว (Profile):</strong> ตรวจสอบและแก้ไขชื่อ-นามสกุล, รหัสพนักงาน, ตำแหน่งผู้ตรวจงาน, สลับโหมดมืด และออกจากระบบ
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Quick Photo Action Sheet & Profile -->
+                            <div class="manual-section-box mt-3">
+                                <h3><i class="fa-solid fa-camera-retro" style="color: var(--pea-purple);"></i> 4. เมนูด่วนสำหรับอัปโหลดภาพหน้างาน & จัดการโปรไฟล์ผู้ตรวจงาน</h3>
+                                <div class="manual-steps-list">
+                                    <div class="manual-list-item">
+                                        <strong>การถ่ายภาพด่วน (Action Sheet):</strong> เมื่อกดปุ่มกล้องกลางจอ จะมีเมนูสไลด์ขึ้นมาจากด้านล่างให้เลือก:
+                                        <ul style="margin: 6px 0 0 18px; line-height: 1.6;">
+                                            <li><strong>ถ่ายภาพจากกล้องทันที:</strong> เปิดกล้องโทรศัพท์ ถ่ายรูปแล้วส่งเข้าคิวรายงานพร้อมประทับลายน้ำ กฟภ. ทันที</li>
+                                            <li><strong>เลือกรูปจากคลังภาพ:</strong> เลือกภาพที่มีอยู่แล้วในสมาร์ตโฟนหลายรูปพร้อมกัน (Multi-picker)</li>
+                                            <li><strong>ฟอร์มบันทึกความก้าวหน้า:</strong> เลื่อนหน้าจอไปยังฟอร์มบันทึกงานทันที</li>
+                                        </ul>
+                                    </div>
+                                    <div class="manual-list-item">
+                                        <strong>การตั้งค่าข้อมูลส่วนตัวผู้ตรวจงาน:</strong> แตะปุ่ม <em>"ข้อมูลส่วนตัว"</em> เพื่อระบุชื่อ-นามสกุล, รหัสพนักงาน กฟภ. และตำแหน่ง ระบบจะจำค่าไว้และนำไปประทับบนแถบลายน้ำภาพถ่ายทุกภาพโดยอัตโนมัติ ไม่ต้องกรอกซ้ำทุกครั้ง
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="manual-tip-box mt-3">
                                 <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -2571,9 +2612,9 @@
                                 </div>
                             </div>
 
-                            <!-- 3. FAQ & Troubleshooting -->
+                            <!-- 5. FAQ & Troubleshooting -->
                             <div class="manual-section-box mt-3">
-                                <h3><i class="fa-solid fa-circle-question" style="color: var(--pea-purple);"></i> 3. คำถามที่พบบ่อยและการแก้ไขปัญหาเบื้องต้น (FAQ)</h3>
+                                <h3><i class="fa-solid fa-circle-question" style="color: var(--pea-purple);"></i> 5. คำถามที่พบบ่อยและการแก้ไขปัญหาเบื้องต้น (FAQ)</h3>
                                 <div class="manual-steps-list">
                                     <div class="manual-list-item">
                                         <strong>1. ทำไมตัวกรองปี พ.ศ. จึงไม่แสดงปีก่อนหน้า (2568, 2567)?</strong><br>
@@ -4203,6 +4244,226 @@
         </div>
     </div>
 
+    <!-- =========================================================================
+         Mobile Bottom Navigation Bar (Admin & Editor)
+         ========================================================================= -->
+    <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="แถบเมนูหลักบนมือถือ">
+        <!-- 1. สถานะงาน (Work / Project Status) -->
+        <button type="button" class="mobile-nav-item active" id="btnMobileNavStatus" onclick="window.mobileNavSwitch('status')" title="สถานะงานก่อสร้าง">
+            <div class="mobile-nav-icon-box">
+                <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <span class="mobile-nav-label">สถานะงาน</span>
+        </button>
+
+        <!-- 2. รายงานหน้างาน (Daily Progress Report) -->
+        <button type="button" class="mobile-nav-item" id="btnMobileNavReport" onclick="window.mobileNavSwitch('report')" title="รายงานความก้าวหน้าหน้างาน">
+            <div class="mobile-nav-icon-box">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <span class="mobile-nav-label">รายงานงาน</span>
+        </button>
+
+        <!-- 3. อัปโหลดรูป (Center Raised FAB) -->
+        <div class="mobile-nav-center-wrap">
+            <button type="button" class="mobile-nav-fab" id="btnMobileNavUpload" onclick="window.mobileNavSwitch('upload')" title="อัปโหลดรูปภาพหน้างาน / ถ่ายภาพ">
+                <div class="fab-inner">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+            </button>
+            <span class="mobile-fab-label">อัปโหลดรูป</span>
+        </div>
+
+        <!-- 4. จัดการระบบ (Admin Only - dynamically toggled) -->
+        <button type="button" class="mobile-nav-item role-admin-only" id="btnMobileNavAdmin" onclick="window.mobileNavSwitch('admin')" style="display: none;" title="การจัดการระบบ Admin">
+            <div class="mobile-nav-icon-box">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <span class="mobile-nav-label">จัดการระบบ</span>
+        </button>
+
+        <!-- 5. ข้อมูลส่วนตัว (Personal Profile & Identity) -->
+        <button type="button" class="mobile-nav-item" id="btnMobileNavProfile" onclick="window.mobileNavSwitch('profile')" title="ข้อมูลส่วนตัวและผู้ตรวจงาน">
+            <div class="mobile-nav-icon-box">
+                <i class="fa-solid fa-circle-user"></i>
+                <span class="mobile-profile-dot" id="mobileProfileDot"></span>
+            </div>
+            <span class="mobile-nav-label">ข้อมูลส่วนตัว</span>
+        </button>
+    </nav>
+
+    <!-- =========================================================================
+         Mobile Quick Photo Upload Action Sheet
+         ========================================================================= -->
+    <div id="mobileUploadSheetBackdrop" class="mobile-sheet-backdrop" onclick="window.closeMobileUploadSheet()">
+        <div id="mobileUploadSheet" class="mobile-bottom-sheet" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle"></div>
+            <div class="sheet-header">
+                <div class="sheet-header-title">
+                    <div class="sheet-icon-badge">
+                        <i class="fa-solid fa-camera-retro"></i>
+                    </div>
+                    <div>
+                        <h3>อัปโหลดภาพหน้างาน</h3>
+                        <p>ระบบประทับลายน้ำ PEA พร้อมพิกัด GPS อัตโนมัติ</p>
+                    </div>
+                </div>
+                <button type="button" class="sheet-close-btn" onclick="window.closeMobileUploadSheet()" title="ปิด">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="sheet-action-list">
+                <!-- ถ่ายภาพจากกล้องทันที -->
+                <button type="button" class="sheet-action-card sheet-action-camera" onclick="window.openMobileCameraUpload()">
+                    <div class="sheet-action-icon">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div class="sheet-action-info">
+                        <div class="sheet-action-title">
+                            ถ่ายภาพจากกล้องมือถือ
+                            <span class="sheet-badge-tag"><i class="fa-solid fa-location-dot"></i> GPS Live</span>
+                        </div>
+                        <div class="sheet-action-desc">เปิดกล้องถ่ายภาพหน้างานทันที พร้อมระบุพิกัดและเสาอัตโนมัติ</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right sheet-action-arrow"></i>
+                </button>
+
+                <!-- เลือกจากคลังภาพ -->
+                <button type="button" class="sheet-action-card sheet-action-gallery" onclick="window.openMobileGalleryUpload()">
+                    <div class="sheet-action-icon">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <div class="sheet-action-info">
+                        <div class="sheet-action-title">
+                            เลือกรูปจากคลังภาพ (Gallery)
+                            <span class="sheet-badge-tag">หลายภาพ</span>
+                        </div>
+                        <div class="sheet-action-desc">เลือกรูปถ่ายจากอัลบั้มมือถือ เข้าคิวประทับลายน้ำ PEA</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right sheet-action-arrow"></i>
+                </button>
+
+                <!-- ไปที่ฟอร์มรายงาน -->
+                <button type="button" class="sheet-action-card sheet-action-form" onclick="window.openMobileReportForm()">
+                    <div class="sheet-action-icon">
+                        <i class="fa-solid fa-file-pen"></i>
+                    </div>
+                    <div class="sheet-action-info">
+                        <div class="sheet-action-title">ฟอร์มบันทึกความก้าวหน้า</div>
+                        <div class="sheet-action-desc">เลือกโครงการ/เสา กรอก % ผลงาน และตรวจคิวรูปภาพ</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right sheet-action-arrow"></i>
+                </button>
+            </div>
+
+            <!-- Current Inspector Info Pill -->
+            <div class="sheet-inspector-pill">
+                <i class="fa-solid fa-id-badge"></i>
+                <span>ผู้ตรวจงานปัจจุบัน: <strong id="sheetInspectorName">กำลังโหลด...</strong></span>
+            </div>
+
+            <button type="button" class="btn-sheet-cancel" onclick="window.closeMobileUploadSheet()">
+                ยกเลิก
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         Mobile Personal Profile Modal / Bottom Sheet
+         ========================================================================= -->
+    <div id="mobileProfileModalBackdrop" class="mobile-sheet-backdrop" onclick="window.closeMobileProfileModal()">
+        <div id="mobileProfileModal" class="mobile-bottom-sheet mobile-profile-sheet" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle"></div>
+            
+            <div class="profile-sheet-header">
+                <div class="profile-avatar-wrap">
+                    <div class="profile-avatar-inner">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <span class="profile-role-indicator" id="mobileProfileRoleIndicator"></span>
+                </div>
+                <div class="profile-header-meta">
+                    <div class="profile-name-title" id="mobileProfileDisplayName">ผู้ตรวจงาน กฟภ.</div>
+                    <div class="profile-badges-row">
+                        <span class="user-role-badge" id="mobileProfileRoleBadge">Admin</span>
+                        <span class="profile-status-badge"><i class="fa-solid fa-circle-check"></i> พร้อมใช้งาน</span>
+                    </div>
+                    <div class="profile-email-text" id="mobileProfileEmail">email@example.com</div>
+                </div>
+                <button type="button" class="sheet-close-btn" onclick="window.closeMobileProfileModal()" title="ปิด">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Profile Body -->
+            <div class="profile-sheet-body">
+                <div class="profile-section-card">
+                    <div class="profile-section-header">
+                        <i class="fa-solid fa-id-card" style="color: var(--pea-purple);"></i>
+                        <span>ข้อมูลส่วนตัวผู้ตรวจงาน (สำหรับประทับลายน้ำภาพ)</span>
+                    </div>
+                    <div class="profile-form-grid">
+                        <div class="profile-input-group">
+                            <label for="mobileProfName"><i class="fa-solid fa-user"></i> ชื่อ - นามสกุล *</label>
+                            <input type="text" id="mobileProfName" placeholder="เช่น นายภูวดล สุขสงวน (หผ.จส.กรย.(ก3))">
+                        </div>
+                        <div class="profile-input-group">
+                            <label for="mobileProfEmpId"><i class="fa-solid fa-hashtag"></i> รหัสพนักงาน กฟภ. *</label>
+                            <input type="text" id="mobileProfEmpId" placeholder="เช่น 500744">
+                        </div>
+                        <div class="profile-input-group">
+                            <label for="mobileProfPos"><i class="fa-solid fa-briefcase"></i> ตำแหน่ง / แผนก *</label>
+                            <input type="text" id="mobileProfPos" placeholder="เช่น วิศวกรควบคุมงาน / หผ.จส.กรย.(ก3)">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-save-mobile-profile" onclick="window.saveMobileProfileInfo()">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลส่วนตัว
+                    </button>
+                </div>
+
+                <!-- Quick Testing Role Switcher (Shown if Admin) -->
+                <div class="profile-section-card admin-only-section" id="mobileProfileAdminSection" style="display: none;">
+                    <div class="profile-section-header">
+                        <i class="fa-solid fa-arrows-rotate" style="color: #F39C12;"></i>
+                        <span>โหมดทดสอบสิทธิ์ (Admin Simulator)</span>
+                    </div>
+                    <div class="role-switch-pills">
+                        <button type="button" class="role-pill-btn" id="rolePillAdmin" onclick="window.mobileSwitchRole('admin')">
+                            <i class="fa-solid fa-shield-halved"></i> Admin
+                        </button>
+                        <button type="button" class="role-pill-btn" id="rolePillEditor" onclick="window.mobileSwitchRole('editor')">
+                            <i class="fa-solid fa-user-gear"></i> Editor
+                        </button>
+                        <button type="button" class="role-pill-btn" id="rolePillViewer" onclick="window.mobileSwitchRole('viewer')">
+                            <i class="fa-solid fa-user"></i> Viewer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings & Quick Tools -->
+                <div class="profile-settings-list">
+                    <div class="profile-setting-item" onclick="if(window.toggleTheme) window.toggleTheme(); window.updateMobileProfileThemeText();">
+                        <div class="profile-setting-icon"><i class="fa-solid fa-moon"></i></div>
+                        <div class="profile-setting-label">สลับโหมด กลางวัน / กลางคืน</div>
+                        <div class="profile-setting-value" id="mobileProfileThemeValue">กลางคืน</div>
+                    </div>
+
+                    <div class="profile-setting-item" onclick="if(window.openGisMapView) window.openGisMapView(); window.closeMobileProfileModal();">
+                        <div class="profile-setting-icon" style="color: #0284c7;"><i class="fa-solid fa-map-location-dot"></i></div>
+                        <div class="profile-setting-label">แผนที่สถานี GIS กฟภ.</div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); font-size: 11px;"></i>
+                    </div>
+                </div>
+
+                <!-- Logout Button -->
+                <button type="button" class="btn-logout-mobile" onclick="window.handleMobileLogout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -4250,7 +4511,7 @@
     <script src="psctm-dashboard.js?v=5"></script>
 
     <!-- Main Application Core -->
-    <script src="app.js?v=26"></script>
+    <script src="app.js?v=27"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
             window.addEventListener('load', () => {
