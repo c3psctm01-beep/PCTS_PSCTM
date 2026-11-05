@@ -10,6 +10,41 @@
 
     let activeSliderIndex = 0;
     let isSplitMode = true; // true = Split slider, false = Side-by-side
+    let activeResizeObserver = null;
+    let activeWindowListeners = null;
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escJsArg(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\r?\n/g, ' ');
+    }
+
+    function cleanupSplitSliderEvents() {
+        if (activeWindowListeners) {
+            window.removeEventListener('mousemove', activeWindowListeners.onMove);
+            window.removeEventListener('mouseup', activeWindowListeners.onEnd);
+            window.removeEventListener('touchmove', activeWindowListeners.onMove);
+            window.removeEventListener('touchend', activeWindowListeners.onEnd);
+            activeWindowListeners = null;
+        }
+        if (activeResizeObserver) {
+            try { activeResizeObserver.disconnect(); } catch (_) {}
+            activeResizeObserver = null;
+        }
+    }
 
     /**
      * เรนเดอร์แท็บเปรียบเทียบภาพ ก่อน-หลัง (Before & After)
@@ -21,6 +56,8 @@
         const pairs = Array.isArray(p.beforeAfter) ? p.beforeAfter : [];
         const container = document.getElementById('beforeAfterTabContainer');
         if (!container) return;
+
+        cleanupSplitSliderEvents();
 
         if (pairs.length === 0) {
             container.innerHTML = `
@@ -55,7 +92,7 @@
                         <select id="beforeAfterSelectPair" onchange="window.switchBeforeAfterPair(this.value)" class="pea-select-sm">
                             ${pairs.map((pr, idx) => `
                                 <option value="${idx}" ${idx === activeSliderIndex ? 'selected' : ''}>
-                                    ${idx + 1}. ${pr.title || 'จุดเปรียบเทียบที่ ' + (idx + 1)}
+                                    ${idx + 1}. ${escHtml(pr.title || 'จุดเปรียบเทียบที่ ' + (idx + 1))}
                                 </option>
                             `).join('')}
                         </select>
@@ -84,8 +121,8 @@
 
                 <!-- Info description -->
                 <div class="before-after-info-card">
-                    <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #1e293b;">${currentPair.title || 'จุดเปรียบเทียบความก้าวหน้า'}</h3>
-                    <p style="margin: 0; font-size: 12px; color: #64748b;">${currentPair.desc || 'ลากเส้นแบ่งตรงกลางเพื่อดูความเปลี่ยนแปลงเปรียบเทียบระหว่างสภาพพื้นที่เดิมและสถานีไฟฟ้าปัจจุบัน'}</p>
+                    <h3 style="margin: 0 0 4px 0; font-size: 15px; color: #1e293b;">${escHtml(currentPair.title || 'จุดเปรียบเทียบความก้าวหน้า')}</h3>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">${escHtml(currentPair.desc || 'ลากเส้นแบ่งตรงกลางเพื่อดูความเปลี่ยนแปลงเปรียบเทียบระหว่างสภาพพื้นที่เดิมและสถานีไฟฟ้าปัจจุบัน')}</p>
                 </div>
 
                 <!-- Comparison View Container -->
@@ -94,13 +131,13 @@
                         <!-- Split Slider View -->
                         <div class="ba-split-container" id="baSplitContainer">
                             <!-- After Image (Background Base) -->
-                            <img src="${currentPair.afterUrl}" alt="After" class="ba-img ba-img-after">
-                            <span class="ba-label ba-label-after"><i class="fa-solid fa-circle-check"></i> ปัจจุบัน/แล้วเสร็จ (${currentPair.afterDate || 'ปัจจุบัน'})</span>
+                            <img src="${escHtml(currentPair.afterUrl)}" alt="After" class="ba-img ba-img-after">
+                            <span class="ba-label ba-label-after"><i class="fa-solid fa-circle-check"></i> ปัจจุบัน/แล้วเสร็จ (${escHtml(currentPair.afterDate || 'ปัจจุบัน')})</span>
 
                             <!-- Before Image (Clipped Overlay) -->
                             <div class="ba-before-overlay" id="baBeforeOverlay" style="width: 50%;">
-                                <img src="${currentPair.beforeUrl}" alt="Before" class="ba-img ba-img-before" id="baBeforeImg">
-                                <span class="ba-label ba-label-before"><i class="fa-regular fa-clock"></i> ก่อนเริ่มงาน (${currentPair.beforeDate || 'เดิม'})</span>
+                                <img src="${escHtml(currentPair.beforeUrl)}" alt="Before" class="ba-img ba-img-before" id="baBeforeImg">
+                                <span class="ba-label ba-label-before"><i class="fa-regular fa-clock"></i> ก่อนเริ่มงาน (${escHtml(currentPair.beforeDate || 'เดิม')})</span>
                             </div>
 
                             <!-- Draggable Split Handle -->
@@ -118,15 +155,15 @@
                         <div class="ba-side-container">
                             <div class="ba-side-item">
                                 <div class="ba-side-header before">
-                                    <i class="fa-regular fa-clock"></i> สภาพพื้นที่ก่อนเริ่มงาน (${currentPair.beforeDate || 'เดิม'})
+                                    <i class="fa-regular fa-clock"></i> สภาพพื้นที่ก่อนเริ่มงาน (${escHtml(currentPair.beforeDate || 'เดิม')})
                                 </div>
-                                <img src="${currentPair.beforeUrl}" alt="Before" class="ba-side-img" onclick="window.viewPunchImage('${currentPair.beforeUrl}', 'ก่อนเริ่มงาน')">
+                                <img src="${escHtml(currentPair.beforeUrl)}" alt="Before" class="ba-side-img" onclick="window.viewPunchImage('${escJsArg(currentPair.beforeUrl)}', 'ก่อนเริ่มงาน')">
                             </div>
                             <div class="ba-side-item">
                                 <div class="ba-side-header after">
-                                    <i class="fa-solid fa-circle-check"></i> ความก้าวหน้าปัจจุบัน/แล้วเสร็จ (${currentPair.afterDate || 'ปัจจุบัน'})
+                                    <i class="fa-solid fa-circle-check"></i> ความก้าวหน้าปัจจุบัน/แล้วเสร็จ (${escHtml(currentPair.afterDate || 'ปัจจุบัน')})
                                 </div>
-                                <img src="${currentPair.afterUrl}" alt="After" class="ba-side-img" onclick="window.viewPunchImage('${currentPair.afterUrl}', 'ปัจจุบัน/แล้วเสร็จ')">
+                                <img src="${escHtml(currentPair.afterUrl)}" alt="After" class="ba-side-img" onclick="window.viewPunchImage('${escJsArg(currentPair.afterUrl)}', 'ปัจจุบัน/แล้วเสร็จ')">
                             </div>
                         </div>
                     `}
@@ -160,6 +197,8 @@
      * จัดการ Drag Interaction สำหรับ Split Slider
      */
     function initSplitSliderEvents() {
+        cleanupSplitSliderEvents();
+
         const container = document.getElementById('baSplitContainer');
         const overlay = document.getElementById('baBeforeOverlay');
         const handle = document.getElementById('baSliderHandle');
@@ -205,13 +244,15 @@
         window.addEventListener('touchmove', onMove, { passive: true });
         window.addEventListener('touchend', onEnd);
 
+        activeWindowListeners = { onMove, onEnd };
+
         // Responsive resize
-        const resizeObserver = new ResizeObserver(() => {
+        activeResizeObserver = new ResizeObserver(() => {
             if (container && beforeImg) {
                 beforeImg.style.width = container.offsetWidth + 'px';
             }
         });
-        resizeObserver.observe(container);
+        activeResizeObserver.observe(container);
     }
 
     /**

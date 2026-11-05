@@ -11,6 +11,25 @@
     let currentFilterStatus = 'all';
     let currentFilterCategory = 'all';
 
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escJsArg(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\r?\n/g, ' ');
+    }
+
     /**
      * เรนเดอร์แท็บรายการตรวจรับ/แก้ไข (Punch List) ของโครงการที่เลือก
      */
@@ -97,16 +116,16 @@
                     </div>
 
                     <div class="punch-card-body">
-                        <h3 class="punch-item-title">${item.title}</h3>
-                        <div class="punch-item-location"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: ${item.location || 'บริเวณสถานีไฟฟ้า'}</div>
-                        <p class="punch-item-desc" style="white-space: pre-line; margin-bottom: 8px;">${cleanDesc}</p>
+                        <h3 class="punch-item-title">${escHtml(item.title)}</h3>
+                        <div class="punch-item-location"><i class="fa-solid fa-location-dot"></i> ตำแหน่ง: ${escHtml(item.location || 'บริเวณสถานีไฟฟ้า')}</div>
+                        <p class="punch-item-desc" style="white-space: pre-line; margin-bottom: 8px;">${escHtml(cleanDesc)}</p>
 
                         ${resolveNoteText ? `
                             <div style="background: rgba(16, 185, 129, 0.08); border-left: 3px solid #10b981; border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 12.5px; color: #065f46;">
                                 <strong style="display: flex; align-items: center; gap: 5px; margin-bottom: 2px; color: #047857;">
                                     <i class="fa-solid fa-clipboard-check"></i> บันทึกผลการแก้ไข (Resolution Note):
                                 </strong>
-                                <span style="white-space: pre-line;">${resolveNoteText}</span>
+                                <span style="white-space: pre-line;">${escHtml(resolveNoteText)}</span>
                             </div>
                         ` : ''}
 
@@ -115,7 +134,7 @@
                             <div class="punch-photo-box">
                                 <div class="punch-photo-label"><i class="fa-solid fa-camera"></i> ภาพก่อนแก้ไข (Before)</div>
                                 ${item.beforePhoto ? `
-                                    <img src="${item.beforePhoto}" alt="Before" class="punch-img-thumb" onclick="window.viewPunchImage('${item.beforePhoto}', 'ก่อนแก้ไข: ${item.title}')">
+                                    <img src="${escHtml(item.beforePhoto)}" alt="Before" class="punch-img-thumb" onclick="window.viewPunchImage('${escJsArg(item.beforePhoto)}', 'ก่อนแก้ไข: ${escJsArg(item.title)}')">
                                 ` : `
                                     <div class="punch-no-photo"><i class="fa-regular fa-image"></i> ไม่มีรูปภาพ</div>
                                 `}
@@ -123,7 +142,7 @@
                             <div class="punch-photo-box">
                                 <div class="punch-photo-label" style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> ภาพหลังแก้ไข (After)</div>
                                 ${item.afterPhoto ? `
-                                    <img src="${item.afterPhoto}" alt="After" class="punch-img-thumb" onclick="window.viewPunchImage('${item.afterPhoto}', 'หลังแก้ไข: ${item.title}')">
+                                    <img src="${escHtml(item.afterPhoto)}" alt="After" class="punch-img-thumb" onclick="window.viewPunchImage('${escJsArg(item.afterPhoto)}', 'หลังแก้ไข: ${escJsArg(item.title)}')">
                                 ` : `
                                     <div class="punch-no-photo" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8;">
                                         <i class="fa-solid fa-clock-rotate-left"></i> ยังไม่ส่งมอบงานแก้ไข
@@ -133,9 +152,9 @@
                         </div>
 
                         <div class="punch-meta-row">
-                            <span><i class="fa-solid fa-building"></i> <strong>ผู้รับผิดชอบ:</strong> ${item.contractor || p.contractor || '-'}</span>
-                            <span><i class="fa-regular fa-calendar"></i> <strong>กำหนดเสร็จ:</strong> ${item.dueDate || '-'}</span>
-                            ${item.resolvedDate ? `<span style="color: #10b981;"><i class="fa-solid fa-check"></i> แก้ไขเมื่อ: ${item.resolvedDate}</span>` : ''}
+                            <span><i class="fa-solid fa-building"></i> <strong>ผู้รับผิดชอบ:</strong> ${escHtml(item.contractor || p.contractor || '-')}</span>
+                            <span><i class="fa-regular fa-calendar"></i> <strong>กำหนดเสร็จ:</strong> ${escHtml(item.dueDate || '-')}</span>
+                            ${item.resolvedDate ? `<span style="color: #10b981;"><i class="fa-solid fa-check"></i> แก้ไขเมื่อ: ${escHtml(item.resolvedDate)}</span>` : ''}
                         </div>
                     </div>
 
@@ -386,7 +405,7 @@
             if (item.beforePhoto) {
                 beforeBox.innerHTML = `
                     <div style="text-align: center;">
-                        <img src="${item.beforePhoto}" alt="Before" style="max-height: 140px; max-width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; object-fit: contain; border: 1px solid #cbd5e1;" onclick="window.viewPunchImage('${item.beforePhoto}', 'ก่อนแก้ไข: ${item.title}')">
+                        <img src="${escHtml(item.beforePhoto)}" alt="Before" style="max-height: 140px; max-width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); cursor: pointer; object-fit: contain; border: 1px solid #cbd5e1;" onclick="window.viewPunchImage('${escJsArg(item.beforePhoto)}', 'ก่อนแก้ไข: ${escJsArg(item.title)}')">
                         <div style="font-size: 11px; color: #64748b; margin-top: 4px;"><i class="fa-solid fa-magnifying-glass-plus"></i> คลิกเพื่อดูรูปก่อนแก้ไขขนาดเต็ม</div>
                     </div>
                 `;
@@ -404,7 +423,7 @@
             if (item.afterPhoto) {
                 currentAfterBox.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px;">
-                        <img src="${item.afterPhoto}" alt="Current After" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #10b981; cursor: pointer; flex-shrink: 0;" onclick="window.viewPunchImage('${item.afterPhoto}', 'หลังแก้ไขปัจจุบัน: ${item.title}')" title="คลิกเพื่อดูรูปขยาย">
+                        <img src="${escHtml(item.afterPhoto)}" alt="Current After" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #10b981; cursor: pointer; flex-shrink: 0;" onclick="window.viewPunchImage('${escJsArg(item.afterPhoto)}', 'หลังแก้ไขปัจจุบัน: ${escJsArg(item.title)}')" title="คลิกเพื่อดูรูปขยาย">
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-size: 13px; font-weight: 600; color: #065f46;"><i class="fa-solid fa-circle-check"></i> มีภาพหลังแก้ไขที่บันทึกไว้เดิมแล้ว</div>
                             <div style="font-size: 11px; color: #047857; margin-top: 3px;">หากไม่ต้องการเปลี่ยนภาพ สามารถใช้ภาพเดิมและพิมพ์บันทึกได้ทันที หรือเลือกไฟล์ใหม่ด้านล่างเพื่อแทนที่ภาพเดิม</div>
@@ -742,10 +761,10 @@
                     <div style="display: flex; align-items: center; gap: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px;">
                         <img src="${e.target.result}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; flex-shrink: 0;" onclick="window.viewPunchImage('${e.target.result}', 'ภาพพรีวิว')" title="คลิกเพื่อดูรูปขยาย">
                         <div style="flex: 1; min-width: 0;">
-                            <div style="font-size: 13px; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escHtml(file.name)}</div>
                             <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
                                 ขนาด: ${fileSizeKb > 1024 ? (fileSizeKb / 1024).toFixed(1) + ' MB' : fileSizeKb + ' KB'}
-                                <span style="color: #10b981; margin-left: 6px; font-weight: 500;"><i class="fa-solid fa-camera"></i> พร้อมประทับพิกัด GPS อัตโนมัติ</span>
+                                <span style="color: #10b981; margin-left: 6px; font-weight: 500;"><i class="fa-solid fa-camera"></i> พร้อมประทับลายน้ำ กฟภ. อัตโนมัติ</span>
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-secondary" onclick="window.clearPunchPhotoInput('${inputId}', '${previewId}')" style="color: #ef4444; border-color: #fecaca; background: #fff5f5; flex-shrink: 0;" title="ยกเลิกรูปนี้">

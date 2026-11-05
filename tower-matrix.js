@@ -12,6 +12,25 @@
     window.currentTowerSearch = '';
     window.currentEditingTowerId = null;
 
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escJsArg(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\r?\n/g, ' ');
+    }
+
     /**
      * สร้างชุดข้อมูลเริ่มต้นสำหรับต้นเสาสายส่ง 115 kV (หากโครงการยังไม่มีข้อมูล)
      * @param {Object} project 
@@ -235,9 +254,9 @@
                     </div>
                     <div class="banner-items-list">
                         ${blockedTowers.map(t => `
-                            <div class="bottleneck-pill" onclick="window.openEditTowerModal('${t.id}')">
-                                <span class="t-badge">${t.towerNo}</span>
-                                <span class="t-obs">${t.obstacle || 'ติดปัญหาคอขวดในขั้นตอนก่อสร้าง'}</span>
+                            <div class="bottleneck-pill" onclick="window.openEditTowerModal('${escJsArg(t.id)}')">
+                                <span class="t-badge">${escHtml(t.towerNo)}</span>
+                                <span class="t-obs">${escHtml(t.obstacle || 'ติดปัญหาคอขวดในขั้นตอนก่อสร้าง')}</span>
                                 <button type="button" class="btn-quick-view"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
                             </div>
                         `).join('')}
@@ -356,7 +375,7 @@
                 const b = badgeMap[phaseStatus] || badgeMap.pending;
                 return `
                     <span class="tower-phase-badge ${b.class} role-editor" 
-                          onclick="window.cycleTowerPhaseStatus('${towerId}', '${phaseName}')" 
+                          onclick="window.cycleTowerPhaseStatus('${escJsArg(towerId)}', '${phaseName}')" 
                           title="คลิกเพื่อเปลี่ยนสถานะด่วน">
                         <i class="fa-solid ${b.icon}"></i> ${b.label}
                     </span>
@@ -370,15 +389,15 @@
                 html += `
                     <tr class="${rowClass}">
                         <td style="text-align: center; font-weight: 700;">
-                            <span class="tower-code-pill">${t.towerNo}</span>
+                            <span class="tower-code-pill">${escHtml(t.towerNo)}</span>
                         </td>
                         <td>
-                            <span class="tower-type-pill ${t.type.toLowerCase()}">${t.type}</span>
+                            <span class="tower-type-pill ${escHtml((t.type || '').toLowerCase())}">${escHtml(t.type)}</span>
                         </td>
                         <td>
-                            <div style="font-size: 11.5px; color: #475569;">${t.span || '-'}</div>
-                            <a href="javascript:void(0)" onclick="window.viewTowerGis(${t.latitude}, ${t.longitude}, '${t.towerNo}')" class="tower-gis-link" title="ดูตำแหน่งบนแผนที่ GIS">
-                                <i class="fa-solid fa-location-dot"></i> ${t.latitude ? `${t.latitude.toFixed(4)}, ${t.longitude.toFixed(4)}` : 'แผนที่'}
+                            <div style="font-size: 11.5px; color: #475569;">${escHtml(t.span || '-')}</div>
+                            <a href="javascript:void(0)" onclick="window.viewTowerGis(${Number(t.latitude) || 0}, ${Number(t.longitude) || 0}, '${escJsArg(t.towerNo)}')" class="tower-gis-link" title="ดูตำแหน่งบนแผนที่ GIS">
+                                <i class="fa-solid fa-location-dot"></i> ${t.latitude ? `${Number(t.latitude).toFixed(4)}, ${Number(t.longitude).toFixed(4)}` : 'แผนที่'}
                             </a>
                         </td>
                         <td style="text-align: center;">${renderBadge(t.foundation, t.id, 'foundation')}</td>
@@ -388,16 +407,16 @@
                         <td>
                             ${t.obstacle ? `
                                 <div class="obstacle-text-box">
-                                    <i class="fa-solid fa-triangle-exclamation"></i> ${t.obstacle}
+                                    <i class="fa-solid fa-triangle-exclamation"></i> ${escHtml(t.obstacle)}
                                 </div>
                             ` : '<span style="color: #94a3b8; font-size: 11.5px;">- ปกติ -</span>'}
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 4px; justify-content: center;">
-                                <button type="button" class="btn-icon-edit role-editor" onclick="window.openEditTowerModal('${t.id}')" title="แก้ไขข้อมูลต้นนี้">
+                                <button type="button" class="btn-icon-edit role-editor" onclick="window.openEditTowerModal('${escJsArg(t.id)}')" title="แก้ไขข้อมูลต้นนี้">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button type="button" class="btn-icon-danger role-admin" onclick="window.deleteTowerItem('${t.id}')" title="ลบต้นนี้">
+                                <button type="button" class="btn-icon-danger role-admin" onclick="window.deleteTowerItem('${escJsArg(t.id)}')" title="ลบต้นนี้">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>

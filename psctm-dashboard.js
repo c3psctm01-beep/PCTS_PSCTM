@@ -11,7 +11,7 @@
   const savedPrefs = window.DashboardStorage ? window.DashboardStorage.loadPreferences() : null;
   let appState = {
     data: null,
-    currentTheme: localStorage.getItem('pea_dashboard_theme') || 'light',
+    currentTheme: localStorage.getItem('pcts_theme') || localStorage.getItem('pea_dashboard_theme') || 'light',
     activeTab: (savedPrefs && savedPrefs.activeTab) ? savedPrefs.activeTab : 'tab-overview',
     disbSelectedProjectIndex: (savedPrefs && typeof savedPrefs.disbSelectedProjectIndex !== 'undefined') ? savedPrefs.disbSelectedProjectIndex : 0,
     ganttSelectedSheet: (savedPrefs && savedPrefs.ganttSelectedSheet) ? savedPrefs.ganttSelectedSheet : '',
@@ -120,6 +120,7 @@
 
   // Theme Management
   function initTheme() {
+    appState.currentTheme = localStorage.getItem('pcts_theme') || appState.currentTheme || 'light';
     const html = document.documentElement;
     html.setAttribute('data-theme', appState.currentTheme);
     updateThemeIcon();
@@ -127,11 +128,15 @@
     const btnTheme = document.getElementById('btnThemeToggle');
     if (btnTheme) {
       btnTheme.addEventListener('click', () => {
-        appState.currentTheme = appState.currentTheme === 'light' ? 'dark' : 'light';
-        localStorage.setItem('pea_dashboard_theme', appState.currentTheme);
-        html.setAttribute('data-theme', appState.currentTheme);
-        updateThemeIcon();
-        updateAllCharts();
+        if (typeof window.toggleTheme === 'function') {
+          window.toggleTheme();
+        } else {
+          appState.currentTheme = appState.currentTheme === 'light' ? 'dark' : 'light';
+          localStorage.setItem('pcts_theme', appState.currentTheme);
+          html.setAttribute('data-theme', appState.currentTheme);
+          updateThemeIcon();
+          updateAllCharts();
+        }
       });
     }
   }
@@ -140,8 +145,14 @@
     const iconContainer = document.getElementById('themeIcon');
     if (!iconContainer) return;
     const isDark = appState.currentTheme === 'dark';
-    iconContainer.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-    lucide.createIcons();
+    if (iconContainer.classList.contains('fa-solid') || iconContainer.classList.contains('fa-moon') || iconContainer.classList.contains('fa-sun')) {
+      iconContainer.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    } else {
+      iconContainer.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    }
   }
 
   // Tabs Navigation

@@ -116,28 +116,42 @@
     /**
      * ดึงพิกัดปัจจุบันใส่ในฟอร์มแก้ไขโครงการ
      */
-    window.getCurrentLocationForProject = async function () {
-        const btn = event?.currentTarget;
+    window.getCurrentLocationForProject = async function (evt) {
+        const e = evt || window.event;
+        const btn = e ? e.currentTarget : null;
         const origText = btn ? btn.innerHTML : '';
         if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงพิกัด...';
 
         try {
-            if (typeof window.getCurrentGpsCoordinates === 'function') {
-                const coords = await window.getCurrentGpsCoordinates(6000);
-                if (coords && coords.lat && coords.lng) {
-                    const latInput = document.getElementById('projectLatInput');
-                    const lngInput = document.getElementById('projectLngInput');
-                    if (latInput) latInput.value = coords.lat.toFixed(6);
-                    if (lngInput) lngInput.value = coords.lng.toFixed(6);
-                    alert(`ดึงพิกัดสำเร็จ:\nละติจูด: ${coords.lat.toFixed(6)}\nลองจิจูด: ${coords.lng.toFixed(6)}`);
-                } else {
-                    alert('ไม่สามารถดึงพิกัด GPS ได้ โปรดตรวจสอบว่าเบราว์เซอร์อนุญาตการเข้าถึงตำแหน่งหรือไม่');
-                }
-            } else {
-                alert('โมดูลระบุพิกัดไม่พร้อมทำงาน');
+            if (!('geolocation' in navigator)) {
+                alert('เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง GPS');
+                return;
             }
-        } catch (e) {
-            alert('เกิดข้อผิดพลาดในการดึงพิกัด: ' + e.message);
+            const coords = await new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy
+                    }),
+                    (err) => {
+                        console.warn('Geolocation error:', err.message);
+                        resolve(null);
+                    },
+                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+                );
+            });
+            if (coords && coords.lat && coords.lng) {
+                const latInput = document.getElementById('projectLatInput');
+                const lngInput = document.getElementById('projectLngInput');
+                if (latInput) latInput.value = coords.lat.toFixed(6);
+                if (lngInput) lngInput.value = coords.lng.toFixed(6);
+                alert(`ดึงพิกัดสำเร็จ:\nละติจูด: ${coords.lat.toFixed(6)}\nลองจิจูด: ${coords.lng.toFixed(6)}`);
+            } else {
+                alert('ไม่สามารถดึงพิกัด GPS ได้ โปรดตรวจสอบว่าเบราว์เซอร์อนุญาตการเข้าถึงตำแหน่งหรือไม่');
+            }
+        } catch (err) {
+            alert('เกิดข้อผิดพลาดในการดึงพิกัด: ' + err.message);
         } finally {
             if (btn) btn.innerHTML = origText;
         }
@@ -322,6 +336,36 @@
         // กรองตามปี พ.ศ. โครงการ (เริ่มปี 2569 เป็นต้นไป)
         if (typeof window.isProjectInYear === 'function') {
             projs = projs.filter(p => window.isProjectInYear(p, window.currentYearFilter));
+        }
+
+        // กรองตามประเภทโครงการ (ดำเนินการเอง / จ้างเหมา)
+        if (window.currentDashboardFilter && window.currentDashboardFilter !== 'all') {
+            projs = projs.filter(p => (p.type || 'จ้างเหมา') === window.currentDashboardFilter);
+        }
+
+        // กรองตามประเภทของงาน (Work Type)
+        if (window.currentWorkTypeFilter && window.currentWorkTypeFilter !== 'all') {
+            projs = projs.filter(p => (p.workType || (typeof window.inferProjectWorkType === 'function' ? window.inferProjectWorkType(p) : '')) === window.currentWorkTypeFilter);
+        }
+
+        // กรองตามสถานะโครงการ
+        if (window.currentStatusFilter && window.currentStatusFilter !== 'all') {
+            projs = projs.filter(p => p.status === window.currentStatusFilter);
+        }
+
+        // กรองตามคำค้นหา
+        const q = (window.gisSearchQuery || window.dashboardSearchQuery || '').trim().toLowerCase();
+        if (q) {
+            projs = projs.filter(p => {
+                const name = (p.name || '').toLowerCase();
+                const contractor = (p.contractor || '').toLowerCase();
+                const supervisor = (p.supervisor || '').toLowerCase();
+                const committee = (p.committee || '').toLowerCase();
+                const status = (p.status || '').toLowerCase();
+                const type = (p.type || '').toLowerCase();
+                const workType = (p.workType || (typeof window.inferProjectWorkType === 'function' ? window.inferProjectWorkType(p) : '') || '').toLowerCase();
+                return name.includes(q) || contractor.includes(q) || supervisor.includes(q) || committee.includes(q) || status.includes(q) || type.includes(q) || workType.includes(q);
+            });
         }
         const bounds = [];
 
@@ -548,6 +592,7 @@
      * ฟิลเตอร์ Marker บนแผนที่ตามคำค้นหา
      */
     window.filterGisMapByQuery = function (query = '') {
+        window.gisSearchQuery = (query || '').trim().toLowerCase();
         window.renderGisMap();
     };
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * storage.js
  * PEA Construction & Disbursement Dashboard
  * Cloud Realtime Persistence Engine powered by Supabase & Local Cache
@@ -77,16 +77,15 @@ window.DashboardStorage = (function () {
     }
   }
 
-  async function postJson(url, body, contentType = 'application/json') {
+  async function postJson(url, body, contentType = 'application/json', extraHeaders) {
     if (!isHttp) return null;
     const passcode = getStoredPasscode() || '1212312121';
+    const headers = { 'Content-Type': contentType || 'application/json', ...(extraHeaders || {}) };
+    if (!headers['X-Upload-Passcode']) headers['X-Upload-Passcode'] = passcode;
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': contentType,
-        'X-Upload-Passcode': passcode
-      },
-      body: body
+      headers: headers,
+      body: body === undefined ? '{}' : body
     });
     if (!res.ok) {
       let errText = '';
@@ -188,22 +187,6 @@ window.DashboardStorage = (function () {
     }
   }
 
-  async function postJson(url, body, contentType, extraHeaders) {
-    const headers = { 'Content-Type': contentType || 'application/json', ...(extraHeaders || {}) };
-    const passcode = getStoredPasscode();
-    if (passcode && !headers['X-Upload-Passcode']) {
-      headers['X-Upload-Passcode'] = passcode;
-    }
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: headers,
-      body: body === undefined ? '{}' : body
-    });
-    let json = {};
-    try { json = await res.json(); } catch (e) { /* ignore */ }
-    if (!res.ok) throw new Error(json.message || json.error || `HTTP ${res.status}`);
-    return json;
-  }
 
   // ------------------------------------------------------------ public API
   /**
