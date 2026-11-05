@@ -5,6 +5,8 @@
 
 -- 1. เพิ่มคอลัมน์ใหม่ในตาราง projects เพื่อรองรับข้อมูลโดยตรง (ไม่ต้องแปลงเป็น Tag ใน details)
 ALTER TABLE public.projects 
+ADD COLUMN IF NOT EXISTS work_type TEXT DEFAULT 'งานสถานีไฟฟ้าถาวร',
+ADD COLUMN IF NOT EXISTS project_year TEXT,
 ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'จ้างเหมา',
 ADD COLUMN IF NOT EXISTS supervisor TEXT,
 ADD COLUMN IF NOT EXISTS committee TEXT,

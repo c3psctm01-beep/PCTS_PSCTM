@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * PCTS (PEA Construction Tracking System)
- * Module: watermark.js - Photo Timestamp & GPS Watermarking Engine
+ * Module: watermark.js - Official PEA Photo Timestamp & Inspector Watermarking Engine
  * ==============================================================================
  */
 

@@ -42,9 +42,9 @@
     <meta name="theme-color" content="#742C81">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=18">
+    <link rel="stylesheet" href="style.css?v=19">
     <!-- PSCTM Transmission & Substations Dashboard CSS -->
-    <link rel="stylesheet" href="psctm-dashboard.css?v=3">
+    <link rel="stylesheet" href="psctm-dashboard.css?v=4">
 </head>
 
 <body>
@@ -2315,7 +2315,7 @@
                                         <br>&bull; <code>จำแนกตามเดือน / งวดงาน</code> เลือกเฉพาะงวดประจำเดือนที่ต้องการส่งเบิกเงินค่างวด
                                         <br>&bull; <code>ภาพถ่าย Defect (ก่อน-หลังแก้ไข)</code> รวบรวมคู่ภาพก่อนและหลังแก้ไขข้อบกพร่องเพื่อตรวจรับงาน
                                     </li>
-                                    <li><strong>ประทับลายน้ำมาตรฐาน กฟภ. (PEA Canvas Watermark):</strong> ประทับพิกัดละติจูด/ลองจิจูด (GPS Coordinates), ความแม่นยำพิกัด (&plusmn; เมตร), วันที่และเวลาที่ถ่ายภาพ, ชื่อสถานีไฟฟ้า และตราสัญลักษณ์ กฟภ. ลงบนภาพถ่ายทุกภาพโดยอัตโนมัติก่อนบีบอัดลง ZIP</li>
+                                    <li><strong>ประทับลายน้ำมาตรฐาน กฟภ. (PEA Canvas Watermark):</strong> ประทับตราสัญลักษณ์ กฟภ., ชื่อสถานีไฟฟ้า/โครงการ, วันที่และเวลาที่ถ่ายภาพ, รหัสพนักงาน และชื่อ-ตำแหน่งผู้ตรวจงาน ลงบนภาพถ่ายทุกภาพโดยอัตโนมัติก่อนบีบอัดลง ZIP</li>
                                     <li><strong>สารบัญภาพอัตโนมัติ (Photo Manifest CSV):</strong> แนบไฟล์ <code>Photo_Manifest.csv</code> อัตโนมัติภายในไฟล์ ZIP บรรจุชื่อไฟล์, กิจกรรม WBS, วันที่บันทึก, พิกัด GPS, และหมายเหตุ สำหรับนำไปใช้ทำเอกสารประกอบการเบิกเงินงวดได้อย่างเป็นระบบ</li>
                                 </ul>
                             </div>
@@ -2343,7 +2343,7 @@
                                 <h3><i class="fa-solid fa-clipboard-check" style="color: #e74c3c;"></i> 3.4 ระบบบริหารจัดการรายการตรวจรับและข้อบกพร่อง (Punch List & Defect Management)</h3>
                                 <p>เข้าใช้งานผ่านแท็บ <strong>"รายการตรวจรับ (Punch List)"</strong> เพื่อควบคุมคุณภาพงานก่อสร้างและส่งมอบงานตามมาตรฐาน กฟภ.:</p>
                                 <ul class="manual-bullet-list">
-                                    <li><strong>การบันทึกข้อบกพร่องใหม่ (Add Punch Item):</strong> ช่างคุมงาน/ผู้ตรวจรับระบุชื่องานก่อสร้าง หมวดหมู่ WBS กำหนดระดับความเร่งด่วน (Critical, High, Medium, Low) วันที่ครบกำหนดแก้ไข และอัปโหลดภาพถ่ายหลักฐานก่อนแก้ไข (Before Photo) พร้อมประทับตราลายน้ำ GPS อัตโนมัติ</li>
+                                    <li><strong>การบันทึกข้อบกพร่องใหม่ (Add Punch Item):</strong> ช่างคุมงาน/ผู้ตรวจรับระบุชื่องานก่อสร้าง หมวดหมู่ WBS กำหนดระดับความเร่งด่วน (Critical, High, Medium, Low) วันที่ครบกำหนดแก้ไข และอัปโหลดภาพถ่ายหลักฐานก่อนแก้ไข (Before Photo) พร้อมประทับตราลายน้ำมาตรฐาน กฟภ. อัตโนมัติ</li>
                                     <li><strong>การดำเนินการแก้ไขและรายงานผล (Resolve Note & After Photo):</strong> ผู้รับเหมา/ผู้รับผิดชอบเมื่อแก้ไขเสร็จสิ้น เข้าสู่ระบบเพื่อพิมพ์บันทึกรายละเอียดการแก้ไข (Resolution Notes) และแนบภาพถ่ายยืนยันหลังการแก้ไข (After Photo)</li>
                                     <li><strong>เปรียบเทียบภาพ ก่อน-หลัง (Before / After Comparison):</strong> แสดงภาพคู่ก่อนและหลังแก้ไขแบบประกบข้าง เพื่อให้คณะกรรมการตรวจรับตรวจสอบความเรียบร้อยได้อย่างชัดเจน</li>
                                     <li><strong>กระบวนการตรวจรับและอนุมัติ (Committee Approval / Reopen):</strong> คณะกรรมการตรวจการจ้างสามารถกดอนุมัติปิดรายการ (Approved / Closed) เมื่อผ่านเกณฑ์ หรือส่งกลับให้แก้ไขซ้ำ (Reopened) พร้อมระบุเหตุผลหากยังไม่ได้มาตรฐาน</li>
@@ -3229,10 +3229,13 @@
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
-                <button class="btn btn-primary" style="flex: 1; min-width: 160px; padding: 12px; font-size: 14px;" onclick="printSelectedSections()">
-                    <i class="fa-solid fa-file-pdf"></i> พิมพ์ / บันทึกรายงาน PDF
+                <button class="btn" style="flex: 1; min-width: 170px; padding: 12px; font-size: 13.5px; font-weight: 600; background: #10b981; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 7px;" onclick="downloadSelectedReportPDF()">
+                    <i class="fa-solid fa-file-pdf"></i> ดาวน์โหลดไฟล์ PDF
                 </button>
-                <button class="btn btn-secondary" style="padding: 12px; min-width: 90px;" onclick="closePrintModal()">
+                <button class="btn btn-primary" style="flex: 1; min-width: 170px; padding: 12px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 7px;" onclick="printSelectedSections()">
+                    <i class="fa-solid fa-print"></i> เปิดหน้าพิมพ์รายงาน (Print)
+                </button>
+                <button class="btn btn-secondary" style="padding: 12px; min-width: 80px;" onclick="closePrintModal()">
                     ยกเลิก
                 </button>
             </div>
@@ -3967,11 +3970,15 @@
           ในหน้าต่างพิมพ์ของเบราว์เซอร์ ให้เลือก <strong>Destination: "Save as PDF"</strong> (บันทึกเป็น PDF) และเลือก <strong>Layout: "Landscape"</strong> (แนวนอน) เพื่อให้เนื้อหาแสดงผลสวยงามและลงตัวที่สุด
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 0.6rem;">
+        <div style="display: flex; justify-content: flex-end; gap: 0.6rem; flex-wrap: wrap;">
           <button type="button" class="btn-secondary" id="btnCancelPrintOptions">ยกเลิก</button>
+          <button type="button" class="btn-primary" id="btnDownloadPsctmPDF" style="background: #10b981; border-color: #10b981;">
+            <i data-lucide="file-down" style="width: 15px; height: 15px;"></i>
+            ดาวน์โหลดไฟล์ PDF
+          </button>
           <button type="button" class="btn-primary" id="btnExecutePrint">
             <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
-            เริ่มพิมพ์ / ส่งออก PDF
+            สั่งพิมพ์รายงาน (Print)
           </button>
         </div>
       </div>
@@ -4252,7 +4259,7 @@
                     </div>
                     <div>
                         <h3>อัปโหลดภาพหน้างาน</h3>
-                        <p>ระบบประทับลายน้ำ PEA พร้อมพิกัด GPS อัตโนมัติ</p>
+                        <p>ระบบประทับลายน้ำมาตรฐาน PEA (วันเวลา & ข้อมูลผู้ตรวจงาน) อัตโนมัติ</p>
                     </div>
                 </div>
                 <button type="button" class="sheet-close-btn" onclick="window.closeMobileUploadSheet()" title="ปิด">
@@ -4269,9 +4276,9 @@
                     <div class="sheet-action-info">
                         <div class="sheet-action-title">
                             ถ่ายภาพจากกล้องมือถือ
-                            <span class="sheet-badge-tag"><i class="fa-solid fa-location-dot"></i> GPS Live</span>
+                            <span class="sheet-badge-tag"><i class="fa-solid fa-stamp"></i> PEA Stamp</span>
                         </div>
-                        <div class="sheet-action-desc">เปิดกล้องถ่ายภาพหน้างานทันที พร้อมระบุพิกัดและเสาอัตโนมัติ</div>
+                        <div class="sheet-action-desc">เปิดกล้องถ่ายภาพหน้างานทันที พร้อมประทับลายน้ำมาตรฐาน กฟภ. อัตโนมัติ</div>
                     </div>
                     <i class="fa-solid fa-chevron-right sheet-action-arrow"></i>
                 </button>
@@ -4437,7 +4444,7 @@
     <script src="gis-map.js?v=5"></script>
     <script src="realtime-sync.js?v=2"></script>
     <script src="pwa-setup.js?v=1"></script>
-    <script src="contract-eot.js?v=2"></script>
+    <script src="contract-eot.js?v=3"></script>
     <script src="photo-zip-downloader.js?v=1"></script>
     <script src="tower-matrix.js?v=2"></script>
     <script src="scurve-export.js?v=1"></script>
@@ -4455,10 +4462,15 @@
     <script src="psctm-validator.js?v=3"></script>
     <script src="psctm-parser.js?v=3"></script>
     <script src="psctm-default-data.js?v=3"></script>
-    <script src="psctm-dashboard.js?v=6"></script>
+    <script src="psctm-dashboard.js?v=7"></script>
 
-    <!-- Main Application Core -->
-    <script src="app.js?v=27"></script>
+    <!-- Main Application Core & Modular Subsystems -->
+    <script src="app.js?v=29"></script>
+    <script src="admin-users.js?v=1"></script>
+    <script src="disbursement.js?v=1"></script>
+    <script src="ai-chat.js?v=1"></script>
+    <script src="work-report.js?v=2"></script>
+    <script src="mobile-nav.js?v=1"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {
             window.addEventListener('load', () => {

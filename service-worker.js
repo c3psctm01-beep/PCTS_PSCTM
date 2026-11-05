@@ -1,10 +1,15 @@
-const CACHE_NAME = 'pcts-pea-v4.6-cache';
+const CACHE_NAME = 'pcts-pea-v4.8-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './style.css',
   './psctm-dashboard.css',
   './app.js',
+  './admin-users.js',
+  './disbursement.js',
+  './ai-chat.js',
+  './work-report.js',
+  './mobile-nav.js',
   './watermark.js',
   './signature-pad.js',
   './gis-map.js',

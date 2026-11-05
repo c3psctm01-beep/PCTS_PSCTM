@@ -1897,26 +1897,41 @@ html, body {
 
 /* Native Print Styles for 100% Crisp Vector PDF */
 @media print {
-    .top-header, .role-switcher, button {
+    .app-sidebar,
+    .sidebar-backdrop,
+    .top-header,
+    .role-switcher,
+    .mobile-bottom-nav,
+    .mobile-sheet-backdrop,
+    .mobile-bottom-sheet,
+    .mascot-widget,
+    .chatbox-container,
+    #aiFabBtn,
+    #aiModal,
+    .modal,
+    .modal-overlay,
+    .toast-container,
+    button:not(.print-only) {
         display: none !important;
     }
-    .app-container, .main-content {
+    html, body, .app-container, .main-content, .content-area {
         display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
-    }
-    .content-area {
-        padding: 0 !important;
+        background: #ffffff !important;
     }
     .view-section {
         display: none !important;
     }
     .view-section.active {
         display: block !important;
-    }
-    * {
-        color: #000 !important;
+        width: 100% !important;
+        overflow: visible !important;
     }
     body {
         -webkit-print-color-adjust: exact !important;
@@ -4819,38 +4834,28 @@ body:has(#editor-view.active) .mascot-widget {
 
 /* ---------------- Print Styles for User Manual (Optimized A4 Portrait) ---------------- */
 @media print {
-    @page {
-        size: A4 portrait !important;
-        margin: 12mm 14mm 14mm 14mm !important;
-    }
-
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Hide EVERYTHING in the application except #manual-view */
-    body > *:not(.app-container),
-    .app-sidebar,
-    .sidebar-backdrop,
-    .top-header,
-    .view-section:not(#manual-view),
-    .modal,
-    .mascot-widget,
-    .mascot-img,
-    .chatbox,
-    .chatbox-container,
-    #aiFabBtn,
-    #aiModal,
-    .manual-hero,
-    .manual-hero-actions,
-    .manual-nav-bar,
-    .btn-manual-print,
-    .btn-manual-print-chapter,
-    .btn-pwa-sidebar,
-    .leaflet-control-container,
-    .leaflet-pane,
-    .toast-container {
+    /* Hide EVERYTHING in the application except #manual-view ONLY when printing the manual */
+    body.manual-printing-a4 > *:not(.app-container),
+    body.manual-printing-a4 .app-sidebar,
+    body.manual-printing-a4 .sidebar-backdrop,
+    body.manual-printing-a4 .top-header,
+    body.manual-printing-a4 .view-section:not(#manual-view),
+    body.manual-printing-a4 .modal,
+    body.manual-printing-a4 .mascot-widget,
+    body.manual-printing-a4 .mascot-img,
+    body.manual-printing-a4 .chatbox,
+    body.manual-printing-a4 .chatbox-container,
+    body.manual-printing-a4 #aiFabBtn,
+    body.manual-printing-a4 #aiModal,
+    body.manual-printing-a4 .manual-hero,
+    body.manual-printing-a4 .manual-hero-actions,
+    body.manual-printing-a4 .manual-nav-bar,
+    body.manual-printing-a4 .btn-manual-print,
+    body.manual-printing-a4 .btn-manual-print-chapter,
+    body.manual-printing-a4 .btn-pwa-sidebar,
+    body.manual-printing-a4 .leaflet-control-container,
+    body.manual-printing-a4 .leaflet-pane,
+    body.manual-printing-a4 .toast-container {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -4859,7 +4864,12 @@ body:has(#editor-view.active) .mascot-widget {
         padding: 0 !important;
     }
 
-    body, html, .app-container, .main-content, .content-area, #manual-view, .manual-a4-container {
+    body.manual-printing-a4,
+    body.manual-printing-a4 .app-container,
+    body.manual-printing-a4 .main-content,
+    body.manual-printing-a4 .content-area,
+    body.manual-printing-a4 #manual-view,
+    body.manual-printing-a4 .manual-a4-container {
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;

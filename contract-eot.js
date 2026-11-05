@@ -650,12 +650,15 @@
                 </div>
             </div>
 
-            <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 8px;">
+            <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
                 <button type="button" class="btn btn-secondary" onclick="window.copyEotPenaltySummary()" title="คัดลอกสรุปข้อความ">
                     <i class="fa-solid fa-copy"></i> คัดลอกสรุปข้อความ
                 </button>
-                <button type="button" class="btn btn-primary" onclick="window.printEotPenaltyReport()" title="พิมพ์หรือบันทึกเป็น PDF">
-                    <i class="fa-solid fa-print"></i> พิมพ์เอกสารสรุป (Print / PDF)
+                <button type="button" class="btn" style="background: #10B981; color: white; font-weight: 600;" onclick="window.downloadEotPenaltyPDF()" title="ดาวน์โหลดเป็นไฟล์ PDF">
+                    <i class="fa-solid fa-file-pdf"></i> ดาวน์โหลดไฟล์ PDF
+                </button>
+                <button type="button" class="btn btn-primary" onclick="window.printEotPenaltyReport()" title="เปิดหน้าพิมพ์รายงาน">
+                    <i class="fa-solid fa-print"></i> พิมพ์เอกสารสรุป (Print)
                 </button>
             </div>
         `;
@@ -695,42 +698,163 @@
     };
 
     /**
+     * ดาวน์โหลดรายงานสรุปสัญญา EOT เป็นไฟล์ PDF โดยตรง
+     */
+    window.downloadEotPenaltyPDF = function () {
+        const sheet = document.getElementById('printableContractSheet');
+        if (!sheet) return;
+
+        if (typeof html2pdf === 'undefined') {
+            window.printEotPenaltyReport();
+            return;
+        }
+
+        const targetProj = window.projects ? window.projects.find(p => p.id === window.currentEotProjectId) : null;
+        const cleanProjName = ((targetProj && targetProj.name) ? targetProj.name : 'Project').replace(/[\\/:*?"<>|]/g, '_').trim();
+        const loadingModal = document.getElementById('pdfLoadingModal');
+        if (loadingModal) loadingModal.style.display = 'flex';
+
+        setTimeout(async () => {
+            try {
+                const container = document.createElement('div');
+                container.id = 'eot-pdf-sandbox';
+                container.style.position = 'fixed';
+                container.style.left = '-15000px';
+                container.style.top = '0';
+                container.style.width = '780px';
+                container.style.zIndex = '-1';
+                container.style.backgroundColor = '#ffffff';
+                container.style.color = '#1e293b';
+                container.style.padding = '20px';
+                container.innerHTML = `
+                    <style>
+                        #eot-pdf-sandbox, #eot-pdf-sandbox * {
+                            font-family: 'Sarabun', 'Prompt', sans-serif !important;
+                            box-sizing: border-box !important;
+                            color: #1e293b;
+                        }
+                        #eot-pdf-sandbox .sheet-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12.5px; }
+                        #eot-pdf-sandbox .sheet-table td { border: 1px solid #cbd5e1; padding: 7px 10px; }
+                        #eot-pdf-sandbox .sheet-table .col-head { background: #f8fafc; font-weight: 600; color: #475569; width: 22%; }
+                        #eot-pdf-sandbox .pea-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+                        #eot-pdf-sandbox .pea-table th, #eot-pdf-sandbox .pea-table td { border: 1px solid #cbd5e1; padding: 6px 8px; }
+                        #eot-pdf-sandbox .pea-table th { background: #f1f5f9; font-weight: 600; }
+                    </style>
+                    ${sheet.innerHTML}
+                `;
+                document.body.appendChild(container);
+
+                const opt = {
+                    margin: [10, 12, 10, 12],
+                    filename: `รายงานสรุปสัญญาและค่าปรับ_${cleanProjName}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        scrollY: 0,
+                        scrollX: 0,
+                        windowWidth: 820
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'], avoid: ['.sheet-signatures-grid', 'tr'] }
+                };
+
+                await html2pdf().set(opt).from(container).save();
+            } catch (err) {
+                console.error('Error generating EOT PDF:', err);
+                alert('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF: ' + (err.message || err));
+            } finally {
+                const sb = document.getElementById('eot-pdf-sandbox');
+                if (sb && sb.parentNode) sb.parentNode.removeChild(sb);
+                if (loadingModal) loadingModal.style.display = 'none';
+            }
+        }, 120);
+    };
+
+    /**
      * พิมพ์รายงานสรุปสัญญา EOT
      */
     window.printEotPenaltyReport = function () {
         const sheet = document.getElementById('printableContractSheet');
         if (!sheet) return;
 
-        const printWin = window.open('', '', 'width=900,height=700');
+        const targetProj = window.projects ? window.projects.find(p => p.id === window.currentEotProjectId) : null;
+        const cleanProjName = ((targetProj && targetProj.name) ? targetProj.name : 'Project').replace(/[\\/:*?"<>|]/g, '_').trim();
+
+        const printWin = window.open('', '_blank', 'width=960,height=780');
+        if (!printWin) {
+            window.downloadEotPenaltyPDF();
+            return;
+        }
         printWin.document.write(`
-            <html>
+            <!DOCTYPE html>
+            <html lang="th">
                 <head>
-                    <title>รายงานสรุปสัญญาและค่าปรับ - PCTS PEA</title>
-                    <link rel="stylesheet" href="style.css">
+                    <meta charset="UTF-8">
+                    <title>รายงานสรุปสัญญาและค่าปรับ - ${targetProj ? targetProj.name : 'PCTS PEA'}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
                     <style>
-                        body { font-family: 'Sarabun', sans-serif; padding: 25px; color: #1e293b; background: white; }
+                        @page { size: A4 portrait; margin: 12mm 14mm; }
+                        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        body { font-family: 'Sarabun', sans-serif; margin: 0; padding: 70px 20px 30px; color: #1e293b; background: #f1f5f9; }
+                        .print-action-bar {
+                            position: fixed; top: 0; left: 0; right: 0;
+                            background: linear-gradient(135deg, #742C81 0%, #531B5E 100%);
+                            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+                            color: white; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                        }
+                        .btn-bar { padding: 7px 14px; border-radius: 6px; border: none; font-family: 'Prompt', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+                        .sheet-container { max-width: 820px; margin: 0 auto; background: white; padding: 28px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
                         .sheet-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; }
                         .sheet-table td { border: 1px solid #cbd5e1; padding: 8px 12px; }
-                        .sheet-table .col-head { background: #f8fafc; font-weight: 600; color: #475569; }
+                        .sheet-table .col-head { background: #f8fafc; font-weight: 600; color: #475569; width: 22%; }
                         .pea-table { width: 100%; border-collapse: collapse; font-size: 12px; }
                         .pea-table th, .pea-table td { border: 1px solid #cbd5e1; padding: 6px 10px; }
                         .pea-table th { background: #f1f5f9; }
                         @media print {
-                            body { padding: 0; }
+                            body { padding: 0; background: white; }
+                            .print-action-bar { display: none !important; }
+                            .sheet-container { max-width: 100%; padding: 0; box-shadow: none; }
                         }
                     </style>
                 </head>
                 <body>
-                    ${sheet.innerHTML}
+                    <div class="print-action-bar">
+                        <div><strong><i class="fa-solid fa-file-contract"></i> รายงานสรุปสถานะสัญญา ขยายเวลา (EOT) และค่าปรับ</strong></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-bar" style="background: #10B981; color: white;" onclick="dlPdf()"><i class="fa-solid fa-file-pdf"></i> ดาวน์โหลด PDF</button>
+                            <button class="btn-bar" style="background: #F59E0B; color: #1e293b;" onclick="window.print()"><i class="fa-solid fa-print"></i> สั่งพิมพ์ (Print)</button>
+                            <button class="btn-bar" style="background: rgba(255,255,255,0.2); color: white;" onclick="window.close()"><i class="fa-solid fa-xmark"></i> ปิดหน้าต่าง</button>
+                        </div>
+                    </div>
+                    <div class="sheet-container" id="eotSheetMain">
+                        ${sheet.innerHTML}
+                    </div>
+                    <script>
+                        function dlPdf() {
+                            var el = document.getElementById('eotSheetMain');
+                            if (!el || typeof html2pdf === 'undefined') { window.print(); return; }
+                            html2pdf().set({
+                                margin: [10, 12, 10, 12],
+                                filename: 'รายงานสรุปสัญญาและค่าปรับ_${cleanProjName}.pdf',
+                                image: { type: 'jpeg', quality: 0.95 },
+                                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0 },
+                                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                            }).from(el).save();
+                        }
+                        window.onload = function() {
+                            setTimeout(function() { window.print(); }, 450);
+                        };
+                    <\/script>
                 </body>
             </html>
         `);
         printWin.document.close();
         printWin.focus();
-        setTimeout(() => {
-            printWin.print();
-            printWin.close();
-        }, 500);
     };
 
     /**

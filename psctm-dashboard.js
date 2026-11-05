@@ -473,59 +473,43 @@
       });
     });
 
-    const btnExecutePrint = document.getElementById('btnExecutePrint');
-    if (btnExecutePrint) {
-      btnExecutePrint.addEventListener('click', () => {
-        const isAll = optAllRadio ? optAllRadio.checked : true;
-        document.getElementById('printOptionsModal')?.classList.remove('active');
+    function preparePsctmPrintState(isAll) {
+      const d = appState.data || {};
+      const fileDateEl = document.getElementById('printReportFileDate');
+      if (fileDateEl) fileDateEl.textContent = `ข้อมูล: ${d.fileName || '-'} (${d.lastUpdated || '-'})`;
 
-        // Populate print report header meta
-        const d = appState.data || {};
-        const fileDateEl = document.getElementById('printReportFileDate');
-        if (fileDateEl) fileDateEl.textContent = `ข้อมูล: ${d.fileName || '-'} (${d.lastUpdated || '-'})`;
+      const printDateEl = document.getElementById('printReportPrintDate');
+      if (printDateEl) {
+        const nowStr = new Date().toLocaleString('th-TH', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        printDateEl.textContent = `พิมพ์รายงานเมื่อ: ${nowStr}`;
+      }
 
-        const printDateEl = document.getElementById('printReportPrintDate');
-        if (printDateEl) {
-          const nowStr = new Date().toLocaleString('th-TH', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          });
-          printDateEl.textContent = `พิมพ์รายงานเมื่อ: ${nowStr}`;
+      appState._prevDisbIndex = appState.disbSelectedProjectIndex;
+      if (isAll || appState.activeTab === 'tab-disbursement') {
+        appState.disbSelectedProjectIndex = 'all';
+        const selectProj = document.getElementById('selectDisbProject');
+        if (selectProj) selectProj.value = 'all';
+        if (typeof appState.updateDisbProjectView === 'function') {
+          appState.updateDisbProjectView();
         }
+      }
 
-        // Save previous disbursement selection and ensure all WBS rows (52 items) are in DOM
-        appState._prevDisbIndex = appState.disbSelectedProjectIndex;
-        if (isAll || appState.activeTab === 'tab-disbursement') {
-          appState.disbSelectedProjectIndex = 'all';
-          const selectProj = document.getElementById('selectDisbProject');
-          if (selectProj) selectProj.value = 'all';
-          if (typeof appState.updateDisbProjectView === 'function') {
-            appState.updateDisbProjectView();
-          }
-        }
+      document.body.classList.remove('print-all-topics', 'print-active-topic');
+      if (isAll) {
+        document.body.classList.add('print-all-topics');
+      } else {
+        document.body.classList.add('print-active-topic');
+      }
 
-        // Apply print class to body FIRST so all tab panels become visible for chart sizing
-        document.body.classList.remove('print-all-topics', 'print-active-topic');
-        if (isAll) {
-          document.body.classList.add('print-all-topics');
-        } else {
-          document.body.classList.add('print-active-topic');
-        }
-
-        // Render dedicated print view for Gantt (all projects with full tables & timelines)
-        renderGanttPrintView();
-
-        // Update all charts so canvases are sharp
-        updateAllCharts();
-
-        setTimeout(() => {
-          window.print();
-        }, 250);
-      });
+      renderGanttPrintView();
+      updateAllCharts();
     }
 
-    window.addEventListener('afterprint', () => {
-      document.body.classList.remove('print-all-topics', 'print-active-topic');
+    function restorePsctmPrintState() {
+      document.body.classList.remove('print-all-topics', 'print-active-topic', 'psctm-pdf-exporting');
       if (window.Chart) window.Chart.defaults.animation = true;
       if (appState._prevDisbIndex !== undefined) {
         appState.disbSelectedProjectIndex = appState._prevDisbIndex;
@@ -535,6 +519,226 @@
           appState.updateDisbProjectView();
         }
       }
+    }
+
+    const btnExecutePrint = document.getElementById('btnExecutePrint');
+    if (btnExecutePrint) {
+      btnExecutePrint.addEventListener('click', () => {
+        const isAll = optAllRadio ? optAllRadio.checked : true;
+        document.getElementById('printOptionsModal')?.classList.remove('active');
+        preparePsctmPrintState(isAll);
+        setTimeout(() => {
+          window.print();
+        }, 280);
+      });
+    }
+
+    const btnDownloadPsctmPDF = document.getElementById('btnDownloadPsctmPDF');
+    if (btnDownloadPsctmPDF) {
+      btnDownloadPsctmPDF.addEventListener('click', () => {
+        const isAll = optAllRadio ? optAllRadio.checked : true;
+        document.getElementById('printOptionsModal')?.classList.remove('active');
+
+        if (typeof html2pdf === 'undefined') {
+          preparePsctmPrintState(isAll);
+          setTimeout(() => window.print(), 280);
+          return;
+        }
+
+        const loadingModal = document.getElementById('pdfLoadingModal');
+        if (loadingModal) loadingModal.style.display = 'flex';
+
+        preparePsctmPrintState(isAll);
+        document.body.classList.add('psctm-pdf-exporting');
+
+        setTimeout(async () => {
+          try {
+            const dashContainer = document.querySelector('#psctm-dashboard-view .psctm-dashboard-container');
+            if (!dashContainer) throw new Error('ไม่พบข้อมูล Dashboard สำหรับสร้าง PDF');
+
+            // Create off-screen sandbox with static chart images for crisp A4 Landscape PDF
+            const sandbox = document.createElement('div');
+            sandbox.id = 'psctm-pdf-sandbox';
+            sandbox.style.position = 'fixed';
+            sandbox.style.left = '-15000px';
+            sandbox.style.top = '0';
+            sandbox.style.width = '1120px';
+            sandbox.style.zIndex = '-1';
+            sandbox.style.backgroundColor = '#ffffff';
+            sandbox.style.color = '#0f172a';
+            sandbox.style.padding = '10px 14px';
+
+            const clone = dashContainer.cloneNode(true);
+            // Remove interactive headers/footers/controls inside clone
+            clone.querySelectorAll('.app-header, .dashboard-nav-tabs, .network-sync-banner, .card-actions-group, .filter-pills, .app-footer, #ganttInteractiveView').forEach(el => el.remove());
+
+            // Show print-only banners and header inside clone
+            clone.querySelectorAll('#printReportHeader, .print-only').forEach(el => {
+              el.style.setProperty('display', 'block', 'important');
+            });
+
+            // Filter tab panels based on isAll vs activeTab
+            clone.querySelectorAll('.tab-content-panel').forEach((panel, idx, arr) => {
+              if (!isAll && panel.id !== appState.activeTab) {
+                panel.remove();
+              } else {
+                panel.style.setProperty('display', 'block', 'important');
+                panel.style.setProperty('opacity', '1', 'important');
+                panel.style.setProperty('transform', 'none', 'important');
+                if (isAll && idx < arr.length - 1) {
+                  panel.classList.add('pdf-page-break-after');
+                }
+              }
+            });
+
+            // Convert live Chart.js canvases into crisp PNG images in clone
+            const origCanvases = dashContainer.querySelectorAll('canvas');
+            origCanvases.forEach(origCvs => {
+              if (!origCvs.id) return;
+              const cloneCvs = clone.querySelector(`#${origCvs.id}`);
+              if (cloneCvs && origCvs.width > 20 && origCvs.height > 20) {
+                try {
+                  const dataUrl = origCvs.toDataURL('image/png', 1.0);
+                  if (dataUrl && dataUrl.length > 100) {
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.style.width = '100%';
+                    img.style.maxHeight = '210px';
+                    img.style.objectFit = 'contain';
+                    img.style.display = 'block';
+                    img.style.margin = '0 auto';
+                    cloneCvs.parentNode.replaceChild(img, cloneCvs);
+                  }
+                } catch (_) { }
+              }
+            });
+
+            sandbox.innerHTML = `
+              <style>
+                #psctm-pdf-sandbox, #psctm-pdf-sandbox * {
+                  color: #0f172a !important;
+                  font-family: 'Prompt', 'Sarabun', sans-serif !important;
+                  box-sizing: border-box !important;
+                }
+                #psctm-pdf-sandbox { background: #ffffff !important; }
+                #psctm-pdf-sandbox .print-report-header {
+                  display: block !important;
+                  border-bottom: 2px solid #7c3aed !important;
+                  padding-bottom: 8px !important;
+                  margin-bottom: 12px !important;
+                }
+                #psctm-pdf-sandbox .print-header-top {
+                  display: flex !important;
+                  justify-content: space-between !important;
+                  align-items: center !important;
+                }
+                #psctm-pdf-sandbox .print-brand {
+                  display: flex !important;
+                  align-items: center !important;
+                  gap: 10px !important;
+                }
+                #psctm-pdf-sandbox .print-logo-badge {
+                  background: #7c3aed !important;
+                  color: #ffffff !important;
+                  font-weight: 800 !important;
+                  padding: 4px 10px !important;
+                  border-radius: 4px !important;
+                }
+                #psctm-pdf-sandbox .print-section-banner {
+                  background: #f1f5f9 !important;
+                  border-left: 4px solid #7c3aed !important;
+                  padding: 6px 12px !important;
+                  margin: 10px 0 !important;
+                  border-radius: 0 4px 4px 0 !important;
+                }
+                #psctm-pdf-sandbox .kpi-grid {
+                  display: grid !important;
+                  grid-template-columns: repeat(3, 1fr) !important;
+                  gap: 8px !important;
+                  margin-bottom: 10px !important;
+                }
+                #psctm-pdf-sandbox .kpi-card,
+                #psctm-pdf-sandbox .chart-card,
+                #psctm-pdf-sandbox .dashboard-card {
+                  background: #ffffff !important;
+                  border: 1px solid #cbd5e1 !important;
+                  box-shadow: none !important;
+                  border-radius: 6px !important;
+                  padding: 8px 12px !important;
+                  margin-bottom: 10px !important;
+                }
+                #psctm-pdf-sandbox .charts-grid-2 {
+                  display: grid !important;
+                  grid-template-columns: 1fr 1fr !important;
+                  gap: 10px !important;
+                  margin-bottom: 10px !important;
+                }
+                #psctm-pdf-sandbox .chart-canvas-wrapper {
+                  height: auto !important;
+                  min-height: 170px !important;
+                  max-height: 220px !important;
+                }
+                #psctm-pdf-sandbox .table-responsive {
+                  overflow: visible !important;
+                }
+                #psctm-pdf-sandbox .modern-table {
+                  width: 100% !important;
+                  border-collapse: collapse !important;
+                  font-size: 9.5px !important;
+                }
+                #psctm-pdf-sandbox .modern-table th,
+                #psctm-pdf-sandbox .modern-table td {
+                  border: 1px solid #cbd5e1 !important;
+                  padding: 4px 5px !important;
+                }
+                #psctm-pdf-sandbox .modern-table th {
+                  background: #f1f5f9 !important;
+                  font-weight: 700 !important;
+                }
+              </style>
+            `;
+            sandbox.appendChild(clone);
+            document.body.appendChild(sandbox);
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const scopeName = isAll ? 'ฉบับสมบูรณ์' : (tabNameMap[appState.activeTab] || 'หัวข้อปัจจุบัน');
+            const opt = {
+              margin: [8, 10, 8, 10],
+              filename: `รายงานสรุปสถานะงานก่อสร้าง_PSCTM_${scopeName}_${dateStr}.pdf`,
+              image: { type: 'jpeg', quality: 0.95 },
+              html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                scrollY: 0,
+                scrollX: 0,
+                windowWidth: 1160
+              },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+              pagebreak: {
+                mode: ['css', 'legacy'],
+                after: '.pdf-page-break-after',
+                avoid: ['.kpi-grid', '.charts-grid-2', '.chart-card', '.modern-table tr']
+              }
+            };
+
+            await html2pdf().set(opt).from(sandbox).save();
+          } catch (err) {
+            console.error('PSCTM PDF export error:', err);
+            alert('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF: ' + (err.message || err));
+          } finally {
+            const sb = document.getElementById('psctm-pdf-sandbox');
+            if (sb && sb.parentNode) sb.parentNode.removeChild(sb);
+            restorePsctmPrintState();
+            if (loadingModal) loadingModal.style.display = 'none';
+          }
+        }, 350);
+      });
+    }
+
+    window.addEventListener('afterprint', () => {
+      restorePsctmPrintState();
     });
 
     // Download latest uploaded Excel button (works locally, on LAN server, and on Vercel Cloud)
