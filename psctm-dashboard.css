@@ -1,16 +1,14 @@
 /* ==========================================================================
-   PEA Construction & Disbursement Dashboard (PSCTM) - Design System
+   PEA Construction & Disbursement Dashboard (PSCTM) - Unified Design Tokens
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
-
 :root {
-  /* Color Palette - Light Theme */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
+  /* Color Palette - Light Theme (Harmonized with PCTS PEA Royal Brand) */
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #eef2f7;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass: rgba(255, 255, 255, 0.88);
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -18,14 +16,14 @@
   --text-inverse: #ffffff;
 
   --border-subtle: #e2e8f0;
-  --border-focus: #7c3aed;
+  --border-focus: #742C81;
 
-  /* PEA Brand Accents */
-  --pea-purple: #6b21a8;
+  /* PEA Brand Accents (Official PEA Purple #742C81 + Vibrant Royal Violet + Gold) */
+  --pea-purple: #742C81;
   --pea-purple-light: #9333ea;
-  --pea-purple-glow: rgba(147, 51, 234, 0.18);
-  --pea-gradient: linear-gradient(135deg, #581c87 0%, #7e22ce 50%, #9333ea 100%);
-  --pea-gradient-subtle: linear-gradient(135deg, rgba(88, 28, 135, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%);
+  --pea-purple-glow: rgba(116, 44, 129, 0.16);
+  --pea-gradient: linear-gradient(135deg, #581c87 0%, #742C81 50%, #9333ea 100%);
+  --pea-gradient-subtle: linear-gradient(135deg, rgba(116, 44, 129, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%);
 
   /* Fallback Card & Background Variables */
   --card-bg: #ffffff;
@@ -102,24 +100,13 @@
 }
 
 #psctm-dashboard-view {
-  font-family: var(--font-family);
-  background-color: var(--bg-primary);
+  font-family: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: transparent;
   color: var(--text-primary);
   line-height: 1.6;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   width: 100%;
-}
-
-body {
-  font-family: var(--font-family);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.6;
-  font-size: 14px;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 /* App Container */

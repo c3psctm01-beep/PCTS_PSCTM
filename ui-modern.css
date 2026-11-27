@@ -1,0 +1,745 @@
+/**
+ * ==============================================================================
+ * PCTS / PSCTM VER 4.0 — PEA Aurora & Executive Bento Glass UI System
+ * Scoped strictly to @media screen so A4 Print & PDF Export remain 100% intact.
+ * ==============================================================================
+ */
+
+@media screen {
+    :root {
+        --pea-royal: #742C81;
+        --pea-royal-deep: #4A1554;
+        --pea-violet: #8B5CF6;
+        --pea-gold-bright: #F59E0B;
+        --pea-surface-glass: rgba(255, 255, 255, 0.86);
+        --pea-border-hairline: rgba(226, 232, 240, 0.88);
+        --pea-card-radius: 18px;
+        --pea-shadow-elevated: 0 10px 30px -6px rgba(15, 23, 42, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --pea-shadow-hover: 0 20px 40px -10px rgba(116, 44, 129, 0.16), 0 8px 18px -4px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff;
+    }
+
+    /* ---------------- 1. Global Scrollbar & Ambient Aurora Canvas ---------------- */
+    ::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.45);
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(116, 44, 129, 0.55);
+    }
+
+    html, body {
+        background-color: #F3F5FA;
+    }
+
+    .app-container {
+        background:
+            radial-gradient(900px circle at 8% 0%, rgba(116, 44, 129, 0.065), transparent 55%),
+            radial-gradient(800px circle at 92% 10%, rgba(139, 92, 246, 0.055), transparent 50%),
+            radial-gradient(750px circle at 85% 92%, rgba(245, 158, 11, 0.05), transparent 55%),
+            #F3F5FA;
+    }
+
+    /* Smooth View Transitions */
+    .view-section.active {
+        animation: peaViewEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes peaViewEnter {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ---------------- 2. Frosted Glass Executive Sidebar ---------------- */
+    .app-sidebar {
+        width: 270px;
+        min-width: 270px;
+        max-width: 270px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(250, 251, 255, 0.96) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(226, 232, 240, 0.9);
+        box-shadow: 6px 0 32px -8px rgba(15, 23, 42, 0.05);
+    }
+
+    .sidebar-brand {
+        padding: 20px 18px 18px;
+        background: linear-gradient(135deg, rgba(116, 44, 129, 0.055) 0%, rgba(245, 158, 11, 0.03) 100%);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.75);
+        position: relative;
+    }
+
+    .sidebar-brand::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 18px;
+        right: 18px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--pea-royal), rgba(147, 51, 234, 0.35), transparent);
+        border-radius: 2px;
+    }
+
+    .logo-mascot-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        border: 2px solid rgba(116, 44, 129, 0.25);
+        box-shadow: 0 6px 16px -3px rgba(116, 44, 129, 0.25);
+        background: #ffffff;
+    }
+
+    .logo-text-wrap h2 {
+        font-size: 19px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #581c87 0%, #742C81 55%, #a855f7 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.3px;
+    }
+
+    .logo-text-wrap p {
+        font-size: 10.5px;
+        color: #64748b;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+
+    .sidebar-section-title {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        padding-left: 12px;
+    }
+
+    .sidebar-nav li,
+    .sidebar-nav-parent {
+        border-radius: 12px;
+        padding: 10.5px 14px;
+        font-weight: 500;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .sidebar-nav li:hover,
+    .sidebar-nav-parent:hover {
+        background: linear-gradient(90deg, rgba(116, 44, 129, 0.075) 0%, rgba(147, 51, 234, 0.03) 100%);
+        color: var(--pea-royal);
+    }
+
+    .sidebar-nav li.active,
+    .sidebar-nav-group.active > .sidebar-nav-parent {
+        background: linear-gradient(135deg, #6B21A8 0%, #742C81 60%, #8B3A9B 100%) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 8px 20px -4px rgba(116, 44, 129, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        border: none !important;
+    }
+
+    .sidebar-nav li.active i,
+    .sidebar-nav-group.active > .sidebar-nav-parent i,
+    .sidebar-nav-group.active > .sidebar-nav-parent .submenu-arrow {
+        color: #FDE68A !important;
+    }
+
+    .sidebar-nav li.active::before,
+    .sidebar-nav-group.active > .sidebar-nav-parent::before {
+        display: none !important;
+    }
+
+    .sidebar-submenu {
+        border-left: 2px solid rgba(116, 44, 129, 0.18) !important;
+        margin: 6px 0 8px 18px !important;
+        padding: 4px 0 4px 12px !important;
+    }
+
+    .sidebar-nav li.sidebar-subitem {
+        border-radius: 10px !important;
+        padding: 8.5px 12px !important;
+    }
+
+    .sidebar-nav li.sidebar-subitem.active {
+        background: linear-gradient(135deg, rgba(116, 44, 129, 0.13) 0%, rgba(147, 51, 234, 0.06) 100%) !important;
+        color: var(--pea-royal) !important;
+        border: 1px solid rgba(116, 44, 129, 0.2) !important;
+        box-shadow: 0 2px 8px rgba(116, 44, 129, 0.08) !important;
+    }
+
+    .sidebar-nav li.sidebar-subitem.active i {
+        color: var(--pea-royal) !important;
+    }
+
+    .sidebar-user-section {
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.5) 0%, rgba(241, 245, 249, 0.9) 100%);
+        border-top: 1px solid rgba(226, 232, 240, 0.85);
+        padding: 14px;
+    }
+
+    .sidebar-user-card {
+        border-radius: 14px;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.05);
+        background: #ffffff;
+    }
+
+    /* ---------------- 3. Sticky Frosted Top Command Bar ---------------- */
+    .top-header {
+        height: 64px;
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+        box-shadow: 0 4px 24px -6px rgba(15, 23, 42, 0.05);
+        padding: 0 26px;
+    }
+
+    .header-bolt-pill {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #742C81 0%, #9333EA 100%);
+        color: #FDE047;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        box-shadow: 0 3px 10px rgba(116, 44, 129, 0.3);
+    }
+
+    .top-header-badge {
+        background: linear-gradient(135deg, rgba(116, 44, 129, 0.12) 0%, rgba(147, 51, 234, 0.08) 100%);
+        color: var(--pea-royal);
+        border: 1px solid rgba(116, 44, 129, 0.22);
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .header-live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .header-live-pill .live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
+        animation: peaLivePulse 2.2s infinite;
+    }
+
+    @keyframes peaLivePulse {
+        0%, 100% { box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25); }
+        50% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.08); }
+    }
+
+    .header-action-btn {
+        border-radius: 999px;
+        padding: 7px 15px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(203, 213, 225, 0.85);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+
+    .content-area {
+        padding: 16px 22px 32px;
+        overflow-y: visible;
+    }
+
+    /* ---------------- 4. PSCTM Executive Hero Header & Segmented Tabs ---------------- */
+    .psctm-dashboard-container {
+        padding: 0.35rem 0.25rem 2.75rem;
+    }
+
+    .app-header {
+        background:
+            radial-gradient(500px circle at 0% 0%, rgba(116, 44, 129, 0.07), transparent 65%),
+            radial-gradient(450px circle at 100% 100%, rgba(245, 158, 11, 0.06), transparent 65%),
+            #ffffff;
+        border-radius: 22px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        box-shadow: var(--pea-shadow-elevated);
+        padding: 1.35rem 1.75rem;
+        margin-bottom: 1.35rem;
+    }
+
+    .app-header::before {
+        height: 4px;
+        background: linear-gradient(90deg, #581c87 0%, #742C81 45%, #a855f7 75%, #f59e0b 100%);
+    }
+
+    .brand-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #581c87 0%, #742C81 55%, #9333ea 100%);
+        box-shadow: 0 10px 22px -4px rgba(116, 44, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .brand-titles h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .badge-pea {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        color: #92400E;
+        border: 1px solid #FCD34D;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        box-shadow: 0 2px 6px rgba(245, 158, 11, 0.18);
+    }
+
+    /* Segmented Quick Nav Bar */
+    .dashboard-nav-tabs {
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 16px;
+        padding: 6px;
+        gap: 6px;
+        margin-bottom: 1.4rem;
+        box-shadow: 0 4px 18px -4px rgba(15, 23, 42, 0.05);
+    }
+
+    .dashboard-nav-tabs .nav-tab {
+        border-radius: 11px;
+        padding: 0.65rem 1.1rem;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #475569;
+        gap: 0.55rem;
+        transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .dashboard-nav-tabs .nav-tab i {
+        font-size: 0.92rem;
+        opacity: 0.85;
+    }
+
+    .dashboard-nav-tabs .nav-tab:hover:not(.active) {
+        background: rgba(116, 44, 129, 0.06);
+        color: var(--pea-royal);
+    }
+
+    .dashboard-nav-tabs .nav-tab.active {
+        background: linear-gradient(135deg, #581c87 0%, #742C81 55%, #9333ea 100%);
+        color: #ffffff;
+        box-shadow: 0 6px 16px -3px rgba(116, 44, 129, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .dashboard-nav-tabs .nav-tab.active i {
+        color: #FDE68A;
+        opacity: 1;
+    }
+
+    /* ---------------- 5. Bento KPI Cards & Stat Cards ---------------- */
+    .kpi-grid {
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+        border-radius: 20px;
+        padding: 1.35rem 1.5rem;
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        box-shadow: var(--pea-shadow-elevated);
+        transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .kpi-card.kpi-interactive {
+        cursor: pointer;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: -35px;
+        right: -35px;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        opacity: 0.45;
+        pointer-events: none;
+        transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    .kpi-card.purple::before { background: radial-gradient(circle, rgba(147, 51, 234, 0.22) 0%, transparent 70%); }
+    .kpi-card.blue::before   { background: radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, transparent 70%); }
+    .kpi-card.amber::before  { background: radial-gradient(circle, rgba(245, 158, 11, 0.24) 0%, transparent 70%); }
+    .kpi-card.green::before  { background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%); }
+
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--pea-shadow-hover);
+    }
+
+    .kpi-card:hover::before {
+        transform: scale(1.25);
+        opacity: 0.75;
+    }
+
+    .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 12px rgba(15, 23, 42, 0.05);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .kpi-card:hover .kpi-icon-box {
+        transform: scale(1.08) rotate(-4deg);
+    }
+
+    /* Elevated Dashboard & Chart Cards */
+    .dashboard-card,
+    .chart-card,
+    .card {
+        border-radius: var(--pea-card-radius);
+        border: 1px solid var(--pea-border-hairline);
+        box-shadow: var(--pea-shadow-elevated);
+    }
+
+    .chart-card {
+        transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .chart-card:hover {
+        border-color: rgba(116, 44, 129, 0.22);
+        box-shadow: 0 14px 32px -8px rgba(15, 23, 42, 0.09);
+    }
+
+    /* ---------------- 6. Project Workspace, Pill Tabs & Modern Tables ---------------- */
+    #dashboardMainTitle {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    /* Project Detail Tabs -> Modern Floating Segmented Bar */
+    .project-tabs {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 15px;
+        padding: 6px;
+        gap: 5px;
+        margin: 12px 0 16px;
+        box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.05);
+    }
+
+    .tablinks {
+        border-radius: 10px;
+        padding: 9px 15px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #475569;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tablinks:hover:not(.active) {
+        background: rgba(116, 44, 129, 0.06);
+        color: var(--pea-royal);
+    }
+
+    .tablinks.active {
+        background: linear-gradient(135deg, #6B21A8 0%, #742C81 60%, #9333EA 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 12px -2px rgba(116, 44, 129, 0.35);
+    }
+
+    .tablinks.active i {
+        color: #FDE68A;
+    }
+
+    .tablinks.active::after {
+        display: none !important;
+    }
+
+    /* Upgrade .pea-table to match crisp .modern-table readability */
+    .pea-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 8px;
+    }
+
+    .pea-table th {
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #334155;
+        font-family: 'Prompt', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 11px 14px;
+        border-bottom: 2px solid #e2e8f0;
+        letter-spacing: 0.01em;
+    }
+
+    .pea-table td {
+        padding: 11px 14px;
+        font-size: 12.5px;
+        color: #1e293b;
+        border-bottom: 1px solid #eef2f7;
+        vertical-align: middle;
+    }
+
+    .pea-table tbody tr {
+        transition: background-color 0.16s ease;
+    }
+
+    .pea-table tbody tr:nth-child(even) {
+        background-color: rgba(248, 250, 252, 0.6);
+    }
+
+    .pea-table tbody tr:hover {
+        background-color: rgba(116, 44, 129, 0.045);
+    }
+
+    /* ---------------- 7. AI Mascot Floating Halo & Modern Chat Drawer ---------------- */
+    .mascot-widget {
+        width: 58px;
+        height: 58px;
+        border: 3px solid #ffffff;
+        box-shadow: 0 10px 26px rgba(116, 44, 129, 0.35), 0 0 0 3px rgba(116, 44, 129, 0.2);
+    }
+
+    .chatbox-panel {
+        width: 365px;
+        height: 490px;
+        max-width: calc(100vw - 32px);
+        max-height: calc(100vh - 120px);
+        border-radius: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+        background: rgba(255, 255, 255, 0.97);
+        backdrop-filter: blur(18px);
+    }
+
+    .chatbox-header {
+        background: linear-gradient(135deg, #581c87 0%, #742C81 60%, #9333ea 100%);
+        padding: 14px 18px;
+    }
+
+    .chat-message {
+        border-radius: 16px;
+        padding: 10px 14px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .chat-message.bot {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+
+    .chat-message.user {
+        background: linear-gradient(135deg, #742C81 0%, #9333ea 100%);
+        box-shadow: 0 4px 12px rgba(116, 44, 129, 0.25);
+    }
+
+    /* ---------------- 8. Luxury Obsidian Dark Mode Refinements ---------------- */
+    [data-theme="dark"] html,
+    [data-theme="dark"] body {
+        background-color: #080D1A;
+    }
+
+    [data-theme="dark"] .app-container {
+        background:
+            radial-gradient(900px circle at 10% 0%, rgba(139, 92, 246, 0.14), transparent 55%),
+            radial-gradient(800px circle at 90% 15%, rgba(14, 165, 233, 0.08), transparent 50%),
+            radial-gradient(750px circle at 85% 95%, rgba(245, 158, 11, 0.06), transparent 55%),
+            #080D1A;
+    }
+
+    [data-theme="dark"] .app-sidebar {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(11, 17, 32, 0.98) 100%);
+        border-right-color: rgba(51, 65, 85, 0.65);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="dark"] .sidebar-brand {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(15, 23, 42, 0.4) 100%);
+        border-bottom-color: rgba(51, 65, 85, 0.6);
+    }
+
+    [data-theme="dark"] .logo-text-wrap h2 {
+        background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 55%, #fbbf24 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="dark"] .sidebar-user-section {
+        background: rgba(15, 23, 42, 0.75);
+        border-top-color: rgba(51, 65, 85, 0.65);
+    }
+
+    [data-theme="dark"] .sidebar-user-card {
+        background: #131C31;
+        border-color: rgba(51, 65, 85, 0.8);
+    }
+
+    [data-theme="dark"] .top-header {
+        background: rgba(11, 17, 32, 0.84);
+        border-bottom-color: rgba(51, 65, 85, 0.65);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="dark"] .header-live-pill {
+        background: rgba(16, 185, 129, 0.16);
+        color: #34d399;
+        border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    [data-theme="dark"] .header-action-btn {
+        background: rgba(30, 41, 59, 0.85);
+        border-color: rgba(71, 85, 105, 0.7);
+        color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .app-header,
+    [data-theme="dark"] .kpi-card,
+    [data-theme="dark"] .dashboard-card,
+    [data-theme="dark"] .chart-card,
+    [data-theme="dark"] .card,
+    [data-theme="dark"] .project-card {
+        background: #121B2E;
+        border-color: rgba(51, 65, 85, 0.75);
+        box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="dark"] .dashboard-nav-tabs,
+    [data-theme="dark"] .project-tabs {
+        background: rgba(18, 27, 46, 0.9);
+        border-color: rgba(51, 65, 85, 0.8);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    [data-theme="dark"] .dashboard-nav-tabs .nav-tab,
+    [data-theme="dark"] .tablinks {
+        color: #94a3b8;
+    }
+
+    [data-theme="dark"] .dashboard-nav-tabs .nav-tab:hover:not(.active),
+    [data-theme="dark"] .tablinks:hover:not(.active) {
+        background: rgba(168, 85, 247, 0.12);
+        color: #e9d5ff;
+    }
+
+    [data-theme="dark"] .dashboard-nav-tabs .nav-tab.active,
+    [data-theme="dark"] .tablinks.active {
+        background: linear-gradient(135deg, #7e22ce 0%, #9333ea 60%, #a855f7 100%);
+        color: #ffffff;
+    }
+
+    [data-theme="dark"] #dashboardMainTitle {
+        color: #f8fafc;
+    }
+
+    [data-theme="dark"] .pea-table th {
+        background: linear-gradient(180deg, #1e293b 0%, #152035 100%);
+        color: #cbd5e1;
+        border-bottom-color: #334155;
+    }
+
+    [data-theme="dark"] .pea-table td {
+        color: #e2e8f0;
+        border-bottom-color: rgba(51, 65, 85, 0.55);
+    }
+
+    [data-theme="dark"] .pea-table tbody tr:nth-child(even) {
+        background-color: rgba(30, 41, 59, 0.3);
+    }
+
+    [data-theme="dark"] .pea-table tbody tr:hover {
+        background-color: rgba(168, 85, 247, 0.1);
+    }
+
+    [data-theme="dark"] .chatbox-panel {
+        background: rgba(18, 27, 46, 0.97);
+        border-color: rgba(71, 85, 105, 0.7);
+    }
+
+    [data-theme="dark"] .chatbox-messages {
+        background: #0d1424;
+    }
+
+    [data-theme="dark"] .chat-message.bot {
+        background: #1a253d;
+        border-color: #2d3d5c;
+        color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .chatbox-input {
+        background: #121B2E;
+        border-top-color: #27354f;
+    }
+
+    [data-theme="dark"] .chatbox-input input {
+        background: #0d1424;
+        border-color: #334155;
+        color: #f8fafc;
+    }
+
+    /* Responsive Mobile Polish */
+    @media (max-width: 768px) {
+        .header-live-pill {
+            display: none;
+        }
+        .content-area {
+            padding: 12px 12px 88px !important;
+        }
+        .dashboard-nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 5px;
+        }
+        .dashboard-nav-tabs .nav-tab {
+            padding: 0.55rem 0.9rem;
+            font-size: 0.8rem;
+        }
+    }
+}

@@ -44,7 +44,9 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css?v=19">
     <!-- PSCTM Transmission & Substations Dashboard CSS -->
-    <link rel="stylesheet" href="psctm-dashboard.css?v=4">
+    <link rel="stylesheet" href="psctm-dashboard.css?v=5">
+    <!-- PEA Aurora & Executive Bento Glass UI System -->
+    <link rel="stylesheet" href="ui-modern.css?v=1">
 </head>
 
 <body>
@@ -198,9 +200,10 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div class="top-header-title">
-                        <i class="fa-solid fa-bolt" style="color: var(--pea-purple); font-size: 14px;"></i>
+                        <span class="header-bolt-pill"><i class="fa-solid fa-bolt"></i></span>
                         <span>PEA Construction Tracking System</span>
-                        <span class="top-header-badge">PCTS VER 4.0</span>
+                        <span class="top-header-badge">VER 4.0</span>
+                        <span class="header-live-pill" title="เชื่อมต่อฐานข้อมูลเรียลไทม์"><span class="live-dot"></span> Online</span>
                     </div>
                 </div>
 
@@ -508,7 +511,7 @@
     <!-- KPI Summary Grid -->
     <section class="kpi-grid">
       <!-- KPI 1: Transmission Lines -->
-      <div class="kpi-card purple">
+      <div class="kpi-card purple kpi-interactive" onclick="handlePsctmSubtabClick('tab-transmission', event)" title="คลิกเพื่อดูรายละเอียดงานก่อสร้างสายส่ง 115 kV">
         <div class="kpi-info">
           <span class="kpi-title">งานก่อสร้างสายส่ง 115 kV</span>
           <span class="kpi-value" id="kpiTransCount">0 งาน</span>
@@ -520,7 +523,7 @@
       </div>
 
       <!-- KPI 2: Substations Active -->
-      <div class="kpi-card blue">
+      <div class="kpi-card blue kpi-interactive" onclick="handlePsctmSubtabClick('tab-substations', event)" title="คลิกเพื่อดูรายละเอียดงานก่อสร้างสถานีไฟฟ้า">
         <div class="kpi-info">
           <span class="kpi-title">สถานีไฟฟ้ากำลังก่อสร้าง</span>
           <span class="kpi-value" id="kpiSubCount">0 แห่ง</span>
@@ -532,7 +535,7 @@
       </div>
 
       <!-- KPI 3: Permits Status -->
-      <div class="kpi-card amber">
+      <div class="kpi-card amber kpi-interactive" onclick="handlePsctmSubtabClick('tab-permits', event)" title="คลิกเพื่อดูรายละเอียดสถานะการขออนุญาตก่อสร้าง">
         <div class="kpi-info">
           <span class="kpi-title">สถานะการขออนุญาตพื้นที่</span>
           <span class="kpi-value" id="kpiPermitApproved">0 / 0 งาน</span>
@@ -543,6 +546,26 @@
         </div>
       </div>
     </section>
+
+    <!-- Segmented Quick Navigation Tabs -->
+    <nav class="dashboard-nav-tabs" aria-label="หมวดหมู่ข้อมูลแดชบอร์ด">
+      <button type="button" class="nav-tab active" data-tab="tab-overview">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>ภาพรวมโครงการ (Overview)</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="tab-transmission">
+        <i class="fa-solid fa-tower-broadcast"></i>
+        <span>สายส่ง 115 kV</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="tab-substations">
+        <i class="fa-solid fa-industry"></i>
+        <span>สถานีไฟฟ้า</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="tab-permits">
+        <i class="fa-solid fa-file-circle-check"></i>
+        <span>การขออนุญาตพื้นที่</span>
+      </button>
+    </nav>
 
 
 
