@@ -310,8 +310,9 @@
         }
 
         try {
-            const beforeUrl = await window.processAndUploadPunchImage(beforeFile, p, title, 'สภาพเดิม Before');
-            const afterUrl = await window.processAndUploadPunchImage(afterFile, p, title, 'ผลงาน After');
+            const baUploadOpts = { folder: 'before-after', prefix: 'ba', moduleLabel: 'Before & After' };
+            const beforeUrl = await window.processAndUploadPunchImage(beforeFile, p, title, 'สภาพเดิม Before', baUploadOpts);
+            const afterUrl = await window.processAndUploadPunchImage(afterFile, p, title, 'ผลงาน After', baUploadOpts);
 
             if (!Array.isArray(p.beforeAfter)) p.beforeAfter = [];
 
@@ -325,18 +326,26 @@
                 afterDate: afterDate || new Date().toISOString().split('T')[0]
             });
 
-            await window.saveProjects(p.id);
+            const saved = await window.saveProjects(p.id);
 
             activeSliderIndex = p.beforeAfter.length - 1;
             window.closeAddBeforeAfterModal();
             window.renderBeforeAfterTab(p);
 
             if (typeof Toastify === 'function') {
-                Toastify({
-                    text: `บันทึกภาพเปรียบเทียบก่อน-หลัง "${title}" สำเร็จ!`,
-                    duration: 3500,
-                    style: { background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '8px' }
-                }).showToast();
+                if (saved === false) {
+                    Toastify({
+                        text: 'บันทึกในเครื่องแล้ว แต่ซิงค์ขึ้นระบบกลางไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต',
+                        duration: 4500,
+                        style: { background: 'linear-gradient(135deg, #d97706, #b45309)', borderRadius: '8px' }
+                    }).showToast();
+                } else {
+                    Toastify({
+                        text: `บันทึกภาพเปรียบเทียบก่อน-หลัง "${title}" สำเร็จ!`,
+                        duration: 3500,
+                        style: { background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '8px' }
+                    }).showToast();
+                }
             }
         } catch (err) {
             console.error('Error saving before-after pair:', err);

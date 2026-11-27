@@ -626,7 +626,10 @@
     /**
      * อรรถประโยชน์ประมวลผล บีบอัด และประทับลายน้ำภาพ Punch List พร้อมอัปโหลด
      */
-    window.processAndUploadPunchImage = function (file, project, title, phase) {
+    window.processAndUploadPunchImage = function (file, project, title, phase, options = {}) {
+        const folderName = options.folder || 'punch';
+        const filePrefix = options.prefix || 'punch';
+        const moduleLabel = options.moduleLabel || 'Punch List';
         return new Promise((resolve) => {
             if (!file) return resolve('');
 
@@ -668,11 +671,11 @@
                                 const userInfo = (typeof window.getCurrentUserInfo === 'function') ? window.getCurrentUserInfo() : {};
                                 await window.applyGpsWatermark(canvas, {
                                     projectName: project ? project.name : '',
-                                    taskName: `[Punch List: ${phase}] ${title}`,
+                                    taskName: `[${moduleLabel}: ${phase}] ${title}`,
                                     empId: userInfo.employee_id,
                                     uploaderName: userInfo.name,
                                     uploaderPosition: userInfo.position,
-                                    footerOrg: '🏛️ การไฟฟ้าส่วนภูมิภาค (PEA) • Punch List'
+                                    footerOrg: `🏛️ การไฟฟ้าส่วนภูมิภาค (PEA) • ${moduleLabel}`
                                 });
                             } catch (watermarkErr) {
                                 console.warn('[PunchList] Watermark apply skipped or error:', watermarkErr);
@@ -700,9 +703,9 @@
                             canvas.toBlob(async (blob) => {
                                 if (!blob) return safeResolve(fallbackDataUrl);
                                 try {
-                                    const fileName = `punch_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                                    const fileName = `${filePrefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
                                     const folderDate = new Date().toISOString().split('T')[0];
-                                    const filePath = `punch/${folderDate}/${fileName}`;
+                                    const filePath = `${folderName}/${folderDate}/${fileName}`;
 
                                     const { data, error } = await window.db.storage.from('project-images').upload(filePath, blob, { contentType: 'image/jpeg' });
                                     if (error) {

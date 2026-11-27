@@ -187,9 +187,13 @@
                 if (!file) return;
 
                 const reader = new FileReader();
-                reader.onload = function (ev) {
-                    const data = new Uint8Array(ev.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                reader.onload = async function (ev) {
+                    try {
+                        if (typeof window.ensureXLSX === 'function') {
+                            await window.ensureXLSX();
+                        }
+                        const data = new Uint8Array(ev.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
                     currentDisbWorkbook = workbook;
 
                     const sheetSelect = document.getElementById('disbSheetSelect');
@@ -210,6 +214,10 @@
                     }
 
                     document.getElementById('disbSheetSelector').style.display = 'block';
+                    } catch (err) {
+                        console.error('Disbursement Excel load error:', err);
+                        alert('ไม่สามารถอ่านไฟล์ Excel ได้ กรุณาตรวจสอบอินเทอร์เน็ตหรือรูปแบบไฟล์');
+                    }
                 };
                 reader.readAsArrayBuffer(file);
             });

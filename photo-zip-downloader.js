@@ -161,6 +161,14 @@
      * เริ่มกระบวนการสร้างและดาวน์โหลดไฟล์ ZIP
      */
     window.executePhotoZipDownload = async function () {
+        try {
+            if (typeof window.ensureJSZip === 'function') {
+                await window.ensureJSZip();
+            }
+        } catch (err) {
+            alert(err.message || 'ไม่สามารถโหลดไลบรารี JSZip ได้');
+            return;
+        }
         if (typeof JSZip === 'undefined') {
             alert('กำลังโหลดไลบรารี JSZip กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
             return;

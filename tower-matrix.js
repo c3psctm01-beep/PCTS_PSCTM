@@ -32,12 +32,13 @@
     }
 
     /**
-     * สร้างชุดข้อมูลเริ่มต้นสำหรับต้นเสาสายส่ง 115 kV (หากโครงการยังไม่มีข้อมูล)
-     * @param {Object} project 
+     * คืนค่ารายการต้นเสาของโครงการ (ไม่สร้างข้อมูลจำลองอัตโนมัติลงฐานข้อมูลเว้นแต่ผู้ใช้กดสร้างเอง)
+     * @param {Object} project
+     * @param {boolean} forceCreateDefaults
      */
-    window.initProjectTowers = function (project) {
+    window.initProjectTowers = function (project, forceCreateDefaults = false) {
         if (!project) return [];
-        if (Array.isArray(project.towers)) {
+        if (Array.isArray(project.towers) && !forceCreateDefaults) {
             // ปรับปรุงหมายเลขเสาเดิมที่เคยใช้ T นำหน้า ให้เป็น P นำหน้าทั้งหมดอัตโนมัติ
             project.towers.forEach(t => {
                 if (t.towerNo && /^[Tt]\d+/.test(t.towerNo)) {
@@ -50,9 +51,15 @@
             return project.towers;
         }
 
+        if (!forceCreateDefaults) {
+            project.towers = [];
+            return project.towers;
+        }
+
         const baseLat = project.latitude || 13.547530;
         const baseLng = project.longitude || 100.274410;
         const totalTowers = 24; // มาตรฐานช่วงสายส่ง 115 kV เข้าสถานีไฟฟ้า ~6-8 กม.
+        const todayStr = new Date().toISOString().split('T')[0];
 
         const towerTypes = ['Terminal', 'Tension', 'Suspension', 'Suspension', 'Angle', 'Suspension', 'Suspension', 'Tension'];
         const towers = [];
@@ -62,52 +69,7 @@
             const typeIndex = (i - 1) % towerTypes.length;
             const type = (i === 1 || i === totalTowers) ? 'Terminal' : towerTypes[typeIndex];
 
-            // จำลองความคืบหน้าตามลำดับหน้างานจริง (หัวแถวเสร็จก่อน ท้ายแถวกำลังทำ)
-            let foundation = 'pending';
-            let erection = 'pending';
-            let stringing = 'pending';
-            let testing = 'pending';
-            let obstacle = '';
-
-            if (i <= 18) {
-                foundation = 'done';
-            } else if (i <= 21) {
-                foundation = 'in_progress';
-            } else {
-                foundation = 'pending';
-            }
-
-            if (i <= 14) {
-                erection = 'done';
-            } else if (i <= 17) {
-                erection = 'in_progress';
-            }
-
-            if (i <= 10) {
-                stringing = 'done';
-            } else if (i <= 13) {
-                stringing = 'in_progress';
-            }
-
-            if (i <= 8) {
-                testing = 'done';
-            }
-
-            // จำลองคอขวดงานก่อสร้าง (Bottlenecks / ROW Issues) จุดสำคัญ
-            if (i === 8) {
-                erection = 'done';
-                stringing = 'blocked';
-                obstacle = 'ติดปัญหาสายสื่อสารและแนวเสาเดิมรอสับเปลี่ยนวงจร (Hot Line Work)';
-            } else if (i === 15) {
-                foundation = 'done';
-                erection = 'blocked';
-                obstacle = 'ติดปัญหาเจรจาพื้นที่กรรมสิทธิ์ที่ดินชาวบ้าน (Right of Way / ROW) กม. 3+200';
-            } else if (i === 22) {
-                foundation = 'blocked';
-                obstacle = 'ติดแนวท่อประปาภูมิภาคใต้ดิน รอประสานงานเปิดหน้าดิน';
-            }
-
-            // คำนวณพิกัด GPS จำลองทอดยาวตามแนวเส้นทางสายส่ง
+            // คำนวณพิกัด GPS เริ่มต้นตามแนวเส้นทางสายส่ง (สถานะเริ่มต้นรอดำเนินการ ไม่มีข้อมูลคอขวดสมมติ)
             const offset = (i - 1) * 0.0025;
             const lat = parseFloat((baseLat + offset * 0.8).toFixed(6));
             const lng = parseFloat((baseLng + offset * 1.1).toFixed(6));
@@ -119,12 +81,12 @@
                 span: `กม. ${((i - 1) * 0.35).toFixed(2)} - ${(i * 0.35).toFixed(2)}`,
                 latitude: lat,
                 longitude: lng,
-                foundation: foundation,
-                erection: erection,
-                stringing: stringing,
-                testing: testing,
-                obstacle: obstacle,
-                updatedAt: '2026-10-15'
+                foundation: 'pending',
+                erection: 'pending',
+                stringing: 'pending',
+                testing: 'pending',
+                obstacle: '',
+                updatedAt: todayStr
             });
         }
 
@@ -132,9 +94,6 @@
         if (Array.isArray(window.projects)) {
             const match = window.projects.find(proj => String(proj.id) === String(project.id));
             if (match) match.towers = towers;
-        }
-        if (typeof window.saveProjects === 'function') {
-            window.saveProjects(project.id);
         }
         return towers;
     };
@@ -742,8 +701,7 @@
         if (!p) return;
         if (!confirm(`คุณต้องการสร้างชุดข้อมูลต้นเสาเริ่มต้น 24 ต้น (P01 - P24) ให้กับโครงการนี้ใช่หรือไม่?`)) return;
 
-        p.towers = null; // Set to null so initProjectTowers generates 24 standard poles
-        const newTowers = window.initProjectTowers(p);
+        const newTowers = window.initProjectTowers(p, true);
 
         if (Array.isArray(window.projects)) {
             const match = window.projects.find(proj => String(proj.id) === String(p.id));
@@ -802,9 +760,18 @@
     /**
      * ส่งออกข้อมูล Pole-by-Pole Matrix เป็นไฟล์ Excel (.xlsx) ผ่าน SheetJS
      */
-    window.exportTowerMatrixExcel = function () {
+    window.exportTowerMatrixExcel = async function () {
         const p = window.currentProjectViewData;
         if (!p || !Array.isArray(p.towers)) return;
+
+        try {
+            if (typeof window.ensureXLSX === 'function') {
+                await window.ensureXLSX();
+            }
+        } catch (err) {
+            alert(err.message || 'ไม่สามารถโหลดไลบรารี Excel ได้');
+            return;
+        }
 
         if (typeof XLSX === 'undefined') {
             alert('กำลังโหลดไลบรารี Excel กรุณารอสักครู่');

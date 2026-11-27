@@ -1132,16 +1132,17 @@
         const payload = window.buildWorkReportPayload();
         if (!payload) return;
 
-        if (typeof html2pdf === 'undefined') {
-            alert('กำลังโหลดไลบรารีสร้าง PDF กรุณารอสักครู่แล้วลองใหม่');
-            return;
-        }
-
         const loadingModal = document.getElementById('pdfLoadingModal');
         if (loadingModal) loadingModal.style.display = 'flex';
 
         setTimeout(async () => {
             try {
+                if (typeof window.ensureHtml2Pdf === 'function') {
+                    await window.ensureHtml2Pdf();
+                }
+                if (typeof html2pdf === 'undefined') {
+                    throw new Error('ไม่สามารถโหลดไลบรารีสร้าง PDF ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+                }
                 const isPortrait = payload.orientation === 'portrait';
                 const containerWidth = isPortrait ? 800 : 1120;
 

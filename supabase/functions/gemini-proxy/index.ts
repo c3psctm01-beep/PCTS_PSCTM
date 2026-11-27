@@ -16,18 +16,26 @@ serve(async (req) => {
       throw new Error('Server is missing GEMINI_API_KEY')
     }
 
-    let { model = 'gemini-3.6-flash', ...payload } = await req.json()
-    if (!model || ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-pro'].includes(model)) {
-      model = 'gemini-3.6-flash'
+    const ALLOWED_DEFAULT_MODEL = 'gemini-2.5-flash'
+    const LEGACY_INVALID_MODELS = ['gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+
+    let { model = ALLOWED_DEFAULT_MODEL, ...payload } = await req.json()
+    if (!model || LEGACY_INVALID_MODELS.includes(model)) {
+      model = ALLOWED_DEFAULT_MODEL
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    const callGemini = async (targetModel: string) => {
+      return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    }
+
+    let response = await callGemini(model)
+    if (response.status === 404 && model !== 'gemini-2.0-flash') {
+      response = await callGemini('gemini-2.0-flash')
+    }
 
     const data = await response.json()
 

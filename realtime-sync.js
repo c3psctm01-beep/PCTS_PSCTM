@@ -144,6 +144,10 @@
                                 window.currentProjectViewData.eot = window.projects[idx].eot;
                                 window.currentProjectViewData.towers = window.projects[idx].towers;
                             }
+                            if (newRecord.updated_at) window.projects[idx].updatedAt = newRecord.updated_at;
+                            if (typeof window.captureProjectSyncSnapshot === 'function') {
+                                window.captureProjectSyncSnapshot(window.projects[idx]);
+                            }
                             updatedProject = window.projects[idx];
                         }
 

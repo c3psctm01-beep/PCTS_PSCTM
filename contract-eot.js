@@ -700,19 +700,26 @@
     /**
      * ดาวน์โหลดรายงานสรุปสัญญา EOT เป็นไฟล์ PDF โดยตรง
      */
-    window.downloadEotPenaltyPDF = function () {
+    window.downloadEotPenaltyPDF = async function () {
         const sheet = document.getElementById('printableContractSheet');
         if (!sheet) return;
-
-        if (typeof html2pdf === 'undefined') {
-            window.printEotPenaltyReport();
-            return;
-        }
 
         const targetProj = window.projects ? window.projects.find(p => p.id === window.currentEotProjectId) : null;
         const cleanProjName = ((targetProj && targetProj.name) ? targetProj.name : 'Project').replace(/[\\/:*?"<>|]/g, '_').trim();
         const loadingModal = document.getElementById('pdfLoadingModal');
         if (loadingModal) loadingModal.style.display = 'flex';
+
+        try {
+            if (typeof window.ensureHtml2Pdf === 'function') {
+                await window.ensureHtml2Pdf();
+            }
+        } catch (_) { }
+
+        if (typeof html2pdf === 'undefined') {
+            if (loadingModal) loadingModal.style.display = 'none';
+            window.printEotPenaltyReport();
+            return;
+        }
 
         setTimeout(async () => {
             try {

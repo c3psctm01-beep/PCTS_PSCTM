@@ -535,18 +535,25 @@
 
     const btnDownloadPsctmPDF = document.getElementById('btnDownloadPsctmPDF');
     if (btnDownloadPsctmPDF) {
-      btnDownloadPsctmPDF.addEventListener('click', () => {
+      btnDownloadPsctmPDF.addEventListener('click', async () => {
         const isAll = optAllRadio ? optAllRadio.checked : true;
         document.getElementById('printOptionsModal')?.classList.remove('active');
 
+        const loadingModal = document.getElementById('pdfLoadingModal');
+        if (loadingModal) loadingModal.style.display = 'flex';
+
+        try {
+          if (typeof window.ensureHtml2Pdf === 'function') {
+            await window.ensureHtml2Pdf();
+          }
+        } catch (_) { }
+
         if (typeof html2pdf === 'undefined') {
+          if (loadingModal) loadingModal.style.display = 'none';
           preparePsctmPrintState(isAll);
           setTimeout(() => window.print(), 280);
           return;
         }
-
-        const loadingModal = document.getElementById('pdfLoadingModal');
-        if (loadingModal) loadingModal.style.display = 'flex';
 
         preparePsctmPrintState(isAll);
         document.body.classList.add('psctm-pdf-exporting');
@@ -898,6 +905,9 @@
     const reader = new FileReader();
     reader.onload = async function (e) {
       try {
+        if (typeof window.ensureXLSX === 'function') {
+          await window.ensureXLSX();
+        }
         const data = new Uint8Array(e.target.result);
         // cellStyles + sheetStubs are required to read Gantt bar colors from empty colored cells
         const workbook = XLSX.read(data, { type: 'array', cellStyles: true, sheetStubs: true });
