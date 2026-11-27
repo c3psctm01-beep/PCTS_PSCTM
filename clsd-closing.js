@@ -106,6 +106,26 @@ window.CLSDClosing = (function () {
     return document.getElementById(id);
   }
 
+  function canUploadClsd() {
+    const role = String(window.currentRole || window.authenticatedRole || 'viewer').toLowerCase();
+    return role === 'admin' || role === 'editor';
+  }
+
+  function updateUploadRoleUI() {
+    const allowed = canUploadClsd();
+    document.querySelectorAll('#clsd-closing-view .clsd-upload-only').forEach(btn => {
+      btn.style.display = allowed ? '' : 'none';
+    });
+    if (!allowed) {
+      el('clsdUploadModal')?.classList.remove('show');
+      el('clsdUpdateZpsr018Modal')?.classList.remove('show');
+    }
+    if (initialized) {
+      renderProjectsCardsAndDirectory();
+    }
+  }
+  window.clsdUpdateUploadRole = updateUploadRoleUI;
+
   function formatMoney(amount) {
     if (isNaN(amount) || amount === null || amount === undefined) return '0.00';
     return Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1140,17 +1160,25 @@ window.CLSDClosing = (function () {
       );
     }
 
+    const allowUpload = canUploadClsd();
+
     if (cardsContainer) {
       cardsContainer.innerHTML = '';
       if (filtered.length === 0) {
         cardsContainer.innerHTML = allProjects.length === 0
-          ? `<div class="clsd-project-card project-card-add" onclick="window.CLSDClosing.openUploadModal()" style="grid-column:1/-1;">
-               <div class="add-card-inner">
-                 <div class="add-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+          ? (allowUpload
+            ? `<div class="clsd-project-card project-card-add" onclick="window.CLSDClosing.openUploadModal()" style="grid-column:1/-1;">
+                 <div class="add-card-inner">
+                   <div class="add-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                   <h4>ยังไม่มีโครงการในระบบ</h4>
+                   <p>คลิกที่นี่เพื่ออัปโหลดรายงานปิดงาน SAP ZPSR018 / ZBUDR018 (.pdf)</p>
+                 </div>
+               </div>`
+            : `<div style="grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:var(--clsd-text-muted);">
+                 <i class="fa-solid fa-folder-open" style="font-size:2rem;margin-bottom:0.5rem;opacity:0.5;"></i>
                  <h4>ยังไม่มีโครงการในระบบ</h4>
-                 <p>คลิกที่นี่เพื่ออัปโหลดรายงานปิดงาน SAP ZPSR018 / ZBUDR018 (.pdf)</p>
-               </div>
-             </div>`
+                 <p style="font-size:0.84rem;">เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้</p>
+               </div>`)
           : `<div style="grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:var(--clsd-text-muted);">
                <i class="fa-solid fa-magnifying-glass" style="font-size:1.8rem;margin-bottom:0.5rem;opacity:0.5;"></i>
                <h4>ไม่พบโครงการที่ตรงกับเงื่อนไขการค้นหา</h4>
@@ -1223,9 +1251,9 @@ window.CLSDClosing = (function () {
               <button class="clsd-btn clsd-btn-outline-purple clsd-btn-sm" onclick="window.CLSDClosing.openChangeStatusModal('${safeId}')" title="กำหนดสถานะปิดงาน">
                 <i class="fa-solid fa-tags"></i> สถานะ
               </button>
-              <button class="clsd-btn clsd-btn-outline-gold clsd-btn-sm" onclick="window.CLSDClosing.openUpdateZpsr018Modal('${safeId}')" title="อัพเดทไฟล์ ZPSR018 ใหม่">
+              ${allowUpload ? `<button class="clsd-btn clsd-btn-outline-gold clsd-btn-sm" onclick="window.CLSDClosing.openUpdateZpsr018Modal('${safeId}')" title="อัพเดทไฟล์ ZPSR018 ใหม่">
                 <i class="fa-solid fa-arrows-rotate"></i>
-              </button>
+              </button>` : ''}
               <button class="clsd-btn clsd-btn-outline-purple clsd-btn-sm" onclick="window.CLSDClosing.openEditProjectNameModal('${safeId}')" title="แก้ไขชื่อโครงการ">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
@@ -1237,17 +1265,19 @@ window.CLSDClosing = (function () {
           cardsContainer.appendChild(card);
         });
 
-        const addCard = document.createElement('div');
-        addCard.className = 'clsd-project-card project-card-add';
-        addCard.onclick = openUploadModal;
-        addCard.innerHTML = `
-          <div class="add-card-inner">
-            <div class="add-icon"><i class="fa-solid fa-plus"></i></div>
-            <h4>เพิ่มโครงการใหม่</h4>
-            <p>อัปโหลดรายงาน SAP ZPSR018 (.pdf)</p>
-          </div>
-        `;
-        cardsContainer.appendChild(addCard);
+        if (allowUpload) {
+          const addCard = document.createElement('div');
+          addCard.className = 'clsd-project-card project-card-add';
+          addCard.onclick = openUploadModal;
+          addCard.innerHTML = `
+            <div class="add-card-inner">
+              <div class="add-icon"><i class="fa-solid fa-plus"></i></div>
+              <h4>เพิ่มโครงการใหม่</h4>
+              <p>อัปโหลดรายงาน SAP ZPSR018 (.pdf)</p>
+            </div>
+          `;
+          cardsContainer.appendChild(addCard);
+        }
       }
     }
 
@@ -1279,7 +1309,7 @@ window.CLSDClosing = (function () {
               <div style="display:inline-flex;gap:0.35rem;">
                 <button class="clsd-btn clsd-btn-xs clsd-btn-purple" onclick="window.CLSDClosing.selectProjectById('${safeId}')"><i class="fa-solid fa-eye"></i> เปิดดู</button>
                 <button class="clsd-btn clsd-btn-xs clsd-btn-outline-purple" onclick="window.CLSDClosing.openChangeStatusModal('${safeId}')"><i class="fa-solid fa-tags"></i></button>
-                <button class="clsd-btn clsd-btn-xs clsd-btn-outline-gold" onclick="window.CLSDClosing.openUpdateZpsr018Modal('${safeId}')"><i class="fa-solid fa-arrows-rotate"></i></button>
+                ${allowUpload ? `<button class="clsd-btn clsd-btn-xs clsd-btn-outline-gold" onclick="window.CLSDClosing.openUpdateZpsr018Modal('${safeId}')" title="อัพเดทไฟล์ ZPSR018"><i class="fa-solid fa-arrows-rotate"></i></button>` : ''}
                 <button class="clsd-btn clsd-btn-xs clsd-btn-outline-danger" onclick="window.CLSDClosing.promptDeleteProject('${safeId}')"><i class="fa-solid fa-trash-can"></i></button>
               </div>
             </td>
@@ -1956,6 +1986,10 @@ window.CLSDClosing = (function () {
   }
 
   function openUploadModal() {
+    if (!canUploadClsd()) {
+      notify('เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้', 'danger');
+      return;
+    }
     selectedPdfFile = null;
     if (el('clsdPdfFileInput')) el('clsdPdfFileInput').value = '';
     if (el('clsdSelectedFileCard')) el('clsdSelectedFileCard').style.display = 'none';
@@ -1966,6 +2000,10 @@ window.CLSDClosing = (function () {
   }
 
   function handleFileSelected(file) {
+    if (!canUploadClsd()) {
+      notify('เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้', 'danger');
+      return;
+    }
     if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
       showInvalidModal('โปรดเลือกไฟล์เอกสาร .pdf จากระบบ SAP เท่านั้น');
       return;
@@ -1980,6 +2018,9 @@ window.CLSDClosing = (function () {
   }
 
   async function submitPdfUpload(file, customName, targetProjectId = null) {
+    if (!canUploadClsd()) {
+      throw new Error('ไม่มีสิทธิ์อัปโหลดไฟล์ (เฉพาะ Admin และ Editor เท่านั้น)');
+    }
     // 1. Try Python PyMuPDF server endpoint first
     const fd = new FormData();
     fd.append('file', file);
@@ -1993,7 +2034,8 @@ window.CLSDClosing = (function () {
         headers: {
           'X-Filename': encodeURIComponent(file.name),
           'X-Project-Name': encodeURIComponent(customName || ''),
-          'X-Project-Id': encodeURIComponent(targetProjectId || '')
+          'X-Project-Id': encodeURIComponent(targetProjectId || ''),
+          'X-User-Role': String(window.currentRole || window.authenticatedRole || 'viewer').toLowerCase()
         },
         body: fd
       });
@@ -2008,6 +2050,11 @@ window.CLSDClosing = (function () {
   }
 
   async function handleConfirmUpload() {
+    if (!canUploadClsd()) {
+      el('clsdUploadModal')?.classList.remove('show');
+      notify('เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้', 'danger');
+      return;
+    }
     if (!selectedPdfFile) return;
     if (el('clsdUploadProgress')) el('clsdUploadProgress').style.display = 'block';
     if (el('clsdBtnConfirmUpload')) el('clsdBtnConfirmUpload').disabled = true;
@@ -2042,6 +2089,10 @@ window.CLSDClosing = (function () {
   }
 
   function openUpdateZpsr018Modal(projectId) {
+    if (!canUploadClsd()) {
+      notify('เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้', 'danger');
+      return;
+    }
     const p = allProjects.find(x => x.id === projectId || x.wbs === projectId) || currentProject;
     if (!p) return;
     updateTargetProjectId = p.id;
@@ -2055,6 +2106,11 @@ window.CLSDClosing = (function () {
   }
 
   async function handleConfirmUpdateZpsr018() {
+    if (!canUploadClsd()) {
+      el('clsdUpdateZpsr018Modal')?.classList.remove('show');
+      notify('เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้', 'danger');
+      return;
+    }
     const inp = el('clsdUpdatePdfInput');
     const file = inp?._file;
     if (!file || !updateTargetProjectId) return;
@@ -2457,11 +2513,13 @@ ${lines || '    - ไม่มีรายการโอนงบประม�
       });
     });
 
+    updateUploadRoleUI();
     loadProjectsData();
   }
 
   function onActivate() {
     init();
+    updateUploadRoleUI();
     renderProjectsCardsAndDirectory();
     if (budgetChart) {
       setTimeout(() => { try { budgetChart.resize(); } catch (_) { } }, 80);
@@ -2528,6 +2586,8 @@ ${lines || '    - ไม่มีรายการโอนงบประม�
       el('clsdSupabaseModal')?.classList.add('show');
     },
     syncAllToCloud,
+    updateRoleUI: updateUploadRoleUI,
+    canUpload: canUploadClsd,
     closeModal: (id) => el(id)?.classList.remove('show')
   };
 })();

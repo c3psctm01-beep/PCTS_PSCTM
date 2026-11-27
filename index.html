@@ -2692,7 +2692,7 @@
                                 <span class="clsd-sync-dot"></span>
                                 <span id="clsdCloudSyncText">Supabase Sync</span>
                             </div>
-                            <button type="button" class="clsd-btn clsd-btn-gold" onclick="window.CLSDClosing.openUploadModal()">
+                            <button type="button" id="clsdBtnTopUpload" class="clsd-btn clsd-btn-gold role-editor clsd-upload-only" onclick="window.CLSDClosing.openUploadModal()">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดไฟล์ SAP PDF
                             </button>
                             <button type="button" class="clsd-btn clsd-btn-outline-light" onclick="window.CLSDClosing.openReportPreviewModal()" title="พิมพ์รายงานผลการตรวจสอบ กส.3 พร้อมแสดงการโอนงบ">
@@ -2724,7 +2724,7 @@
                                                 <option value="">กำลังโหลดโครงการ...</option>
                                             </select>
                                         </div>
-                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-gold" style="margin-left: auto;" onclick="window.CLSDClosing.openUpdateZpsr018Modal()">
+                                        <button type="button" id="clsdBtnHeroUpdatePdf" class="clsd-btn clsd-btn-xs clsd-btn-outline-gold role-editor clsd-upload-only" style="margin-left: auto;" onclick="window.CLSDClosing.openUpdateZpsr018Modal()">
                                             <i class="fa-solid fa-arrows-rotate"></i> อัพเดทไฟล์ ZPSR018
                                         </button>
                                         <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-danger" onclick="window.CLSDClosing.promptDeleteProject()">
@@ -2887,7 +2887,7 @@
                                     <h3 class="hub-title">ระบบติดตามและตรวจสอบสถานะการปิดงานก่อสร้าง (SAP ZPSR018)</h3>
                                     <p class="hub-subtitle">เลือกโครงการเพื่อตรวจสอบงบประมาณหน้างาน 5 หมวด แผนการโอนงบรายโครงข่าย และพัสดุคงค้าง หรืออัปโหลดไฟล์ PDF จาก SAP</p>
                                 </div>
-                                <button type="button" class="clsd-btn clsd-btn-gold" onclick="window.CLSDClosing.openUploadModal()">
+                                <button type="button" id="clsdBtnHubUpload" class="clsd-btn clsd-btn-gold role-editor clsd-upload-only" onclick="window.CLSDClosing.openUploadModal()">
                                     <i class="fa-solid fa-cloud-arrow-up"></i> เพิ่มโครงการใหม่ (อัปโหลด PDF)
                                 </button>
                             </div>
@@ -5616,7 +5616,7 @@
     <script src="disbursement.js?v=2"></script>
     <script src="ai-chat.js?v=2"></script>
     <script src="work-report.js?v=3"></script>
-    <script src="clsd-closing.js?v=1"></script>
+    <script src="clsd-closing.js?v=2"></script>
     <script src="mobile-nav.js?v=1"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {

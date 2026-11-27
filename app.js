@@ -1847,6 +1847,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof window.psctmUpdateUploadRole === 'function') {
             window.psctmUpdateUploadRole();
         }
+        // Synchronize CLSD SAP PDF upload buttons based on role (Admin & Editor only)
+        if (typeof window.clsdUpdateUploadRole === 'function') {
+            window.clsdUpdateUploadRole();
+        }
 
         updateRoleSwitcherUI();
         if (typeof window.syncUploaderIdentityFields === 'function') {

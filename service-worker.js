@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcts-pea-v5.3-cache';
+const CACHE_NAME = 'pcts-pea-v5.4-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',

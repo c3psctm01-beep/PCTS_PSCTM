@@ -48,7 +48,7 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Expires', '0')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Passcode, X-Filename, X-Project-Name, X-Project-Id')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Passcode, X-Filename, X-Project-Name, X-Project-Id, X-User-Role')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -706,6 +706,9 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
         # --- CLSD SAP Construction Closing Endpoints (POST) ---
         if clsd_sap_service is not None:
             if path in ('/api/clsd/upload-pdf', '/api/upload-pdf'):
+                user_role = (self.headers.get('X-User-Role') or '').strip().lower()
+                if user_role and user_role not in ('admin', 'editor'):
+                    return self._send_json({'success': False, 'error': 'เฉพาะผู้ดูแลระบบ (Admin) และผู้ควบคุมงาน (Editor) เท่านั้นที่สามารถอัปโหลดไฟล์ได้'}, 403)
                 content_type = self.headers.get('Content-Type', '')
                 length = int(self.headers.get('Content-Length', 0))
                 body = self.rfile.read(length)
