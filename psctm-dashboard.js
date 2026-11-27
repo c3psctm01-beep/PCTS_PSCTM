@@ -16,10 +16,7 @@
     disbSelectedProjectIndex: (savedPrefs && typeof savedPrefs.disbSelectedProjectIndex !== 'undefined') ? savedPrefs.disbSelectedProjectIndex : 0,
     ganttSelectedSheet: (savedPrefs && savedPrefs.ganttSelectedSheet) ? savedPrefs.ganttSelectedSheet : '',
     ganttViewMode: 'consolidated',
-    selectedYear: (function () {
-      const y = localStorage.getItem('pcts_year_filter') || '2569';
-      return (y !== 'all' && parseInt(y, 10) < 2569) ? '2569' : y;
-    })(),
+    selectedYear: String(new Date().getFullYear() + 543),
     overviewChartFilter: 'all',
     transChartMode: 'cumulative',
     disbUnit: 'mb',
@@ -1008,60 +1005,92 @@
   // Year Filtering Logic & Options Population
   // ------------------------------------------------------------------
   function extractAllYearsFromData(d) {
-    const baseYear = 2569;
-    const currentYear = Math.max((new Date().getFullYear() + 543), baseYear);
-    const yearsSet = new Set([baseYear, currentYear]);
+    const currentYear = new Date().getFullYear() + 543;
+    const nextYear = currentYear + 1;
+    const yearsSet = new Set([nextYear, currentYear]);
+
+    const addValidYear = (val) => {
+      const y = parseInt(val, 10);
+      if (!isNaN(y) && y >= 2555 && y <= 2600) {
+        yearsSet.add(y);
+      }
+    };
 
     if (d && d.transmissionLines) {
       d.transmissionLines.forEach(t => {
-        if (t.monthly2569) yearsSet.add(2569);
-        const matches = (t.remarks || '').match(/25[6-9]\d/g);
-        if (matches) matches.forEach(m => {
-          const y = parseInt(m, 10);
-          if (y >= baseYear) yearsSet.add(y);
+        Object.keys(t).forEach(k => {
+          const mMonth = k.match(/^monthly(25\d{2})$/);
+          if (mMonth && t[k]) addValidYear(mMonth[1]);
+          const mProg = k.match(/^progress(25\d{2})$/);
+          if (mProg && Number(t[k]) > 0) addValidYear(mProg[1]);
         });
+        const text = (t.remarks || '') + ' ' + (t.project || '');
+        const matches = text.match(/25[5-9]\d/g);
+        if (matches) matches.forEach(m => addValidYear(m));
       });
     }
 
     if (d && d.substationsDetail) {
       d.substationsDetail.forEach(s => {
-        const text = (s.contract || '') + ' ' + (s.statusText || '');
-        const y4 = text.match(/25[6-9]\d/g);
-        if (y4) y4.forEach(m => {
-          const y = parseInt(m, 10);
-          if (y >= baseYear) yearsSet.add(y);
-        });
+        const text = (s.contract || '') + ' ' + (s.statusText || '') + ' ' + (s.project || '') + ' ' + (s.wbs || '');
+        const y4 = text.match(/25[5-9]\d/g);
+        if (y4) y4.forEach(m => addValidYear(m));
+
         const dMatches = (s.contract || '').match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
         if (dMatches) {
-          dMatches.forEach(dm => {
-            const y2 = parseInt(dm.split('/')[2], 10);
-            if (y2 >= 69 && y2 <= 99) yearsSet.add(2500 + y2);
-          });
+          if (dMatches.length >= 2) {
+            const startY2 = parseInt(dMatches[0].split('/')[2], 10);
+            const endY2 = parseInt(dMatches[1].split('/')[2], 10);
+            if (startY2 >= 55 && endY2 >= startY2 && endY2 <= 99) {
+              for (let y = 2500 + startY2; y <= 2500 + endY2; y++) addValidYear(y);
+            }
+          } else {
+            dMatches.forEach(dm => {
+              const y2 = parseInt(dm.split('/')[2], 10);
+              if (y2 >= 55 && y2 <= 99) addValidYear(2500 + y2);
+            });
+          }
+        }
+
+        const wbsYrMatch = (s.wbs || '').match(/(?:^|-)([5-9]\d)-/);
+        if (wbsYrMatch) {
+          addValidYear(2500 + parseInt(wbsYrMatch[1], 10));
         }
       });
     }
 
     if (d && d.permits) {
       d.permits.forEach(p => {
-        const matches = ((p.statusText || '') + ' ' + (p.permitDetail || '')).match(/25[6-9]\d/g);
-        if (matches) matches.forEach(m => {
-          const y = parseInt(m, 10);
-          if (y >= baseYear) yearsSet.add(y);
-        });
+        const matches = ((p.statusText || '') + ' ' + (p.permitDetail || '') + ' ' + (p.projectName || '')).match(/25[5-9]\d/g);
+        if (matches) matches.forEach(m => addValidYear(m));
       });
     }
 
-    // กรองเฉพาะปี 2569 เป็นต้นไป ไม่เอาปีก่อนหน้านี้
-    const validYears = Array.from(yearsSet).filter(y => y >= baseYear && y <= 2580);
-    return validYears.sort((a, b) => b - a);
+    // รวมปีจากรายการโครงการหลัก (ถ้ามี) เพื่อให้ตัวเลือกทั้ง 2 หน้าตรงกันเสมอ
+    if (typeof window.getProjectActiveYears === 'function') {
+      const projList = (window.projects && window.projects.length > 0) ? window.projects : (window.defaultProjects || []);
+      projList.forEach(p => {
+        const pYears = window.getProjectActiveYears(p);
+        if (Array.isArray(pYears)) pYears.forEach(y => addValidYear(y));
+      });
+    }
+
+    return Array.from(yearsSet).filter(y => y >= 2555 && y <= 2600).sort((a, b) => b - a);
   }
+
+  window.extractPsctmYears = function () {
+    const currentYear = new Date().getFullYear() + 543;
+    if (!appState.data) return [currentYear + 1, currentYear];
+    return extractAllYearsFromData(appState.data);
+  };
 
   function populatePsctmYearOptions() {
     const select = document.getElementById('psctmYearSelect');
     if (!select || !appState.data) return;
 
     const years = extractAllYearsFromData(appState.data);
-    const currentYear = (new Date().getFullYear() + 543);
+    const currentYear = new Date().getFullYear() + 543;
+    const nextYear = currentYear + 1;
 
     const targetVals = [...years.map(y => y.toString()), 'all'].join(',');
     const currentVals = Array.from(select.options).map(o => o.value).join(',');
@@ -1069,34 +1098,30 @@
     if (currentVals !== targetVals) {
       let html = '';
       years.forEach(yr => {
-        const isCur = (yr === currentYear || yr === 2569);
-        const label = isCur ? `ปี ${yr} (ปีปัจจุบัน)` : `ปี ${yr}`;
+        let label = `ปี ${yr}`;
+        if (yr === currentYear) label = `ปี ${yr} (ปีปัจจุบัน)`;
+        else if (yr === nextYear) label = `ปี ${yr} (ปีถัดไป)`;
         html += `<option value="${yr}">${label}</option>`;
       });
-      html += `<option value="all">ทุกปี (ตั้งแต่ปี 2569)</option>`;
+      html += `<option value="all">ทุกปีโครงการ (ทั้งหมด)</option>`;
       select.innerHTML = html;
     }
 
-    const savedYear = localStorage.getItem('pcts_year_filter') || appState.selectedYear || '2569';
-    if (savedYear !== 'all' && parseInt(savedYear, 10) < 2569) {
-      select.value = '2569';
-      appState.selectedYear = '2569';
-      localStorage.setItem('pcts_year_filter', '2569');
-    } else if (years.includes(parseInt(savedYear, 10)) || savedYear === 'all') {
-      select.value = savedYear;
-      appState.selectedYear = savedYear;
+    const activeYear = appState.selectedYear || currentYear.toString();
+    if (activeYear === 'all' || years.includes(parseInt(activeYear, 10))) {
+      select.value = activeYear;
+      appState.selectedYear = activeYear;
     } else {
-      select.value = '2569';
-      appState.selectedYear = '2569';
+      select.value = currentYear.toString();
+      appState.selectedYear = currentYear.toString();
     }
   }
 
   window.onPsctmYearChange = function (yearVal, syncOther = true) {
-    if (yearVal !== 'all' && parseInt(yearVal, 10) < 2569) {
-      yearVal = '2569';
-    }
+    const currentYear = new Date().getFullYear() + 543;
+    if (!yearVal) yearVal = currentYear.toString();
+
     appState.selectedYear = yearVal;
-    localStorage.setItem('pcts_year_filter', yearVal);
 
     const select = document.getElementById('psctmYearSelect');
     if (select && select.value !== yearVal) {
@@ -1105,13 +1130,16 @@
 
     if (syncOther) {
       window.currentYearFilter = yearVal;
+      if (typeof window.renderDashboardYearOptions === 'function') {
+        window.renderDashboardYearOptions();
+      }
       const otherSelect = document.getElementById('dashboardYearSelect');
       if (otherSelect && otherSelect.value !== yearVal) {
         otherSelect.value = yearVal;
       }
       const badge = document.getElementById('titleYearBadge');
       if (badge) {
-        badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ (ตั้งแต่ปี 2569)' : `ปี ${yearVal}`;
+        badge.innerText = yearVal === 'all' ? 'ทุกปีโครงการ (ทั้งหมด)' : `ปี ${yearVal}`;
       }
       if (typeof window.renderTables === 'function') {
         window.renderTables();
@@ -1124,11 +1152,8 @@
   function getActiveDataset() {
     if (!appState.data) return null;
     const d = appState.data;
-    let yearVal = appState.selectedYear || '2569';
-    if (yearVal !== 'all' && parseInt(yearVal, 10) < 2569) {
-      yearVal = '2569';
-      appState.selectedYear = '2569';
-    }
+    const currentYear = new Date().getFullYear() + 543;
+    let yearVal = appState.selectedYear || currentYear.toString();
 
     if (!yearVal || yearVal === 'all') {
       return {
@@ -1140,53 +1165,85 @@
     }
 
     const yr = parseInt(yearVal, 10);
-    const shortYr = (yr > 2500) ? (yr % 100).toString() : yr.toString();
+    const shortYr = (yr > 2500) ? String(yr % 100).padStart(2, '0') : String(yr);
 
-    // 1. Transmission lines (ปี 2569 เป็นต้นไป)
+    // 1. Transmission lines (รองรับปีเก่า, ปีปัจจุบัน และปีถัดไป)
     const activeTrans = (d.transmissionLines || []).filter(item => {
-      if (yr === 2569) {
-        const hasMonthly = item.monthly2569 && Object.values(item.monthly2569).some(v => Number(v) > 0);
-        return hasMonthly || (item.totalProgress > 0) || (item.remarks && item.remarks.includes('2569'));
-      }
-      return item.remarks && item.remarks.includes(yr.toString());
-    }).map(item => ({
-      ...item,
-      displayProgress: item.totalProgress
-    }));
+      const monthlyForYr = item[`monthly${yr}`];
+      const hasMonthlyForYr = monthlyForYr && Object.values(monthlyForYr).some(v => Number(v) > 0);
+      const progForYr = item[`progress${yr}`];
+      const hasProgForYr = progForYr !== undefined && Number(progForYr) > 0;
+      const text = (item.remarks || '') + ' ' + (item.project || '');
 
-    // 2. Substations
+      if (hasMonthlyForYr || hasProgForYr || text.includes(yr.toString())) return true;
+      if (yr === 2569) {
+        const hasMonthly2569 = item.monthly2569 && Object.values(item.monthly2569).some(v => Number(v) > 0);
+        if (hasMonthly2569 || Number(item.totalProgress) > 0) return true;
+      }
+      // กรณีปีปฏิทินก้าวเข้าสู่ปีใหม่ (> 2569) ให้คงงานที่ยังไม่แล้วเสร็จต่อเนื่องมาแสดงในปีปัจจุบัน
+      if (yr === currentYear && currentYear > 2569 && Number(item.totalProgress) < 100) return true;
+      return false;
+    }).map(item => {
+      let displayProg = item.totalProgress;
+      if (yr < 2569 && item[`progress${yr}`] !== undefined && !item[`monthly${yr}`]) {
+        displayProg = Number(item[`progress${yr}`]) || 0;
+      }
+      return {
+        ...item,
+        displayProgress: displayProg
+      };
+    });
+
+    // 2. Substations (รองรับสัญญาข้ามปี, ปีเก่า, ปีปัจจุบัน และปีถัดไป)
     const activeSubs = (d.substationsDetail || []).filter(item => {
       const contract = item.contract || '';
       const yearsInContract = [];
       const dMatches = contract.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
       if (dMatches && dMatches.length >= 2) {
-        let startYr = parseInt(dMatches[0].split('/')[2], 10) + 2500;
-        let endYr = parseInt(dMatches[1].split('/')[2], 10) + 2500;
+        const startYr = parseInt(dMatches[0].split('/')[2], 10) + 2500;
+        const endYr = parseInt(dMatches[1].split('/')[2], 10) + 2500;
         for (let y = startYr; y <= endYr; y++) yearsInContract.push(y);
+      } else if (dMatches && dMatches.length === 1) {
+        yearsInContract.push(parseInt(dMatches[0].split('/')[2], 10) + 2500);
       }
       if (yearsInContract.includes(yr)) return true;
-      if (item.statusText && item.statusText.includes(yr.toString())) return true;
-      if (item.wbs && (item.wbs.includes(`-${shortYr}-`) || item.wbs.includes(yr.toString()))) return true;
-      if (yr === 2569) return true;
+
+      const text = (item.statusText || '') + ' ' + (item.project || '') + ' ' + contract;
+      if (text.includes(yr.toString())) return true;
+      if (item.wbs && (new RegExp(`(?:^|-)${shortYr}(?:-|$)`).test(item.wbs) || item.wbs.includes(yr.toString()))) return true;
+
+      if (yr === 2569) {
+        const explicitYears = (text.match(/25[5-9]\d/g) || []).map(Number);
+        const isFutureOnly = explicitYears.length > 0 && explicitYears.every(y => y > 2569);
+        if (!isFutureOnly) return true;
+      }
+      if (yr === currentYear && currentYear > 2569 && Number(item.progress) < 100) return true;
       return false;
     }).map(item => ({
       ...item,
       displayProgress: item.progress
     }));
 
-    // 3. Permits
+    // 3. Permits (รองรับปีเก่า, ปีปัจจุบัน และปีถัดไป)
     const activePermits = (d.permits || []).filter(item => {
-      const text = (item.statusText || '') + ' ' + (item.permitDetail || '');
+      const text = (item.statusText || '') + ' ' + (item.permitDetail || '') + ' ' + (item.projectName || '');
       if (text.includes(yr.toString())) return true;
-      if (yr === 2569) return true;
+      if (new RegExp(`[-/]${shortYr}\\b`).test(text)) return true;
+
+      if (yr === 2569) {
+        const explicitYears = (text.match(/25[5-9]\d/g) || []).map(Number);
+        const isOtherYearOnly = explicitYears.length > 0 && !explicitYears.includes(2569);
+        if (!isOtherYearOnly) return true;
+      }
+      if (yr === currentYear && currentYear > 2569 && item.statusGroup !== 'approved') return true;
       return false;
     });
 
     return {
       ...d,
-      activeTrans: activeTrans.length > 0 ? activeTrans : (d.transmissionLines || []).map(t => ({ ...t, displayProgress: t.totalProgress })),
-      activeSubs: activeSubs.length > 0 ? activeSubs : (d.substationsDetail || []).map(s => ({ ...s, displayProgress: s.progress })),
-      activePermits: activePermits.length > 0 ? activePermits : (d.permits || [])
+      activeTrans,
+      activeSubs,
+      activePermits
     };
   }
 
@@ -1274,7 +1331,7 @@
 
     // KPI 2: Substations
     const subCompleted = subList.filter(s => Number(s.displayProgress ?? s.progress) >= 100).length;
-    const subInProgress = transCount > 0 ? subList.length - subCompleted : 0;
+    const subInProgress = Math.max(0, subCount - subCompleted);
     document.getElementById('kpiSubCount').textContent = `${subCount} แห่ง`;
     document.getElementById('kpiSubStatus').textContent = `เสร็จแล้ว ${subCompleted} แห่ง / ระหว่างทำ ${subInProgress} แห่ง (${yrText})`;
 
@@ -1684,8 +1741,8 @@
         projectFilter.appendChild(opt);
       });
 
-      projectFilter.addEventListener('change', filterTransTable);
-      if (searchInput) searchInput.addEventListener('input', filterTransTable);
+      projectFilter.addEventListener('change', () => appState._filterTransTable && appState._filterTransTable());
+      if (searchInput) searchInput.addEventListener('input', () => appState._filterTransTable && appState._filterTransTable());
     }
 
     function filterTransTable() {
@@ -1706,7 +1763,8 @@
         const prog = Number(item.displayProgress ?? item.totalProgress) || 0;
         const isComplete = prog >= 100;
         const thaiMonthsOrder = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-        const monthlyCols = Object.entries(item.monthly2569 || {})
+        const monthlySource = (appState.selectedYear && item[`monthly${appState.selectedYear}`]) ? item[`monthly${appState.selectedYear}`] : (item.monthly2569 || {});
+        const monthlyCols = Object.entries(monthlySource)
           .filter(([m, v]) => Number(v) > 0)
           .sort(([a], [b]) => {
             const idxA = thaiMonthsOrder.indexOf(a);
@@ -1747,6 +1805,7 @@
       lucide.createIcons({ root: tableBody });
     }
 
+    appState._filterTransTable = filterTransTable;
     filterTransTable();
     renderTransmissionCharts();
   }
@@ -1895,15 +1954,16 @@
       const palette = ['#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899'];
 
       const datasets = transList.map((item, idx) => {
+        const monthlySource = (appState.selectedYear && item[`monthly${appState.selectedYear}`]) ? item[`monthly${appState.selectedYear}`] : (item.monthly2569 || {});
         let dataValues = [];
         if (isCumulative) {
           let running = Number(item.progress2568) || 0;
           dataValues = months.map(m => {
-            running += Number(item.monthly2569[m] || 0);
+            running += Number(monthlySource[m] || 0);
             return Math.min(100, running);
           });
         } else {
-          dataValues = months.map(m => Number(item.monthly2569[m] || 0));
+          dataValues = months.map(m => Number(monthlySource[m] || 0));
         }
 
         const cleanName = getShortTransName(item.name);
@@ -2127,9 +2187,10 @@
         lucide.createIcons({ root: detailTableBody });
       }
 
+      appState._filterSubTable = filterSubTable;
       if (searchInput && !searchInput.hasAttribute('data-bound')) {
         searchInput.setAttribute('data-bound', 'true');
-        searchInput.addEventListener('input', filterSubTable);
+        searchInput.addEventListener('input', () => appState._filterSubTable && appState._filterSubTable());
       }
       filterSubTable();
     }
@@ -3109,11 +3170,11 @@
           pills.forEach(p => p.classList.remove('active'));
           pill.classList.add('active');
           appState.permitFilter = pill.getAttribute('data-filter') || 'all';
-          filterPermits();
+          if (appState._filterPermits) appState._filterPermits();
         });
       });
 
-      if (searchInput) searchInput.addEventListener('input', filterPermits);
+      if (searchInput) searchInput.addEventListener('input', () => appState._filterPermits && appState._filterPermits());
     }
 
     function filterPermits() {
@@ -3157,6 +3218,7 @@
       lucide.createIcons({ root: tableBody });
     }
 
+    appState._filterPermits = filterPermits;
     filterPermits();
     renderPermitsCharts();
   }
@@ -4332,16 +4394,12 @@
   // Expose global controllers for PCTS integration immediately
   window.renderPsctmDashboard = function () {
     if (appState.data) {
-      let currentStoredYear = localStorage.getItem('pcts_year_filter') || window.currentYearFilter;
-      if (currentStoredYear && currentStoredYear !== 'all' && parseInt(currentStoredYear, 10) < 2569) {
-        currentStoredYear = '2569';
-        localStorage.setItem('pcts_year_filter', '2569');
+      const currentYearStr = String(new Date().getFullYear() + 543);
+      const syncedYear = window.currentYearFilter || appState.selectedYear || currentYearStr;
+      if (syncedYear && syncedYear !== appState.selectedYear) {
+        appState.selectedYear = syncedYear;
       }
-      if (currentStoredYear && currentStoredYear !== appState.selectedYear) {
-        appState.selectedYear = currentStoredYear;
-        const sel = document.getElementById('psctmYearSelect');
-        if (sel) sel.value = currentStoredYear;
-      }
+      populatePsctmYearOptions();
 
       if (!appState._rendered) {
         renderAll();
