@@ -145,6 +145,10 @@
             } else if (typeof window.switchProjectView === 'function') {
                 window.switchProjectView(window.currentProjectViewMode || 'cards');
             }
+        } else if (targetId === 'clsd-closing-view') {
+            if (window.CLSDClosing && typeof window.CLSDClosing.onActivate === 'function') {
+                window.CLSDClosing.onActivate();
+            }
         }
 
         window.syncMobileNavActiveTab();
@@ -170,7 +174,7 @@
             btnReport.classList.add('active');
         } else if (secId === 'admin-view') {
             if (btnAdmin) btnAdmin.classList.add('active');
-        } else if (secId === 'psctm-dashboard-view' || secId === 'dashboard-view' || secId === 'project-detail-view') {
+        } else if (secId === 'psctm-dashboard-view' || secId === 'dashboard-view' || secId === 'project-detail-view' || secId === 'clsd-closing-view') {
             btnStatus.classList.add('active');
         }
     };

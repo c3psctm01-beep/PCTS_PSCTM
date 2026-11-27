@@ -47,6 +47,8 @@
     <link rel="stylesheet" href="psctm-dashboard.css?v=5">
     <!-- PEA Aurora & Executive Bento Glass UI System -->
     <link rel="stylesheet" href="ui-modern.css?v=1">
+    <!-- SAP ZPSR018 Construction Closing Inspector CSS -->
+    <link rel="stylesheet" href="clsd-closing.css?v=1">
 </head>
 
 <body>
@@ -104,6 +106,11 @@
                         <li data-target="dashboard-view" onclick="toggleSidebar(false)">
                             <i class="fa-solid fa-chart-pie"></i>
                             <span>สถานะงานก่อสร้างงานโครงการ</span>
+                        </li>
+                        <li id="sidebarNavClsdClosing" data-target="clsd-closing-view" onclick="toggleSidebar(false)">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span>สถานะการปิดงานก่อสร้าง</span>
+                            <span class="sidebar-badge clsd-nav-badge" id="badgeClsdCount">0</span>
                         </li>
                         <li data-target="editor-view" class="role-editor" onclick="toggleSidebar(false)" style="display: none;">
                             <i class="fa-solid fa-camera"></i>
@@ -2664,6 +2671,812 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- =========================================================================
+                     CLSD SAP ZPSR018 Construction Closing Status View (สถานะการปิดงานก่อสร้าง)
+                     ========================================================================= -->
+                <section id="clsd-closing-view" class="view-section">
+                    <!-- Top Header Bar -->
+                    <div class="clsd-top-bar">
+                        <div class="clsd-brand" onclick="window.CLSDClosing.switchTab('clsd-tab-projects')" title="คลิกเพื่อกลับหน้ารวมโครงการปิดงาน">
+                            <div class="clsd-brand-icon">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                            </div>
+                            <div class="clsd-brand-text">
+                                <h2>สถานะการปิดงานก่อสร้าง SAP (ZPSR018 / ZBUDR018)</h2>
+                                <p>ระบบติดตาม ตรวจสอบงบประมาณ โอนงบหน้างาน และรายการพัสดุคงค้างเพื่อปิดงาน กส.3</p>
+                            </div>
+                        </div>
+                        <div class="clsd-top-actions">
+                            <div id="clsdCloudSyncBadge" class="clsd-sync-badge" onclick="window.CLSDClosing.openSupabaseModal()" title="คลิกดูสถานะการเชื่อมต่อ Supabase Cloud">
+                                <span class="clsd-sync-dot"></span>
+                                <span id="clsdCloudSyncText">Supabase Sync</span>
+                            </div>
+                            <button type="button" class="clsd-btn clsd-btn-gold" onclick="window.CLSDClosing.openUploadModal()">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดไฟล์ SAP PDF
+                            </button>
+                            <button type="button" class="clsd-btn clsd-btn-outline-light" onclick="window.CLSDClosing.openReportPreviewModal()" title="พิมพ์รายงานผลการตรวจสอบ กส.3 พร้อมแสดงการโอนงบ">
+                                <i class="fa-solid fa-print"></i> พิมพ์รายงาน (กส.3)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Project Detail Hero & Workspace Header (Hidden on Hub Page) -->
+                    <div id="clsdProjectDetailHero" style="display: none;">
+                        <div class="project-hero-card">
+                            <div class="hero-top">
+                                <div style="flex: 1; min-width: 280px;">
+                                    <div class="badge-row">
+                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-purple" onclick="window.CLSDClosing.switchTab('clsd-tab-projects')">
+                                            <i class="fa-solid fa-arrow-left"></i> หน้ารวมโครงการ
+                                        </button>
+                                        <span class="clsd-badge badge-purple" id="clsdTemplateBadge"><i class="fa-solid fa-file-invoice"></i> TEMPLATE ZPSR018</span>
+                                        <span class="clsd-badge badge-wbs"><i class="fa-solid fa-hashtag"></i> WBS: <strong id="clsdHeroWbs">-</strong></span>
+                                        <span class="clsd-badge badge-status-ready clickable-status-pill" id="clsdClosingStatusBadge" onclick="window.CLSDClosing.openChangeStatusModal()">
+                                            <i class="fa-solid fa-circle-check"></i> รอตรวจสอบ
+                                        </span>
+                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-purple" onclick="window.CLSDClosing.openChangeStatusModal()">
+                                            <i class="fa-solid fa-tags"></i> กำหนดสถานะ
+                                        </button>
+                                        <div class="project-quick-switcher">
+                                            <label for="clsdProjectSelect" style="font-size: 0.76rem; font-weight: 600; color: var(--clsd-text-muted);"><i class="fa-solid fa-arrows-rotate text-purple"></i> สลับโครงการ:</label>
+                                            <select id="clsdProjectSelect">
+                                                <option value="">กำลังโหลดโครงการ...</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-gold" style="margin-left: auto;" onclick="window.CLSDClosing.openUpdateZpsr018Modal()">
+                                            <i class="fa-solid fa-arrows-rotate"></i> อัพเดทไฟล์ ZPSR018
+                                        </button>
+                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-danger" onclick="window.CLSDClosing.promptDeleteProject()">
+                                            <i class="fa-solid fa-trash-can"></i> ลบโครงการนี้
+                                        </button>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                                        <h2 class="project-main-title" id="clsdHeroProjectName">กำลังโหลดข้อมูลโครงการ...</h2>
+                                        <button type="button" class="clsd-btn clsd-btn-xs clsd-btn-outline-purple" onclick="window.CLSDClosing.openEditProjectNameModal()">
+                                            <i class="fa-solid fa-pen-to-square"></i> แก้ไขชื่อ
+                                        </button>
+                                    </div>
+                                    <div class="project-meta-inline">
+                                        <span><i class="fa-solid fa-user-gear"></i> ผู้ควบคุมงาน: <strong id="clsdHeroOfficer">-</strong></span>
+                                        <span><i class="fa-solid fa-id-card"></i> รหัส: <strong id="clsdHeroOfficerId">-</strong></span>
+                                        <span><i class="fa-solid fa-calendar-day"></i> วันที่พิมพ์รายงาน: <strong id="clsdHeroPrintDate">-</strong></span>
+                                    </div>
+                                </div>
+
+                                <!-- Hero Control Panels -->
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                    <div class="target-closing-panel">
+                                        <div class="target-panel-header">
+                                            <i class="fa-solid fa-calendar-check text-gold"></i>
+                                            <span>แผนเดือนที่ต้องปิดงาน</span>
+                                        </div>
+                                        <div class="target-inputs">
+                                            <select id="clsdTargetMonthSelect" class="clsd-select-sm">
+                                                <option value="มกราคม">มกราคม</option>
+                                                <option value="กุมภาพันธ์">กุมภาพันธ์</option>
+                                                <option value="มีนาคม">มีนาคม</option>
+                                                <option value="เมษายน">เมษายน</option>
+                                                <option value="พฤษภาคม">พฤษภาคม</option>
+                                                <option value="มิถุนายน">มิถุนายน</option>
+                                                <option value="กรกฎาคม">กรกฎาคม</option>
+                                                <option value="สิงหาคม">สิงหาคม</option>
+                                                <option value="กันยายน" selected>กันยายน</option>
+                                                <option value="ตุลาคม">ตุลาคม</option>
+                                                <option value="พฤศจิกายน">พฤศจิกายน</option>
+                                                <option value="ธันวาคม">ธันวาคม</option>
+                                            </select>
+                                            <select id="clsdTargetYearSelect" class="clsd-select-sm">
+                                                <option value="2567">2567</option>
+                                                <option value="2568">2568</option>
+                                                <option value="2569" selected>2569</option>
+                                                <option value="2570">2570</option>
+                                                <option value="2571">2571</option>
+                                            </select>
+                                            <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-purple" onclick="window.CLSDClosing.saveTargetMonth()">
+                                                <i class="fa-solid fa-floppy-disk"></i> บันทึก
+                                            </button>
+                                        </div>
+                                        <div class="target-status-badge">
+                                            <i class="fa-solid fa-clock"></i> เป้าหมาย: <strong id="clsdTargetMonthDisplay">กันยายน 2569</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="target-closing-panel">
+                                        <div class="target-panel-header">
+                                            <i class="fa-solid fa-tags text-purple"></i>
+                                            <span>สถานะการดำเนินงานปิดงาน</span>
+                                        </div>
+                                        <div class="target-inputs">
+                                            <select id="clsdHeroStatusSelect" class="clsd-select-sm" style="max-width: 225px;">
+                                                <option value="AUTO">-- อัตโนมัติ (ตามรายงาน SAP) --</option>
+                                                <option value="STATUS_1">1. อยู่ระหว่างดำเนินการโอนงบประมาณ</option>
+                                                <option value="STATUS_2">2. อยู่ระหว่างคืนพัสดุ</option>
+                                                <option value="STATUS_3">3. อยู่ระหว่างดำเนินการโอนงบประมาณ และคืนพัสดุ</option>
+                                                <option value="STATUS_4">4. ส่งเอกสารปิดงานแล้ว อยู่ระหว่างส่วนเกี่ยวข้องตรวจสอบ</option>
+                                                <option value="STATUS_5">5. ปิดงานแล้ว CLSD F4</option>
+                                            </select>
+                                            <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-purple" onclick="window.CLSDClosing.saveHeroStatus()">
+                                                <i class="fa-solid fa-floppy-disk"></i> บันทึก
+                                            </button>
+                                        </div>
+                                        <div class="target-status-badge" style="cursor: pointer;" onclick="window.CLSDClosing.openChangeStatusModal()">
+                                            <i class="fa-solid fa-tag text-purple"></i> <span id="clsdHeroStatusDisplayText">รอตรวจสอบ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4 Key Metrics Cards -->
+                        <div class="clsd-kpi-grid">
+                            <div class="clsd-kpi-card">
+                                <div class="clsd-kpi-icon icon-purple"><i class="fa-solid fa-list-check"></i></div>
+                                <div>
+                                    <span class="clsd-kpi-label">ความพร้อมปิดงาน (Readiness)</span>
+                                    <div class="clsd-kpi-value-row">
+                                        <span class="clsd-kpi-number" id="clsdKpiReadinessPct">0%</span>
+                                        <span class="kpi-status-tag tag-neutral" id="clsdKpiReadinessTag">-</span>
+                                    </div>
+                                    <p class="clsd-kpi-desc">ตรวจสอบเงื่อนไขงบประมาณและพัสดุ</p>
+                                </div>
+                            </div>
+                            <div class="clsd-kpi-card">
+                                <div class="clsd-kpi-icon icon-danger"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                                <div>
+                                    <span class="clsd-kpi-label">งบประมาณค่าใช้จ่ายหน้างาน (5 หมวด)</span>
+                                    <div class="clsd-kpi-value-row">
+                                        <span class="clsd-kpi-number text-danger" id="clsdKpiBudgetVal">0.00 ฿</span>
+                                        <span class="kpi-status-tag tag-neutral" id="clsdKpiBudgetTag">-</span>
+                                    </div>
+                                    <p class="clsd-kpi-desc" id="clsdKpiBudgetDesc">-</p>
+                                </div>
+                            </div>
+                            <div class="clsd-kpi-card">
+                                <div class="clsd-kpi-icon icon-warning"><i class="fa-solid fa-boxes-packing"></i></div>
+                                <div>
+                                    <span class="clsd-kpi-label">อุปกรณ์ที่ต้องส่งคืนคลัง</span>
+                                    <div class="clsd-kpi-value-row">
+                                        <span class="clsd-kpi-number" id="clsdKpiReturnCount">0</span>
+                                        <span style="font-size: 0.8rem;">รายการ</span>
+                                        <span class="kpi-status-tag tag-neutral" id="clsdKpiReturnTag">-</span>
+                                    </div>
+                                    <p class="clsd-kpi-desc">พัสดุเบิกเกิน / ไม่ได้ติดตั้ง / พัสดุรื้อถอน</p>
+                                </div>
+                            </div>
+                            <div class="clsd-kpi-card">
+                                <div class="clsd-kpi-icon icon-primary"><i class="fa-solid fa-dolly"></i></div>
+                                <div>
+                                    <span class="clsd-kpi-label">อุปกรณ์ที่ต้องเบิกออก / ขาดเบิก</span>
+                                    <div class="clsd-kpi-value-row">
+                                        <span class="clsd-kpi-number text-warning" id="clsdKpiWithdrawCount">0</span>
+                                        <span style="font-size: 0.8rem;">รายการ</span>
+                                        <span class="kpi-status-tag tag-warning" id="clsdKpiWithdrawTag">-</span>
+                                    </div>
+                                    <p class="clsd-kpi-desc">ประมาณการไว้แต่ยังไม่ได้เบิกจ่ายจริง</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Segmented Workspace Tabs -->
+                        <nav class="clsd-tabs-nav" aria-label="แถบเมนูการตรวจสอบการปิดงาน">
+                            <button type="button" class="clsd-tab-btn active" data-clsd-tab="clsd-tab-overview">
+                                <i class="fa-solid fa-chart-pie"></i> ภาพรวมสถานะปิดงาน
+                            </button>
+                            <button type="button" class="clsd-tab-btn" data-clsd-tab="clsd-tab-budget">
+                                <i class="fa-solid fa-money-bill-transfer"></i> วิเคราะห์ค่าใช้จ่ายหน้างาน &amp; โอนงบ
+                                <span class="check-badge bg-success" id="clsdBudgetTabBadge">ปกติ</span>
+                            </button>
+                            <button type="button" class="clsd-tab-btn" data-clsd-tab="clsd-tab-materials">
+                                <i class="fa-solid fa-boxes-stacked"></i> วิเคราะห์อุปกรณ์ (ส่งคืน / เบิกออก)
+                                <span class="check-badge bg-warning" id="clsdMatTabBadge">0 ขาดเบิก</span>
+                            </button>
+                            <button type="button" class="clsd-tab-btn" data-clsd-tab="clsd-tab-all-materials">
+                                <i class="fa-solid fa-table-list"></i> ทะเบียนพัสดุทั้งหมด
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- HUB TAB: Projects Hub & Cards (Default Landing) -->
+                    <div id="clsd-tab-projects" class="clsd-tab-content active">
+                        <div class="projects-hub-banner">
+                            <div class="hub-header-row">
+                                <div>
+                                    <span class="clsd-badge badge-purple"><i class="fa-solid fa-layer-group"></i> ทะเบียนงานปิดงานก่อสร้าง</span>
+                                    <h3 class="hub-title">ระบบติดตามและตรวจสอบสถานะการปิดงานก่อสร้าง (SAP ZPSR018)</h3>
+                                    <p class="hub-subtitle">เลือกโครงการเพื่อตรวจสอบงบประมาณหน้างาน 5 หมวด แผนการโอนงบรายโครงข่าย และพัสดุคงค้าง หรืออัปโหลดไฟล์ PDF จาก SAP</p>
+                                </div>
+                                <button type="button" class="clsd-btn clsd-btn-gold" onclick="window.CLSDClosing.openUploadModal()">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> เพิ่มโครงการใหม่ (อัปโหลด PDF)
+                                </button>
+                            </div>
+                            <div class="hub-stats-row">
+                                <div class="hub-stat-card" onclick="window.CLSDClosing.setStatusFilter('ALL')" style="cursor: pointer;">
+                                    <div class="hub-stat-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></div>
+                                    <div class="hub-stat-info">
+                                        <span class="stat-num" id="clsdHubTotalCount">0</span>
+                                        <span class="stat-lbl">โครงการทั้งหมด</span>
+                                    </div>
+                                </div>
+                                <div class="hub-stat-card" onclick="window.CLSDClosing.setStatusFilter('READY')" style="cursor: pointer;">
+                                    <div class="hub-stat-icon icon-success"><i class="fa-solid fa-circle-check"></i></div>
+                                    <div class="hub-stat-info">
+                                        <span class="stat-num text-success" id="clsdHubReadyCount">0</span>
+                                        <span class="stat-lbl">พร้อมปิดงาน</span>
+                                    </div>
+                                </div>
+                                <div class="hub-stat-card" onclick="window.CLSDClosing.setStatusFilter('DEFICIT')" style="cursor: pointer;">
+                                    <div class="hub-stat-icon icon-danger"><i class="fa-solid fa-ban"></i></div>
+                                    <div class="hub-stat-info">
+                                        <span class="stat-num text-danger" id="clsdHubDeficitCount">0</span>
+                                        <span class="stat-lbl">ปิดงานไม่ได้ (งบติดลบ)</span>
+                                    </div>
+                                </div>
+                                <div class="hub-stat-card" onclick="window.CLSDClosing.setStatusFilter('WITHDRAW')" style="cursor: pointer;">
+                                    <div class="hub-stat-icon icon-warning"><i class="fa-solid fa-boxes-stacked"></i></div>
+                                    <div class="hub-stat-info">
+                                        <span class="stat-num text-warning" id="clsdHubMissingCount">0</span>
+                                        <span class="stat-lbl">มีพัสดุขาดเบิก</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search & View Mode Toolbar -->
+                        <div class="hub-toolbar">
+                            <div class="hub-search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="clsdHubSearchInput" placeholder="ค้นหาตามรหัส WBS, ชื่อโครงการ, หรือผู้ควบคุมงาน...">
+                            </div>
+                            <div class="hub-filter-group">
+                                <select id="clsdHubStatusFilter" class="clsd-select-sm">
+                                    <option value="ALL">สถานะทั้งหมด</option>
+                                    <optgroup label="สถานะการดำเนินงานปิดงาน 5 ขั้นตอน">
+                                        <option value="STATUS_1">1. อยู่ระหว่างดำเนินการโอนงบประมาณ</option>
+                                        <option value="STATUS_2">2. อยู่ระหว่างคืนพัสดุ</option>
+                                        <option value="STATUS_3">3. อยู่ระหว่างดำเนินการโอนงบประมาณ และคืนพัสดุ</option>
+                                        <option value="STATUS_4">4. ส่งเอกสารปิดงานแล้ว อยู่ระหว่างส่วนเกี่ยวข้องตรวจสอบ</option>
+                                        <option value="STATUS_5">5. ปิดงานแล้ว CLSD F4</option>
+                                    </optgroup>
+                                    <optgroup label="เงื่อนไขมาตรฐาน SAP">
+                                        <option value="READY">พร้อมปิดงาน</option>
+                                        <option value="DEFICIT">ปิดงานไม่ได้ (งบติดลบ)</option>
+                                        <option value="WITHDRAW">มีพัสดุขาดเบิก</option>
+                                    </optgroup>
+                                </select>
+                                <div style="display: inline-flex; gap: 4px;">
+                                    <button type="button" id="clsdBtnViewCards" class="clsd-btn clsd-btn-xs clsd-btn-purple active" onclick="window.CLSDClosing.setProjectsViewMode('cards')">
+                                        <i class="fa-solid fa-grip"></i> การ์ด
+                                    </button>
+                                    <button type="button" id="clsdBtnViewTable" class="clsd-btn clsd-btn-xs clsd-btn-outline-purple" onclick="window.CLSDClosing.setProjectsViewMode('table')">
+                                        <i class="fa-solid fa-table-list"></i> ตาราง
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Status Filter Pills Bar -->
+                        <div class="status-quick-filter-bar">
+                            <div class="status-filter-title">
+                                <i class="fa-solid fa-filter text-purple"></i> <strong>กดกรองตามสถานะการปิดงานก่อสร้าง:</strong>
+                            </div>
+                            <div class="status-pills-list">
+                                <button type="button" class="status-pill-btn active" data-status="ALL" onclick="window.CLSDClosing.setStatusFilter('ALL')">
+                                    <span>ทั้งหมด</span> <span class="pill-count" id="clsdCountStatusAll">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-1" data-status="STATUS_1" onclick="window.CLSDClosing.setStatusFilter('STATUS_1')">
+                                    <i class="fa-solid fa-money-bill-transfer"></i> <span>1. โอนงบประมาณ</span> <span class="pill-count" id="clsdCountStatus1">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-2" data-status="STATUS_2" onclick="window.CLSDClosing.setStatusFilter('STATUS_2')">
+                                    <i class="fa-solid fa-boxes-packing"></i> <span>2. คืนพัสดุ</span> <span class="pill-count" id="clsdCountStatus2">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-3" data-status="STATUS_3" onclick="window.CLSDClosing.setStatusFilter('STATUS_3')">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> <span>3. โอนงบและคืนพัสดุ</span> <span class="pill-count" id="clsdCountStatus3">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-4" data-status="STATUS_4" onclick="window.CLSDClosing.setStatusFilter('STATUS_4')">
+                                    <i class="fa-solid fa-file-circle-check"></i> <span>4. ส่งเอกสาร/รอตรวจสอบ</span> <span class="pill-count" id="clsdCountStatus4">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-5" data-status="STATUS_5" onclick="window.CLSDClosing.setStatusFilter('STATUS_5')">
+                                    <i class="fa-solid fa-circle-check"></i> <span>5. ปิดงานแล้ว CLSD F4</span> <span class="pill-count" id="clsdCountStatus5">0</span>
+                                </button>
+                                <button type="button" class="status-pill-btn pill-status-ready" data-status="READY" onclick="window.CLSDClosing.setStatusFilter('READY')">
+                                    <i class="fa-solid fa-circle-check text-success"></i> <span>พร้อมปิดงาน</span> <span class="pill-count" id="clsdCountStatusReady">0</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Cards View -->
+                        <div id="clsdProjectsCardsContainer" class="clsd-cards-grid"></div>
+
+                        <!-- Table Directory View -->
+                        <div id="clsdProjectsTableContainer" class="clsd-panel" style="display: none;">
+                            <div class="clsd-panel-body p-0">
+                                <div class="table-responsive">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th>หมายเลข WBS</th>
+                                                <th>ชื่อโครงการก่อสร้าง</th>
+                                                <th>ผู้ควบคุมงาน</th>
+                                                <th>แผนเดือนปิดงาน</th>
+                                                <th class="text-right">ยอดเงินติดลบ</th>
+                                                <th class="text-center">พัสดุขาดเบิก</th>
+                                                <th class="text-center">สถานะปิดงาน</th>
+                                                <th class="text-center">การจัดการ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdProjectsDirectoryBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAIL TAB 1: Closing Overview -->
+                    <div id="clsd-tab-overview" class="clsd-tab-content">
+                        <div class="clsd-grid-2">
+                            <div class="clsd-panel">
+                                <div class="clsd-panel-header">
+                                    <h3><i class="fa-solid fa-clipboard-check text-purple"></i> ตรวจสอบเงื่อนไขการปิดงานในระบบ SAP</h3>
+                                    <span class="clsd-badge badge-status-ready" id="clsdOverallClosingBadge">-</span>
+                                </div>
+                                <div class="clsd-panel-body">
+                                    <div class="checklist-list">
+                                        <div class="check-item check-pass">
+                                            <div><i class="fa-solid fa-circle-check text-success"></i></div>
+                                            <div class="check-info">
+                                                <strong>1. ความถูกต้องของเอกสาร SAP (ZPSR018 / ZBUDR018)</strong>
+                                                <p>รายงานตรงตามแบบมาตรฐานการปิดงานก่อสร้างของการไฟฟ้าส่วนภูมิภาค</p>
+                                            </div>
+                                            <span class="check-badge bg-success">ผ่าน</span>
+                                        </div>
+                                        <div class="check-item" id="clsdCheckItemBudget">
+                                            <div><i class="fa-solid fa-circle-info text-danger"></i></div>
+                                            <div class="check-info">
+                                                <strong>2. ตรวจสอบยอดงบประมาณค่าใช้จ่ายหน้างานติดลบ (Budget Deficit)</strong>
+                                                <p id="clsdCheckBudgetDesc">-</p>
+                                            </div>
+                                            <span class="check-badge bg-danger" id="clsdCheckBudgetBadge">-</span>
+                                        </div>
+                                        <div class="check-item" id="clsdCheckItemReturn">
+                                            <div><i class="fa-solid fa-boxes-packing text-warning"></i></div>
+                                            <div class="check-info">
+                                                <strong>3. ตรวจสอบพัสดุค้างส่งคืนคลัง</strong>
+                                                <p id="clsdCheckReturnDesc">-</p>
+                                            </div>
+                                            <span class="check-badge bg-success" id="clsdCheckReturnBadge">-</span>
+                                        </div>
+                                        <div class="check-item" id="clsdCheckItemWithdraw">
+                                            <div><i class="fa-solid fa-triangle-exclamation text-warning"></i></div>
+                                            <div class="check-info">
+                                                <strong>4. ตรวจสอบพัสดุตามประมาณการที่ยังไม่ได้เบิก (Pending Withdrawal)</strong>
+                                                <p id="clsdCheckWithdrawDesc">-</p>
+                                            </div>
+                                            <span class="check-badge bg-warning" id="clsdCheckWithdrawBadge">-</span>
+                                        </div>
+                                        <div class="check-item check-pass">
+                                            <div><i class="fa-solid fa-calendar-check text-success"></i></div>
+                                            <div class="check-info">
+                                                <strong>5. แผนกำหนดเดือนปิดงานก่อสร้าง</strong>
+                                                <p>เป้าหมายปิดงานภายในเดือน: <strong id="clsdCheckTargetMonthText">กันยายน 2569</strong></p>
+                                            </div>
+                                            <span class="check-badge bg-success">กำหนดแล้ว</span>
+                                        </div>
+                                    </div>
+                                    <div class="closing-action-box">
+                                        <div class="action-box-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                                        <div>
+                                            <h4 style="margin: 0 0 0.3rem 0; font-size: 0.92rem;">ข้อแนะนำในการปิดงาน:</h4>
+                                            <p id="clsdActionSummary" style="font-size: 0.82rem; margin: 0 0 0.65rem 0; line-height: 1.5;">-</p>
+                                            <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-gold" onclick="window.CLSDClosing.switchTab('clsd-tab-budget')">
+                                                <i class="fa-solid fa-arrow-right"></i> ดูแผนการโอนงบประมาณทันที
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="clsd-panel">
+                                <div class="clsd-panel-header">
+                                    <h3><i class="fa-solid fa-chart-column text-purple"></i> สรุปผลต่างงบประมาณรายหมวดค่าใช้จ่าย</h3>
+                                    <span class="clsd-badge badge-wbs">หน่วย: บาท</span>
+                                </div>
+                                <div class="clsd-panel-body">
+                                    <div style="height: 320px; position: relative;">
+                                        <canvas id="clsdBudgetDiffChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAIL TAB 2: Site Budget, Network Analysis & Transfer Engine -->
+                    <div id="clsd-tab-budget" class="clsd-tab-content">
+                        <div class="budget-disbursement-banner">
+                            <div class="budget-disbursement-header">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <i class="fa-solid fa-file-invoice-dollar text-gold" style="font-size: 1.4rem;"></i>
+                                    <div>
+                                        <h3 style="color: #fbbf24 !important; margin: 0; font-size: 1.08rem;">ข้อมูลการจัดสรรและการเบิกจ่ายงบประมาณโครงการ (SAP ZPSR018 Budget Summary)</h3>
+                                        <p style="margin: 0; font-size: 0.78rem; color: #cbd5e1;">รายงานสรุปงบประมาณที่ได้รับจัดสรรและการเบิกจ่ายจริงจากระบบ SAP</p>
+                                    </div>
+                                </div>
+                                <span class="clsd-badge badge-purple"><i class="fa-solid fa-calculator"></i> ข้อมูลทางการ SAP</span>
+                            </div>
+                            <div class="budget-disbursement-grid">
+                                <div class="budget-metric-card">
+                                    <span class="budget-metric-label">งบประมาณที่ได้รับจัดสรร</span>
+                                    <div class="budget-metric-val text-gold" id="clsdProjAllocatedVal">0.00 ฿</div>
+                                    <div class="budget-metric-hint">วงเงินงบประมาณที่อนุมัติ</div>
+                                </div>
+                                <div class="budget-metric-card">
+                                    <span class="budget-metric-label">ค่าใช้จ่ายจริง (ควบคุมงบฯ)</span>
+                                    <div class="budget-metric-val" id="clsdProjControlledVal">0.00 ฿</div>
+                                    <div class="budget-metric-hint">ยอดเบิกจ่ายจริงสะสม</div>
+                                </div>
+                                <div class="budget-metric-card">
+                                    <span class="budget-metric-label">งบประมาณคงเหลือ</span>
+                                    <div class="budget-metric-val text-success" id="clsdProjRemainingVal">0.00 ฿</div>
+                                    <div class="budget-metric-hint">งบคงเหลือสุทธิ</div>
+                                </div>
+                                <div class="budget-metric-card">
+                                    <span class="budget-metric-label">อัตราการเบิกจ่ายจริง</span>
+                                    <div class="budget-metric-val" style="color: #38bdf8;" id="clsdProjDisbRateVal">0.00%</div>
+                                    <div class="budget-metric-hint">สัดส่วนเบิกจ่ายต่องบจัดสรร</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 1. Site Expenses (5 Categories) -->
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header header-gradient-danger" id="clsdSiteBudgetHeader">
+                                <div>
+                                    <h3><i class="fa-solid fa-helmet-safety"></i> 1. ตารางวิเคราะห์ค่าใช้จ่ายหน้างาน (5 หมวดหลักที่ควบคุมงบประมาณ)</h3>
+                                    <p class="subtitle">วิเคราะห์เฉพาะ: ค่าแรงงาน/ค่าจ้างเหมา, ค่าควบคุมงาน, ค่าขนส่ง/ยานพาหนะ, ค่าเบ็ดเตล็ด และค่าดำเนินการ</p>
+                                </div>
+                                <strong id="clsdSiteTotalDeficitText">-</strong>
+                            </div>
+                            <div class="clsd-panel-body p-0">
+                                <div class="table-responsive">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width: 50px;">ลำดับ</th>
+                                                <th>หมวดค่าใช้จ่ายหน้างาน</th>
+                                                <th class="text-right">ตามประมาณการ (บาท)</th>
+                                                <th class="text-right">ค่าใช้จ่ายจริง (บาท)</th>
+                                                <th class="text-right">ผลต่างงบประมาณ (บาท)</th>
+                                                <th class="text-center">สัดส่วน</th>
+                                                <th class="text-center">สถานะการปิดงาน</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdSiteBudgetBody"></tbody>
+                                        <tfoot id="clsdSiteBudgetFoot"></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Material Budget -->
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header header-gradient-gold">
+                                <div>
+                                    <h3><i class="fa-solid fa-boxes-stacked"></i> 2. หมวดพัสดุโครงการ (ค่าพัสดุ และพัสดุเข้างาน)</h3>
+                                    <p class="subtitle">แสดงมูลค่าพัสดุที่เบิกใช้จริงและงบประมาณคงเหลือในส่วนของพัสดุ</p>
+                                </div>
+                                <span class="check-badge bg-success" id="clsdMatSurplusBadge">งบพัสดุคงเหลือ: 0.00 ฿</span>
+                            </div>
+                            <div class="clsd-panel-body p-0">
+                                <div class="table-responsive">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width: 50px;">ลำดับ</th>
+                                                <th>หมวดพัสดุ</th>
+                                                <th class="text-right">ตามประมาณการ (บาท)</th>
+                                                <th class="text-right">ค่าใช้จ่ายจริง (บาท)</th>
+                                                <th class="text-right">ผลต่างงบประมาณ (บาท)</th>
+                                                <th class="text-center">สัดส่วน</th>
+                                                <th class="text-center">สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdMatBudgetBody"></tbody>
+                                        <tfoot id="clsdMatBudgetFoot"></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. SAP Network Analysis -->
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header header-gradient-purple">
+                                <div>
+                                    <h3><i class="fa-solid fa-network-wired"></i> 3. ตารางวิเคราะห์การเงินจำแนกตามเลขที่โครงข่าย (SAP Network Analysis)</h3>
+                                    <p class="subtitle">ชี้เป้าโครงข่ายที่เป็นสาเหตุของยอดเงินติดลบ พร้อมเจาะลึกค่าใช้จ่ายครบ 10 หมวด</p>
+                                </div>
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                    <span class="check-badge bg-purple">ทั้งหมด: <strong id="clsdNetCountTotal">0</strong></span>
+                                    <span class="check-badge bg-success">พร้อมปิด: <strong id="clsdNetCountPass">0</strong></span>
+                                    <span class="check-badge bg-danger">ติดลบ: <strong id="clsdNetCountDeficit">0</strong></span>
+                                </div>
+                            </div>
+                            <div class="clsd-panel-body">
+                                <div class="network-alert-box" id="clsdNetworkAlertBox">
+                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.4rem;"></i>
+                                    <div id="clsdNetworkAlertDesc" style="font-size: 0.85rem; line-height: 1.55;">กำลังวิเคราะห์ข้อมูลงบประมาณรายโครงข่าย...</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem; margin-bottom: 0.85rem;">
+                                    <div class="net-filter-tabs">
+                                        <button type="button" class="net-filter-btn active" data-filter="all">ทั้งหมด (<span id="clsdFilterNetAllCount">0</span>)</button>
+                                        <button type="button" class="net-filter-btn filter-danger" data-filter="deficit">เฉพาะที่ติดลบ (<span id="clsdFilterNetDeficitCount">0</span>)</button>
+                                        <button type="button" class="net-filter-btn filter-success" data-filter="ready">งบไม่เกิน (<span id="clsdFilterNetReadyCount">0</span>)</button>
+                                    </div>
+                                    <span style="font-size: 0.78rem; color: var(--clsd-text-muted);"><i class="fa-solid fa-magnifying-glass-chart text-gold"></i> กดปุ่ม <strong>"ดู 10 หมวด"</strong> เพื่อเจาะลึกรายโครงข่าย</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">ที่</th>
+                                                <th>เลขที่โครงข่าย</th>
+                                                <th>รายการโครงข่าย / แผนก</th>
+                                                <th class="text-right">ประมาณการรวม (฿)</th>
+                                                <th class="text-right">ใช้จริงรวม (฿)</th>
+                                                <th class="text-right">ผลต่างรวม (฿)</th>
+                                                <th class="text-right">หน้างานจริง 5 หมวด</th>
+                                                <th class="text-right">ผลต่างหน้างาน</th>
+                                                <th>หมวดที่ติดลบ</th>
+                                                <th class="text-center">สถานะ</th>
+                                                <th class="text-center">เจาะลึก</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdNetworksBody"></tbody>
+                                        <tfoot id="clsdNetworksFoot"></tfoot>
+                                    </table>
+                                </div>
+                                <div style="margin-top: 1.15rem;">
+                                    <h4 style="font-size: 0.92rem; margin-bottom: 0.65rem;"><i class="fa-solid fa-arrows-split-up-and-left text-gold"></i> แนวทางการโอนงบประมาณระดับโครงข่าย (Network Budget Reallocation Plan):</h4>
+                                    <div class="net-guide-grid" id="clsdNetTransferGuideGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Smart Transfer Plan & Simulation -->
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header header-gradient-gold">
+                                <div>
+                                    <h3><i class="fa-solid fa-wand-magic-sparkles"></i> 4. แผนการโอนงบประมาณเพื่อแก้ปัญหายอดเงินติดลบหน้างาน</h3>
+                                    <p class="subtitle">จำลองการตัดโอนงบประมาณตามระเบียบ กฟภ. พร้อมออกบันทึกขอโอนงบและแบบฟอร์ม Word (.docx)</p>
+                                </div>
+                                <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+                                    <button type="button" id="clsdBtnExportApprovalDocx" class="clsd-btn clsd-btn-sm clsd-btn-gold" onclick="window.CLSDClosing.exportApprovalDocx()">
+                                        <i class="fa-solid fa-file-word"></i> บันทึกลงแบบฟอร์มขออนุมัติ (.docx)
+                                    </button>
+                                    <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-purple" onclick="window.CLSDClosing.openReportPreviewModal()">
+                                        <i class="fa-solid fa-print"></i> พิมพ์รายงาน (กส.3)
+                                    </button>
+                                    <button type="button" id="clsdBtnCopyTransferMemo" class="clsd-btn clsd-btn-sm clsd-btn-dark" onclick="window.CLSDClosing.openMemoModal()">
+                                        <i class="fa-solid fa-file-pen"></i> บันทึกข้อความขอโอนงบ SAP
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="clsd-panel-body">
+                                <div class="transfer-policy-box">
+                                    <strong><i class="fa-solid fa-shield-halved text-purple"></i> เงื่อนไขและระเบียบการโอนงบประมาณในระบบ SAP (กฟภ.):</strong>
+                                    <div class="policy-grid">
+                                        <div class="policy-item item-prohibited">
+                                            <span class="check-badge bg-danger"><i class="fa-solid fa-ban"></i> หมวดที่ห้ามโอนเด็ดขาด</span>
+                                            <p style="margin: 0.35rem 0 0;"><strong>ค่าพัสดุ, พัสดุเข้างาน, บันทึกเวลา/ปันส่วน, ดอกเบี้ย/ทางอ้อม</strong> ไม่สามารถนำมาโอนชดเชยค่าใช้จ่ายหน้างานได้</p>
+                                        </div>
+                                        <div class="policy-item item-allowed">
+                                            <span class="check-badge bg-success"><i class="fa-solid fa-circle-check"></i> หมวดที่โอนได้ตามปกติ</span>
+                                            <p style="margin: 0.35rem 0 0;">โอนได้เฉพาะกลุ่ม <strong>ค่าใช้จ่ายหน้างาน</strong> (ค่าควบคุมงาน, ค่าแรงงาน/จ้างเหมา, ค่าขนส่ง/ยานพาหนะ, ค่าเบ็ดเตล็ด)</p>
+                                        </div>
+                                        <div class="policy-item item-conditional">
+                                            <span class="check-badge bg-warning"><i class="fa-solid fa-triangle-exclamation"></i> เงื่อนไขพิเศษ: ค่าดำเนินการ</span>
+                                            <p style="margin: 0.35rem 0 0;"><strong>หมวดค่าดำเนินการ</strong> ใช้เป็นหมวดสำรองลำดับสุดท้ายเมื่อหมวดอื่นไม่เพียงพอเท่านั้น</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="transfer-cards-grid" id="clsdTransferCardsGrid"></div>
+
+                                <div id="clsdSimulationSection" style="margin-top: 1.25rem;">
+                                    <h4 style="font-size: 0.92rem; margin-bottom: 0.55rem;"><i class="fa-solid fa-calculator text-purple"></i> ตารางจำลองการโอนค่าใช้จ่าย (Transfer Simulation Detail)</h4>
+                                    <div class="table-responsive">
+                                        <table class="clsd-table">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">ลำดับ</th>
+                                                    <th>ประเภทการโอน</th>
+                                                    <th>โอนจากโครงข่าย</th>
+                                                    <th>หมวดต้นทาง</th>
+                                                    <th>โอนไปโครงข่าย</th>
+                                                    <th>หมวดปลายทาง</th>
+                                                    <th class="text-right">จำนวนเงินโอน (฿)</th>
+                                                    <th class="text-center">สถานะ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="clsdSimulationBody"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.25rem 0 0.55rem; flex-wrap: wrap; gap: 0.5rem;">
+                                        <h4 style="font-size: 0.92rem; margin: 0;"><i class="fa-solid fa-scale-balanced text-purple"></i> สรุปยอดค่าใช้จ่ายหน้างานหลังจำลองการโอน (แยกตามเลขที่โครงข่าย)</h4>
+                                        <div style="display: flex; gap: 6px;">
+                                            <button type="button" id="clsdBtnFilterTransferOnly" class="clsd-btn clsd-btn-xs clsd-btn-purple" onclick="window.CLSDClosing.setPostTransferView('transfer_only')">เฉพาะโครงข่ายที่มีการโอนงบ</button>
+                                            <button type="button" id="clsdBtnFilterAllNets" class="clsd-btn clsd-btn-xs clsd-btn-outline-dark" onclick="window.CLSDClosing.setPostTransferView('all')">แสดงทุกโครงข่าย</button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="clsd-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>เลขที่โครงข่าย</th>
+                                                    <th>รายการ / แผนก</th>
+                                                    <th>หมวดค่าใช้จ่ายหน้างาน</th>
+                                                    <th class="text-right">ผลต่างเดิม (฿)</th>
+                                                    <th class="text-center">โอนเข้า (+) / โอนออก (-)</th>
+                                                    <th class="text-right">คงเหลือหลังโอน (฿)</th>
+                                                    <th class="text-center">สถานะหลังโอน</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="clsdPostTransferBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Allocated / Indirect Expenses -->
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header">
+                                <div>
+                                    <h3><i class="fa-solid fa-calculator"></i> 5. ข้อมูลเพิ่มเติม: ค่าใช้จ่ายปันส่วนทางบัญชี / ทางอ้อม</h3>
+                                    <p class="subtitle">ค่าใช้จ่ายที่ระบบ SAP ปันส่วนอัตโนมัติ (ไม่ใช่ค่าใช้จ่ายหน้างานที่ผู้ควบคุมงานควบคุม)</p>
+                                </div>
+                                <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-outline-dark" onclick="window.CLSDClosing.exportBudgetCsv()">
+                                    <i class="fa-solid fa-file-excel"></i> ส่งออกตารางงบประมาณ CSV/Excel
+                                </button>
+                            </div>
+                            <div class="clsd-panel-body p-0">
+                                <div class="table-responsive">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">รหัส</th>
+                                                <th>หมวดค่าใช้จ่ายปันส่วน</th>
+                                                <th class="text-right">ตามประมาณการ (บาท)</th>
+                                                <th class="text-right">ค่าใช้จ่ายจริง (บาท)</th>
+                                                <th class="text-right">ผลต่าง (บาท)</th>
+                                                <th>หมายเหตุ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdAllocatedBudgetBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAIL TAB 3: Materials Return & Pending Withdrawal -->
+                    <div id="clsd-tab-materials" class="clsd-tab-content">
+                        <div class="clsd-grid-2">
+                            <div class="clsd-panel">
+                                <div class="clsd-panel-header header-gradient-gold">
+                                    <div>
+                                        <h3><i class="fa-solid fa-arrow-rotate-left"></i> อุปกรณ์ที่ต้องส่งคืนคลังพัสดุ</h3>
+                                        <p class="subtitle">พัสดุที่เบิกเกินกว่าติดตั้งจริง หรือพัสดุรื้อถอน</p>
+                                    </div>
+                                    <span class="check-badge bg-warning" id="clsdReturnItemBadge">0 รายการ</span>
+                                </div>
+                                <div class="clsd-panel-body p-0">
+                                    <div class="table-responsive" style="max-height: 460px; overflow-y: auto;">
+                                        <table class="clsd-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>รหัสพัสดุ</th>
+                                                    <th>รายการ</th>
+                                                    <th class="text-right">เบิก</th>
+                                                    <th class="text-right">ติดตั้ง</th>
+                                                    <th class="text-right">ต้องคืน</th>
+                                                    <th>หน่วย</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="clsdReturnMaterialsBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="clsd-panel">
+                                <div class="clsd-panel-header">
+                                    <div>
+                                        <h3><i class="fa-solid fa-cart-flatbed text-purple"></i> อุปกรณ์ที่ต้องเบิกออก / ขาดเบิก</h3>
+                                        <p class="subtitle">พัสดุที่มีในแบบประมาณการแต่ยังไม่ได้เบิกจ่ายจริง</p>
+                                    </div>
+                                    <span class="check-badge bg-info" id="clsdWithdrawItemBadge">0 รายการ</span>
+                                </div>
+                                <div class="clsd-panel-body p-0">
+                                    <div class="table-responsive" style="max-height: 460px; overflow-y: auto;">
+                                        <table class="clsd-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>รหัสพัสดุ</th>
+                                                    <th>รายการ</th>
+                                                    <th class="text-right">ประมาณการ</th>
+                                                    <th class="text-right">เบิกจริง</th>
+                                                    <th class="text-right">ขาดเบิก</th>
+                                                    <th>หน่วย</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="clsdWithdrawMaterialsBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-body" style="display: flex; gap: 0.85rem; align-items: flex-start;">
+                                <i class="fa-solid fa-circle-info text-purple" style="font-size: 1.35rem; margin-top: 2px;"></i>
+                                <div style="font-size: 0.83rem; line-height: 1.6;">
+                                    <strong>คำแนะนำในการจัดการพัสดุก่อนปิดงาน (ระเบียบ กฟภ.):</strong>
+                                    <ul style="margin: 0.35rem 0 0; padding-left: 1.2rem;">
+                                        <li><strong>สำหรับพัสดุที่ต้องส่งคืนคลัง:</strong> จัดทำใบส่งคืนพัสดุ (กส.4) ส่งมอบให้แผนกคลังพัสดุตรวจรับคืนในระบบ SAP (Movement Type 262 หรือ 282)</li>
+                                        <li><strong>สำหรับพัสดุที่มีในประมาณการแต่ไม่ได้เบิก:</strong> หากหน้างานจริงไม่ได้ใช้งาน ให้ทำการ <em>"ปลดการจองพัสดุ (Close Reservation)"</em> ในระบบ SAP เพื่อไม่ให้มียอดจองค้างใน WBS</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAIL TAB 4: Full Materials Registry -->
+                    <div id="clsd-tab-all-materials" class="clsd-tab-content">
+                        <div class="clsd-panel">
+                            <div class="clsd-panel-header">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <h3><i class="fa-solid fa-list-check text-purple"></i> ทะเบียนพัสดุและอุปกรณ์ทั้งหมดในรายงาน ZPSR018</h3>
+                                    <span class="clsd-badge badge-wbs" id="clsdTotalMaterialsCountTag">0 รายการ</span>
+                                </div>
+                                <div style="display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap;">
+                                    <select id="clsdMaterialFilterSelect" class="clsd-select-sm">
+                                        <option value="ALL">พัสดุทั้งหมด (All)</option>
+                                        <option value="need_withdraw">เฉพาะที่ขาดเบิก</option>
+                                        <option value="need_return">เฉพาะที่ต้องคืนคลัง</option>
+                                        <option value="complete">เฉพาะที่ติดตั้งครบถ้วน</option>
+                                    </select>
+                                    <input type="text" id="clsdMaterialSearchInput" class="clsd-select-sm" style="min-width: 210px;" placeholder="ค้นหารหัส หรือชื่อพัสดุ...">
+                                    <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-outline-purple" onclick="window.CLSDClosing.exportMaterialsCsv()">
+                                        <i class="fa-solid fa-file-excel"></i> ส่งออก Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="clsd-panel-body p-0">
+                                <div class="table-responsive" style="max-height: 560px; overflow-y: auto;">
+                                    <table class="clsd-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">หน้า</th>
+                                                <th>รหัสพัสดุ</th>
+                                                <th>รายการพัสดุ</th>
+                                                <th class="text-center">หน่วย</th>
+                                                <th class="text-right">ประมาณการ</th>
+                                                <th class="text-right">เบิกจากคลัง</th>
+                                                <th class="text-right">ส่งคืนคลัง</th>
+                                                <th class="text-right">ติดตั้งจริง</th>
+                                                <th class="text-right">ค่าพัสดุเบิก (฿)</th>
+                                                <th class="text-center">สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clsdAllMaterialsBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -4433,12 +5246,323 @@
                         <div class="profile-setting-label">แผนที่สถานี GIS กฟภ.</div>
                         <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); font-size: 11px;"></i>
                     </div>
+
+                    <div class="profile-setting-item" onclick="if(window.switchToViewSection) window.switchToViewSection('clsd-closing-view'); window.closeMobileProfileModal();">
+                        <div class="profile-setting-icon" style="color: #7b1fa2;"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <div class="profile-setting-label">สถานะการปิดงานก่อสร้าง (SAP ZPSR018)</div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-secondary); font-size: 11px;"></i>
+                    </div>
                 </div>
 
                 <!-- Logout Button -->
                 <button type="button" class="btn-logout-mobile" onclick="window.handleMobileLogout()">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> ออกจากระบบ
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         CLSD SAP ZPSR018 Modals & Print Area
+         ========================================================================= -->
+    <div id="clsdPrintArea"></div>
+
+    <!-- 1. Upload SAP PDF Modal -->
+    <div class="clsd-modal-backdrop" id="clsdUploadModal">
+        <div class="clsd-modal">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-cloud-arrow-up text-gold"></i> อัปโหลดไฟล์รายงาน SAP ZPSR018 / ZBUDR018</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdUploadModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #1e40af;">
+                    <strong><i class="fa-solid fa-shield-halved"></i> เงื่อนไขการตรวจสอบไฟล์:</strong> รองรับเฉพาะรายงานการปิดงานก่อสร้างจากระบบ SAP (<strong>ZPSR018</strong> หรือ <strong>ZBUDR018</strong>) ของ กฟภ. เท่านั้น
+                </div>
+                <div class="clsd-dropzone" id="clsdPdfDropzone" onclick="document.getElementById('clsdPdfFileInput').click()">
+                    <input type="file" id="clsdPdfFileInput" accept="application/pdf" style="display: none;">
+                    <i class="fa-solid fa-file-pdf text-purple" style="font-size: 2.6rem; margin-bottom: 0.5rem;"></i>
+                    <h4 style="margin: 0.25rem 0;">ลากไฟล์ PDF มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</h4>
+                    <p style="font-size: 0.8rem; color: var(--clsd-text-muted); margin: 0;">รองรับไฟล์รายงาน PDF จาก SAP (.pdf)</p>
+                </div>
+                <div id="clsdSelectedFileCard" style="display: none; justify-content: space-between; align-items: center; margin-top: 0.85rem; padding: 0.65rem 0.9rem; background: var(--clsd-bg-subtle); border-radius: 8px; border: 1px solid var(--clsd-border);">
+                    <div>
+                        <strong id="clsdSelectedFileName">filename.pdf</strong>
+                        <span id="clsdSelectedFileSize" style="font-size: 0.76rem; color: var(--clsd-text-muted); margin-left: 8px;">0 KB</span>
+                    </div>
+                </div>
+                <div id="clsdUploadProjectNameGroup" style="display: none; margin-top: 0.85rem;">
+                    <label style="font-weight: 600; font-size: 0.84rem; display: block; margin-bottom: 0.35rem;">ชื่อโครงการ (แก้ไขได้):</label>
+                    <input type="text" id="clsdUploadCustomName" style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid #a855f7; border-radius: 8px; font-family: inherit;">
+                </div>
+                <div id="clsdUploadProgress" style="display: none; text-align: center; padding: 1rem 0 0;">
+                    <i class="fa-solid fa-spinner fa-spin text-purple" style="font-size: 1.6rem;"></i>
+                    <p style="font-size: 0.84rem; margin-top: 0.4rem;">กำลังวิเคราะห์งบประมาณ 10 หมวด โครงข่าย และรายการพัสดุ...</p>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdUploadModal')">ยกเลิก</button>
+                <button type="button" class="clsd-btn clsd-btn-gold" id="clsdBtnConfirmUpload" disabled onclick="window.CLSDClosing.handleConfirmUpload()">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> เริ่มตรวจสอบและนำเข้าข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Edit Project Name Modal -->
+    <div class="clsd-modal-backdrop" id="clsdEditNameModal">
+        <div class="clsd-modal" style="max-width: 480px;">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> แก้ไขชื่อโครงการ</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdEditNameModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">ชื่อโครงการก่อสร้าง:</label>
+                <input type="text" id="clsdInputEditProjectName" style="width: 100%; padding: 0.55rem 0.75rem; border: 1.5px solid #a855f7; border-radius: 8px; font-family: inherit;">
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdEditNameModal')">ยกเลิก</button>
+                <button type="button" class="clsd-btn clsd-btn-purple" onclick="window.CLSDClosing.saveEditedProjectName()">
+                    <i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Change Closing Status Modal (5 Steps + Auto) -->
+    <div class="clsd-modal-backdrop" id="clsdChangeStatusModal">
+        <div class="clsd-modal">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-tags"></i> กำหนดสถานะการดำเนินงานปิดงาน (5 ขั้นตอน)</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdChangeStatusModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <div style="background: var(--clsd-purple-50); border: 1px solid rgba(168,85,247,0.35); border-radius: 8px; padding: 0.7rem 0.95rem; margin-bottom: 0.9rem;">
+                    <span class="clsd-badge badge-wbs"><i class="fa-solid fa-hashtag"></i> <strong id="clsdStatusModalWbs">-</strong></span>
+                    <strong id="clsdStatusModalName" style="margin-left: 0.5rem;">-</strong>
+                </div>
+                <div class="clsd-status-option-list">
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="STATUS_1">
+                        <div>
+                            <strong style="color: #0284c7;"><i class="fa-solid fa-money-bill-transfer"></i> 1. อยู่ระหว่างดำเนินการโอนงบประมาณ</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">มีหมวดค่าใช้จ่ายหน้างานติดลบ ต้องโอนงบประมาณชดเชยก่อนปิดงาน</div>
+                        </div>
+                    </label>
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="STATUS_2">
+                        <div>
+                            <strong style="color: #d97706;"><i class="fa-solid fa-boxes-packing"></i> 2. อยู่ระหว่างคืนพัสดุ</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">มีพัสดุเบิกเกิน / ไม่ได้ติดตั้ง ต้องส่งคืนคลังพัสดุให้ครบถ้วน</div>
+                        </div>
+                    </label>
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="STATUS_3">
+                        <div>
+                            <strong style="color: #e11d48;"><i class="fa-solid fa-triangle-exclamation"></i> 3. อยู่ระหว่างดำเนินการโอนงบประมาณ และคืนพัสดุ</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">มีทั้งงบประมาณหน้างานติดลบ และมีพัสดุค้างส่งคืนคลัง</div>
+                        </div>
+                    </label>
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="STATUS_4">
+                        <div>
+                            <strong style="color: #7c3aed;"><i class="fa-solid fa-file-circle-check"></i> 4. ส่งเอกสารปิดงานแล้ว อยู่ระหว่างส่วนเกี่ยวข้องตรวจสอบ</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">ส่งแบบรายงานปิดงาน กส.3 และเอกสารประกอบให้ส่วนงานที่เกี่ยวข้องตรวจสอบ</div>
+                        </div>
+                    </label>
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="STATUS_5">
+                        <div>
+                            <strong style="color: #059669;"><i class="fa-solid fa-circle-check"></i> 5. ปิดงานแล้ว CLSD F4</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">ผ่านการตรวจสอบครบถ้วน และดำเนินการปิดงาน (CLSD) ในระบบ SAP เรียบร้อยแล้ว</div>
+                        </div>
+                    </label>
+                    <label class="clsd-status-option-card">
+                        <input type="radio" name="clsdProjectStatusOpt" value="AUTO">
+                        <div>
+                            <strong><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> อัตโนมัติ (ตรวจจับตามรายงาน SAP)</strong>
+                            <div style="font-size: 0.78rem; color: var(--clsd-text-muted);">คำนวณสถานะอัตโนมัติตามยอดงบประมาณและพัสดุจริงในไฟล์ ZPSR018</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdChangeStatusModal')">ยกเลิก</button>
+                <button type="button" class="clsd-btn clsd-btn-purple" onclick="window.CLSDClosing.saveStatusFromModal()">
+                    <i class="fa-solid fa-floppy-disk"></i> บันทึกสถานะ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Invalid Template Modal -->
+    <div class="clsd-modal-backdrop" id="clsdInvalidModal">
+        <div class="clsd-modal" style="max-width: 500px;">
+            <div class="clsd-modal-header header-danger">
+                <h3><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถนำเข้าไฟล์ได้</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdInvalidModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body text-center">
+                <i class="fa-solid fa-ban text-danger" style="font-size: 3rem; margin-bottom: 0.65rem;"></i>
+                <p id="clsdInvalidErrorText" style="font-size: 0.9rem;">ไฟล์ที่เลือกไม่ใช่รายงานการปิดงาน SAP ZPSR018 / ZBUDR018</p>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-purple" onclick="window.CLSDClosing.closeModal('clsdInvalidModal'); window.CLSDClosing.openUploadModal();">ลองใหม่อีกครั้ง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Network 10-Category Drilldown Modal -->
+    <div class="clsd-modal-backdrop" id="clsdNetworkModal">
+        <div class="clsd-modal modal-lg">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-network-wired"></i> รายละเอียดโครงข่าย: <span id="clsdModalNetNo">-</span></h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdNetworkModal')"><i class="fa-solid fa-xmark"></i> ออก</button>
+            </div>
+            <div class="clsd-modal-body">
+                <div style="margin-bottom: 0.85rem;"><strong>รายการโครงข่าย / แผนก:</strong> <span id="clsdModalNetDesc" class="text-purple font-weight-bold">-</span></div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.65rem; margin-bottom: 1rem;">
+                    <div style="padding: 0.65rem; border: 1px solid var(--clsd-border); border-radius: 8px; text-align: center;"><small>ประมาณการรวม</small><div class="font-weight-bold" id="clsdModalNetEst">-</div></div>
+                    <div style="padding: 0.65rem; border: 1px solid var(--clsd-border); border-radius: 8px; text-align: center;"><small>ใช้จริงรวม</small><div class="font-weight-bold" id="clsdModalNetAct">-</div></div>
+                    <div style="padding: 0.65rem; border: 1px solid var(--clsd-border); border-radius: 8px; text-align: center;"><small>ผลต่างรวม</small><div class="font-weight-bold" id="clsdModalNetDiff">-</div></div>
+                    <div style="padding: 0.65rem; border: 1px solid var(--clsd-border); border-radius: 8px; text-align: center;"><small>ผลต่างหน้างาน 5 หมวด</small><div class="font-weight-bold" id="clsdModalNetSiteDiff">-</div></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="clsd-table">
+                        <thead>
+                            <tr>
+                                <th class="text-center">ลำดับ</th>
+                                <th>หมวดค่าใช้จ่าย</th>
+                                <th>กลุ่ม</th>
+                                <th class="text-right">ประมาณการ (฿)</th>
+                                <th class="text-right">ใช้จริง (฿)</th>
+                                <th class="text-right">ผลต่าง (฿)</th>
+                                <th class="text-center">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clsdModalNetCatBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-danger" onclick="window.CLSDClosing.closeModal('clsdNetworkModal')">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Official Memo Modal -->
+    <div class="clsd-modal-backdrop" id="clsdMemoModal">
+        <div class="clsd-modal modal-lg">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-file-pen"></i> บันทึกข้อความขออนุมัติโอนงบประมาณ (SAP WBS)</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdMemoModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <textarea id="clsdMemoTextarea" class="clsd-memo-textarea" rows="15" readonly></textarea>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdMemoModal')">ปิด</button>
+                <button type="button" class="clsd-btn clsd-btn-purple" onclick="window.CLSDClosing.exportApprovalDocx()"><i class="fa-solid fa-file-word"></i> บันทึกลงแบบฟอร์ม Word (.docx)</button>
+                <button type="button" class="clsd-btn clsd-btn-gold" onclick="window.CLSDClosing.copyMemo()"><i class="fa-solid fa-copy"></i> คัดลอกข้อความ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Delete Project Confirmation Modal -->
+    <div class="clsd-modal-backdrop" id="clsdDeleteModal">
+        <div class="clsd-modal" style="max-width: 500px;">
+            <div class="clsd-modal-header header-danger">
+                <h3><i class="fa-solid fa-triangle-exclamation"></i> ยืนยันการลบโครงการออกจากทะเบียนปิดงาน</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdDeleteModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <p>คุณต้องการลบโครงการนี้ออกจากทะเบียนการปิดงานใช่หรือไม่?</p>
+                <div style="padding: 0.75rem; background: var(--clsd-bg-subtle); border-radius: 8px; border: 1px solid var(--clsd-border);">
+                    <div><strong>WBS:</strong> <span id="clsdDeleteModalWbs" class="text-danger">-</span></div>
+                    <div><strong>ชื่อโครงการ:</strong> <span id="clsdDeleteModalName">-</span></div>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdDeleteModal')">ยกเลิก</button>
+                <button type="button" class="clsd-btn clsd-btn-danger" onclick="window.CLSDClosing.confirmDeleteProject()"><i class="fa-solid fa-trash-can"></i> ยืนยันการลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Report Preview & Print Modal (กส.3) -->
+    <div class="clsd-modal-backdrop" id="clsdReportPreviewModal">
+        <div class="clsd-modal modal-xl">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-print text-gold"></i> รายงานผลการตรวจสอบ กส.3 และแผนการโอนงบประมาณ</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdReportPreviewModal')"><i class="fa-solid fa-xmark"></i> ออก</button>
+            </div>
+            <div class="clsd-modal-body" style="background: #f1f5f9;">
+                <div id="clsdReportPreviewPaper" style="background: #ffffff; border-radius: 8px; padding: 20px 24px; max-width: 860px; margin: 0 auto; box-shadow: 0 4px 14px rgba(0,0,0,0.08);"></div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdReportPreviewModal')">ปิดหน้าต่าง</button>
+                <button type="button" class="clsd-btn clsd-btn-purple" onclick="window.CLSDClosing.executePrintReport()"><i class="fa-solid fa-print"></i> สั่งพิมพ์รายงาน / บันทึก PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Update ZPSR018 PDF Modal -->
+    <div class="clsd-modal-backdrop" id="clsdUpdateZpsr018Modal">
+        <div class="clsd-modal">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-arrows-rotate text-gold"></i> อัพเดทไฟล์ ZPSR018 ฉบับใหม่</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdUpdateZpsr018Modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <div style="margin-bottom: 0.75rem;">
+                    <span class="clsd-badge badge-wbs"><strong id="clsdUpdateModalWbs">-</strong></span>
+                    <strong id="clsdUpdateModalName" style="margin-left: 0.5rem;">-</strong>
+                </div>
+                <div class="clsd-dropzone" onclick="document.getElementById('clsdUpdatePdfInput').click()">
+                    <input type="file" id="clsdUpdatePdfInput" accept="application/pdf" style="display: none;">
+                    <i class="fa-solid fa-file-arrow-up text-purple" style="font-size: 2rem;"></i>
+                    <h4 style="margin: 0.4rem 0 0.2rem;">เลือกไฟล์ ZPSR018 (.pdf) ฉบับใหม่หลังโอนงบประมาณ</h4>
+                </div>
+                <div id="clsdUpdateFileCard" style="display: none; justify-content: space-between; margin-top: 0.75rem; padding: 0.6rem 0.85rem; background: var(--clsd-bg-subtle); border-radius: 8px;">
+                    <strong id="clsdUpdateFileName">-</strong>
+                    <span id="clsdUpdateFileSize">0 KB</span>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdUpdateZpsr018Modal')">ยกเลิก</button>
+                <button type="button" class="clsd-btn clsd-btn-gold" id="clsdBtnConfirmUpdate" disabled onclick="window.CLSDClosing.handleConfirmUpdateZpsr018()">
+                    <i class="fa-solid fa-arrows-rotate"></i> อัพเดทข้อมูลงบประมาณ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. Supabase Cloud Status Modal -->
+    <div class="clsd-modal-backdrop" id="clsdSupabaseModal">
+        <div class="clsd-modal">
+            <div class="clsd-modal-header">
+                <h3><i class="fa-solid fa-cloud"></i> สถานะการซิงค์ข้อมูลปิดงานก่อสร้าง (Supabase Cloud)</h3>
+                <button type="button" class="clsd-modal-close" onclick="window.CLSDClosing.closeModal('clsdSupabaseModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="clsd-modal-body">
+                <div style="padding: 0.85rem 1rem; border: 1px solid var(--clsd-border); border-radius: 10px; margin-bottom: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <strong>ฐานข้อมูล Cloud (เชื่อมตรงกับระบบ CLSD_SAP)</strong>
+                        <span class="clsd-badge badge-purple" id="clsdModalSupabaseBadge">กำลังตรวจสอบ...</span>
+                    </div>
+                    <div id="clsdModalSupabaseMsg" style="font-size: 0.84rem;"></div>
+                </div>
+                <div id="clsdSupabaseGuideSection" style="display: none; font-size: 0.82rem; color: var(--clsd-text-muted);">
+                    หากต้องการสร้างตาราง <code>public.projects</code> บนโปรเจกต์ Supabase ใหม่ สามารถใช้สคีมาจากระบบ CLSD_SAP ได้ทันที
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.65rem;">
+                    <span style="font-size: 0.83rem;">ส่งข้อมูลโครงการปิดงานทั้งหมดขึ้น Cloud:</span>
+                    <button type="button" class="clsd-btn clsd-btn-sm clsd-btn-outline-purple" onclick="window.CLSDClosing.syncAllToCloud()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> ซิงค์ขึ้น Cloud ทันที
+                    </button>
+                </div>
+            </div>
+            <div class="clsd-modal-footer">
+                <button type="button" class="clsd-btn clsd-btn-outline-dark" onclick="window.CLSDClosing.closeModal('clsdSupabaseModal')">ปิด</button>
             </div>
         </div>
     </div>
@@ -4492,6 +5616,7 @@
     <script src="disbursement.js?v=2"></script>
     <script src="ai-chat.js?v=2"></script>
     <script src="work-report.js?v=3"></script>
+    <script src="clsd-closing.js?v=1"></script>
     <script src="mobile-nav.js?v=1"></script>
     <script>
         if (window.location.search.includes('admin') || window.location.hash.includes('admin')) {

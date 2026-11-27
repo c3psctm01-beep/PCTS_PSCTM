@@ -13,7 +13,9 @@
     const LIB_URLS = {
         XLSX: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
         html2pdf: 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-        JSZip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+        JSZip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+        pdfjsLib: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+        pdfjsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
     };
 
     const pendingPromises = {};
@@ -62,6 +64,15 @@
 
     window.ensureJSZip = function () {
         return loadExternalScript('JSZip', () => typeof window.JSZip !== 'undefined', LIB_URLS.JSZip);
+    };
+
+    window.ensurePdfJs = function () {
+        return loadExternalScript('pdfjsLib', () => typeof window.pdfjsLib !== 'undefined', LIB_URLS.pdfjsLib).then(() => {
+            if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = LIB_URLS.pdfjsWorker;
+            }
+            return true;
+        });
     };
 
     // Warm up heavy libraries quietly during idle time after initial render is complete

@@ -15,8 +15,15 @@ import sys
 import json
 import time
 import shutil
+import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+
+try:
+    import clsd_sap_service
+except Exception as _clsd_err:
+    clsd_sap_service = None
+    print("Notice: clsd_sap_service unavailable:", _clsd_err)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -40,8 +47,8 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Passcode')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Passcode, X-Filename, X-Project-Name, X-Project-Id')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -307,6 +314,45 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
         if path == '/api/users':
             users = self._get_users()
             return self._send_json({'success': True, 'users': users, 'deleted_users': self._get_deleted_users()})
+
+        # --- CLSD SAP Construction Closing Endpoints (GET) ---
+        if clsd_sap_service is not None:
+            if path in ('/api/clsd/projects', '/api/projects'):
+                projects = clsd_sap_service.load_clsd_projects()
+                return self._send_json(projects)
+
+            if path in ('/api/clsd/supabase-status', '/api/supabase-status'):
+                test_res = clsd_sap_service.supabase_request("projects?select=id&limit=1", method="GET")
+                table_ready = test_res is not None
+                return self._send_json({
+                    'configured': True,
+                    'url': clsd_sap_service.SUPABASE_URL,
+                    'table_ready': table_ready,
+                    'status': 'connected' if table_ready else 'table_missing'
+                })
+
+            if path in ('/api/clsd/download-approval-docx', '/api/download-approval-docx'):
+                qs = parse_qs(parsed.query)
+                pid = qs.get('id', [None])[0]
+                projects = clsd_sap_service.load_clsd_projects()
+                match = next((p for p in projects if p.get('id') == pid or p.get('wbs') == pid), None)
+                if not match and projects:
+                    match = projects[0]
+                if not match:
+                    return self._send_json({'error': 'Project not found'}, 404)
+                try:
+                    file_bytes = clsd_sap_service.generate_approval_docx_bytes(match)
+                    filename = f"แบบฟอร์มขออนุมัติค่าใช้จ่ายหน้างาน_{match.get('wbs', match.get('id', 'form'))}.docx"
+                    quoted_filename = urllib.parse.quote(filename)
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                    self.send_header('Content-Disposition', f"attachment; filename*=UTF-8''{quoted_filename}")
+                    self.send_header('Content-Length', str(len(file_bytes)))
+                    self.end_headers()
+                    self.wfile.write(file_bytes)
+                    return
+                except Exception as e:
+                    return self._send_json({'error': f'Error generating docx: {str(e)}'}, 500)
 
         super().do_GET()
 
@@ -656,6 +702,145 @@ class PCTSRequestHandler(SimpleHTTPRequestHandler):
             target['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S')
             self._save_users(users)
             return self._send_json({'success': True, 'user': target})
+
+        # --- CLSD SAP Construction Closing Endpoints (POST) ---
+        if clsd_sap_service is not None:
+            if path in ('/api/clsd/upload-pdf', '/api/upload-pdf'):
+                content_type = self.headers.get('Content-Type', '')
+                length = int(self.headers.get('Content-Length', 0))
+                body = self.rfile.read(length)
+                pdf_bytes, filename, custom_name, target_project_id = clsd_sap_service.extract_multipart_pdf(
+                    content_type, body, self.headers
+                )
+                if not pdf_bytes:
+                    return self._send_json({'success': False, 'error': 'ไม่พบข้อมูลไฟล์ PDF หรือไฟล์เสียหาย'}, 400)
+                try:
+                    result = clsd_sap_service.parse_pdf_data(pdf_bytes, filename=filename, custom_name=custom_name)
+                    if not result.get('success'):
+                        return self._send_json(result, 400)
+
+                    projects = clsd_sap_service.load_clsd_projects()
+                    existing_idx = -1
+                    if target_project_id:
+                        existing_idx = next((i for i, p in enumerate(projects) if p.get('id') == target_project_id or p.get('wbs') == target_project_id), -1)
+                    if existing_idx < 0:
+                        existing_idx = next((i for i, p in enumerate(projects) if p.get('id') == result.get('id') or (p.get('wbs') and p.get('wbs') == result.get('wbs'))), -1)
+
+                    if existing_idx >= 0:
+                        prev = projects[existing_idx]
+                        result['id'] = prev['id']
+                        result['target_month'] = prev.get('target_month', result.get('target_month', 'กันยายน 2569'))
+                        result['target_year_be'] = prev.get('target_year_be', result.get('target_year_be', 2569))
+                        result['target_month_num'] = prev.get('target_month_num', result.get('target_month_num', 9))
+                        if 'custom_status' in prev:
+                            result['custom_status'] = prev['custom_status']
+                        if 'status_text' in prev:
+                            result['status_text'] = prev['status_text']
+                        if prev.get('name') and not custom_name:
+                            result['name'] = prev['name']
+                        projects[existing_idx] = result
+                    else:
+                        projects.insert(0, result)
+
+                    clsd_sap_service.save_clsd_projects(projects)
+                    clsd_sap_service.supabase_upsert_project(result)
+                    return self._send_json(result)
+                except Exception as e:
+                    return self._send_json({'success': False, 'error': f'เกิดข้อผิดพลาดในการประมวลผล PDF: {str(e)}'}, 500)
+
+            if path in ('/api/clsd/projects/update-name', '/api/projects/update-name'):
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length).decode('utf-8'))
+                pid = data.get('id')
+                new_name = str(data.get('name', '')).strip()
+                if not new_name:
+                    return self._send_json({'error': 'ชื่อโครงการต้องไม่เป็นค่าว่าง'}, 400)
+                projects = clsd_sap_service.load_clsd_projects()
+                match = next((p for p in projects if p.get('id') == pid or p.get('wbs') == pid), None)
+                if match:
+                    match['name'] = new_name
+                    clsd_sap_service.save_clsd_projects(projects)
+                    clsd_sap_service.supabase_update_project(match['id'], {'name': new_name, 'data': match})
+                    return self._send_json({'success': True, 'project': match})
+                return self._send_json({'error': 'Project not found'}, 404)
+
+            if path in ('/api/clsd/projects/update-target', '/api/projects/update-target'):
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length).decode('utf-8'))
+                pid = data.get('id')
+                target_month = data.get('target_month')
+                projects = clsd_sap_service.load_clsd_projects()
+                match = next((p for p in projects if p.get('id') == pid or p.get('wbs') == pid), None)
+                if match:
+                    match['target_month'] = target_month
+                    clsd_sap_service.save_clsd_projects(projects)
+                    clsd_sap_service.supabase_update_project(match['id'], {'target_month': target_month, 'data': match})
+                    return self._send_json({'success': True, 'project': match})
+                return self._send_json({'error': 'Project not found'}, 404)
+
+            if path in ('/api/clsd/projects/update-status', '/api/projects/update-status'):
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length).decode('utf-8'))
+                pid = data.get('id')
+                custom_status = data.get('custom_status')
+                status_text = data.get('status_text')
+                projects = clsd_sap_service.load_clsd_projects()
+                match = next((p for p in projects if p.get('id') == pid or p.get('wbs') == pid), None)
+                if match:
+                    is_auto = (custom_status == 'AUTO' or not custom_status)
+                    if is_auto:
+                        match.pop('custom_status', None)
+                        match.pop('status_text', None)
+                    else:
+                        match['custom_status'] = custom_status
+                        if status_text:
+                            match['status_text'] = status_text
+                    clsd_sap_service.save_clsd_projects(projects)
+                    clsd_sap_service.supabase_update_project(match['id'], {
+                        'custom_status': None if is_auto else custom_status,
+                        'status_text': None if is_auto else status_text,
+                        'data': match
+                    })
+                    return self._send_json({'success': True, 'project': match})
+                return self._send_json({'error': 'Project not found'}, 404)
+
+            if path in ('/api/clsd/projects/delete', '/api/projects/delete'):
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length).decode('utf-8'))
+                pid = data.get('id')
+                projects = clsd_sap_service.load_clsd_projects()
+                projects = [p for p in projects if p.get('id') != pid and p.get('wbs') != pid]
+                clsd_sap_service.save_clsd_projects(projects)
+                clsd_sap_service.supabase_delete_project(pid)
+                return self._send_json({'success': True})
+
+            if path in ('/api/clsd/export-approval-docx', '/api/export-approval-docx'):
+                length = int(self.headers.get('Content-Length', 0))
+                data = json.loads(self.rfile.read(length).decode('utf-8'))
+                pid = data.get('id')
+                proj_payload = data.get('project')
+                projects = clsd_sap_service.load_clsd_projects()
+                match = proj_payload if isinstance(proj_payload, dict) else next((p for p in projects if p.get('id') == pid or p.get('wbs') == pid), None)
+                if not match:
+                    return self._send_json({'success': False, 'error': 'ไม่พบข้อมูลโครงการ'}, 404)
+                try:
+                    file_bytes = clsd_sap_service.generate_approval_docx_bytes(match)
+                    # Save temp copy so download endpoint can also serve it if project was only in client memory
+                    if proj_payload and isinstance(proj_payload, dict):
+                        idx = next((i for i, p in enumerate(projects) if p.get('id') == match.get('id') or p.get('wbs') == match.get('wbs')), -1)
+                        if idx >= 0:
+                            projects[idx] = match
+                        else:
+                            projects.insert(0, match)
+                        clsd_sap_service.save_clsd_projects(projects)
+                    dl_id = urllib.parse.quote(str(match.get('id') or match.get('wbs') or 'form'))
+                    return self._send_json({
+                        'success': True,
+                        'size': len(file_bytes),
+                        'download_url': f'/api/clsd/download-approval-docx?id={dl_id}'
+                    })
+                except Exception as e:
+                    return self._send_json({'success': False, 'error': str(e)}, 500)
 
         self.send_response(404)
         self.end_headers()

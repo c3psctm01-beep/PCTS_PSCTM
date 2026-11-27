@@ -1321,6 +1321,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
+            // If switching to clsd-closing-view (สถานะการปิดงานก่อสร้าง SAP ZPSR018)
+            if (targetId === 'clsd-closing-view') {
+                if (window.CLSDClosing && typeof window.CLSDClosing.onActivate === 'function') {
+                    window.CLSDClosing.onActivate();
+                }
+            }
+
             // Resize Chart and Calendar if their views are opened
             if (targetId === 'project-detail-view') {
                 if (window.sChart) window.sChart.resize();
@@ -1892,6 +1899,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if (targetView === 'editor-view' && typeof window.syncUploaderIdentityFields === 'function') {
                     window.syncUploaderIdentityFields(true);
+                }
+                if (targetView === 'clsd-closing-view' && window.CLSDClosing && typeof window.CLSDClosing.onActivate === 'function') {
+                    const psctmGroup = document.getElementById('sidebarGroupPsctm');
+                    if (psctmGroup) psctmGroup.classList.remove('active');
+                    window.CLSDClosing.onActivate();
                 }
             }
         }, 300);
