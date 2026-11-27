@@ -1004,6 +1004,14 @@
   // ------------------------------------------------------------------
   // Year Filtering Logic & Options Population
   // ------------------------------------------------------------------
+  function extractThaiYearsFromText(str) {
+    if (!str) return [];
+    // ตัดเลขที่หนังสือราชการ เช่น "คค 06143/60/2579" ออกก่อน เพื่อไม่ให้เข้าใจผิดว่าเป็นปี พ.ศ.
+    const cleaned = String(str).replace(/\b\d{2,}\/[0-9()-]+\/\d+\b/g, ' ');
+    const matches = cleaned.match(/\b25[6-9]\d\b/g);
+    return matches ? matches.map(m => parseInt(m, 10)) : [];
+  }
+
   function extractAllYearsFromData(d) {
     const currentYear = new Date().getFullYear() + 543;
     const nextYear = currentYear + 1;
@@ -1011,7 +1019,8 @@
 
     const addValidYear = (val) => {
       const y = parseInt(val, 10);
-      if (!isNaN(y) && y >= 2555 && y <= 2600) {
+      // แสดงเฉพาะปีเก่าที่มีข้อมูล, ปีปัจจุบัน และปีถัดไป (ไม่เกิน nextYear และไม่เอาปีอนาคตไกลเช่น 2579)
+      if (!isNaN(y) && y >= 2560 && y <= nextYear) {
         yearsSet.add(y);
       }
     };
@@ -1025,34 +1034,32 @@
           if (mProg && Number(t[k]) > 0) addValidYear(mProg[1]);
         });
         const text = (t.remarks || '') + ' ' + (t.project || '');
-        const matches = text.match(/25[5-9]\d/g);
-        if (matches) matches.forEach(m => addValidYear(m));
+        extractThaiYearsFromText(text).forEach(y => addValidYear(y));
       });
     }
 
     if (d && d.substationsDetail) {
       d.substationsDetail.forEach(s => {
         const text = (s.contract || '') + ' ' + (s.statusText || '') + ' ' + (s.project || '') + ' ' + (s.wbs || '');
-        const y4 = text.match(/25[5-9]\d/g);
-        if (y4) y4.forEach(m => addValidYear(m));
+        extractThaiYearsFromText(text).forEach(y => addValidYear(y));
 
         const dMatches = (s.contract || '').match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/g);
         if (dMatches) {
           if (dMatches.length >= 2) {
             const startY2 = parseInt(dMatches[0].split('/')[2], 10);
             const endY2 = parseInt(dMatches[1].split('/')[2], 10);
-            if (startY2 >= 55 && endY2 >= startY2 && endY2 <= 99) {
+            if (startY2 >= 60 && endY2 >= startY2 && endY2 <= 99) {
               for (let y = 2500 + startY2; y <= 2500 + endY2; y++) addValidYear(y);
             }
           } else {
             dMatches.forEach(dm => {
               const y2 = parseInt(dm.split('/')[2], 10);
-              if (y2 >= 55 && y2 <= 99) addValidYear(2500 + y2);
+              if (y2 >= 60 && y2 <= 99) addValidYear(2500 + y2);
             });
           }
         }
 
-        const wbsYrMatch = (s.wbs || '').match(/(?:^|-)([5-9]\d)-/);
+        const wbsYrMatch = (s.wbs || '').match(/(?:^|-)([6-9]\d)-/);
         if (wbsYrMatch) {
           addValidYear(2500 + parseInt(wbsYrMatch[1], 10));
         }
@@ -1061,8 +1068,8 @@
 
     if (d && d.permits) {
       d.permits.forEach(p => {
-        const matches = ((p.statusText || '') + ' ' + (p.permitDetail || '') + ' ' + (p.projectName || '')).match(/25[5-9]\d/g);
-        if (matches) matches.forEach(m => addValidYear(m));
+        const text = (p.statusText || '') + ' ' + (p.permitDetail || '') + ' ' + (p.projectName || '');
+        extractThaiYearsFromText(text).forEach(y => addValidYear(y));
       });
     }
 
@@ -1075,7 +1082,7 @@
       });
     }
 
-    return Array.from(yearsSet).filter(y => y >= 2555 && y <= 2600).sort((a, b) => b - a);
+    return Array.from(yearsSet).filter(y => y >= 2560 && y <= nextYear && y !== 2579).sort((a, b) => b - a);
   }
 
   window.extractPsctmYears = function () {
@@ -1227,12 +1234,12 @@
     // 3. Permits (รองรับปีเก่า, ปีปัจจุบัน และปีถัดไป)
     const activePermits = (d.permits || []).filter(item => {
       const text = (item.statusText || '') + ' ' + (item.permitDetail || '') + ' ' + (item.projectName || '');
-      if (text.includes(yr.toString())) return true;
+      const yearsInText = extractThaiYearsFromText(text);
+      if (yearsInText.includes(yr)) return true;
       if (new RegExp(`[-/]${shortYr}\\b`).test(text)) return true;
 
       if (yr === 2569) {
-        const explicitYears = (text.match(/25[5-9]\d/g) || []).map(Number);
-        const isOtherYearOnly = explicitYears.length > 0 && !explicitYears.includes(2569);
+        const isOtherYearOnly = yearsInText.length > 0 && !yearsInText.includes(2569);
         if (!isOtherYearOnly) return true;
       }
       if (yr === currentYear && currentYear > 2569 && item.statusGroup !== 'approved') return true;

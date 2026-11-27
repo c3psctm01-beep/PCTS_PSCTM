@@ -2739,7 +2739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         list.forEach(p => {
             const pYears = window.getProjectActiveYears(p);
             pYears.forEach(y => {
-                if (y >= 2555 && y <= 2600) {
+                if (y >= 2560 && y <= nextYear && y !== 2579) {
                     allYearsSet.add(y);
                 }
             });
@@ -2750,7 +2750,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const psctmYears = window.extractPsctmYears();
             if (Array.isArray(psctmYears)) {
                 psctmYears.forEach(y => {
-                    if (y >= 2555 && y <= 2600) allYearsSet.add(y);
+                    if (y >= 2560 && y <= nextYear && y !== 2579) allYearsSet.add(y);
                 });
             }
         }
